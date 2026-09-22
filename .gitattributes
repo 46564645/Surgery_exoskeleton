@@ -1,0 +1,23 @@
+* text=auto
+
+# Preserve downloaded reference snapshots byte-for-byte.
+"Open-source projects/**" -text
+
+# Keep engineering and research binaries out of text diffs.
+*.3dm binary
+*.3mf binary
+*.doc binary
+*.docx binary
+*.f3d binary
+*.pdf binary
+*.rar binary
+*.step binary
+*.stl binary
+*.stp binary
+*.zip binary
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.sldasm binary
+*.sldprt binary

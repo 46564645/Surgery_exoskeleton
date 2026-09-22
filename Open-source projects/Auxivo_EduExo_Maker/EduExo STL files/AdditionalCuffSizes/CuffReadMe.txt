@@ -1,0 +1,1 @@
+This folder contains different files of the upper arm cuffs with different inner diameters. The different sizes enable you to adjust the exoskeleton to smaller or larger users (upper arm diameter) and ensure a good fit of the exoskeleton on the arm.

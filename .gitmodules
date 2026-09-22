@@ -1,0 +1,12 @@
+[submodule "Open-source projects/OpenExo"]
+	path = Open-source projects/OpenExo
+	url = https://github.com/naubiomech/OpenExo.git
+[submodule "Open-source projects/STM32-Libraries-HX711"]
+	path = Open-source projects/STM32-Libraries-HX711
+	url = https://github.com/DanielMartensson/STM32-Libraries.git
+[submodule "Open-source projects/UICRM-Embedded"]
+	path = Open-source projects/UICRM-Embedded
+	url = https://github.com/UIC-RoboMaster/UICRM-Embedded.git
+[submodule "Open-source projects/WitStandardProtocol_JY901"]
+	path = Open-source projects/WitStandardProtocol_JY901
+	url = https://github.com/WITMOTION/WitStandardProtocol_JY901.git
