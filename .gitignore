@@ -1,46 +1,10 @@
-# macOS and editor metadata
 .DS_Store
 ._*
-*.swp
-*.swo
-*~
-.idea/
-.vscode/
-
-# Python caches
+__MACOSX/
 __pycache__/
 *.py[cod]
-.pytest_cache/
-.mypy_cache/
-
-# Build output and temporary files
-build/
-Build/
-cmake-build-*/
-dist/
-out/
-*.tmp
-*.temp
-*.bak
-*.log
-
-# Embedded tool output
-Debug/
-Release/
-*.elf
-*.bin
-*.hex
-*.map
-*.o
-*.obj
-*.d
-*.su
-*.cyclo
-
-# Local environment and credentials
 .env
 .env.*
 !.env.example
 *.pem
 *.key
-

@@ -1,46 +1,35 @@
-# Surgery Exoskeleton
+# Surgery Upper Exoskeleton
 
-面向骨科手术上肢操作的助力外骨骼学生原型项目。本仓库集中管理技术文档、硬件资料、机械模型、文献调研和开源参考项目。
+当前主工作目录：`/Users/mzc/Desktop/Surgery_upper_exoskeleton`。
 
-当前工作以原型研究和台架验证为主，不代表医疗器械、临床产品或已经完成人体安全验证的系统。
+本仓库按该目录的现有结构维护。旧目录作为本地历史副本，不与本目录自动同步。
 
-## 项目目标
+## 项目资料
 
-- 为拉钩、支镜、持械等持续负荷任务提供基础重力补偿；
-- 在拨、撬、推、钻等主动施力阶段研究额外助力；
-- 保持用户对动作方向、幅度和节奏的直接控制；
-- 基于 ExoKit 的结构与交互思想，适配本项目已有硬件；
-- 通过开源复用、模块化开发和分阶段验证降低实现风险。
+- [系统架构蓝图](Main_%20project/docs/system_architecture_blueprint.md)
+- [需求蓝图](Main_%20project/docs/Drafts/project_requirements_blueprint.md)
+- [技术文档](Main_%20project/docs/upper_limb_exoskeleton_technical_document%20%281%29.md)
+- [硬件清单](Main_%20project/Hardware_information_list/hardware_components_reference.md)
+- [硬件接口登记](Main_%20project/Hardware_information_list/hardware_interface_registry.md)
+- [架构决策地图](Main_%20project/docs/Drafts/wayfinder/project_blueprint_architecture/map.md)
+- [开源借鉴索引](Open-source%20projects/开源项目借鉴索引表.md)
 
-## 当前硬件方向
+`self models/` 保存当前机械源文件和导出文件。`Open-source projects/` 为只读参考资料。
 
-- 主控：STM32F446RE；
-- J2 肩部关节：GIM6010-8；
-- J3 肘部关节：裸 M3508 + C620；
-- 姿态传感：WT901C-TTL；
-- 人机交互力采集：S 型拉压力传感器 + HX711。
+本次上传保留现有文档内容。文件整理后，部分文档中的旧相对路径仍需后续修正；蓝图引用的五张 SVG 当前未包含在此主目录中。
 
-以上内容是当前设计方向。电机参数、开源项目资料或仿真结果不能替代机械、电气和人体安全验证。
+## 完整获取参考仓库
 
-## 目录说明
+独立第三方 Git 仓库以子模块记录其来源和固定提交。GitHub 的 Download ZIP 不包含子模块源码，完整获取请运行：
 
-| 目录 | 内容 |
-|---|---|
-| `Main_ project/` | 本项目技术文档、硬件清单与官方资料 |
-| `Open-source projects/` | ExoKit 及其他第三方参考项目；默认只读 |
-| `self models/` | 本项目机械设计源文件与导出模型 |
-| `文献调研/` | 研究论文与调研资料 |
-| `data—base /` | 补充数据与论文附件 |
+```sh
+git clone --recurse-submodules https://github.com/46564645/Surgery_exoskeleton.git
+```
 
-开源项目的本地位置、原始来源和复用判断见 [`Open-source projects/OPEN_SOURCE_PROJECTS_INDEX.md`](Open-source%20projects/OPEN_SOURCE_PROJECTS_INDEX.md)。
+已有克隆补齐参考库：
 
-## 开发规则
+```sh
+git submodule update --init --recursive
+```
 
-1. 开始模块设计或编码前，依次检查 ExoKit、本地参考项目、网上开源实现和官方资料。
-2. 复用优先级为：直接使用、部分复用、思路借鉴、讨论后自主实现。
-3. 不得编造引脚、协议字段、力矩参数、阈值或测试结果。
-4. 第三方参考项目中已保留 Git 历史的目录以子模块登记；其他目录是下载时的只读快照。
-5. 当前未进行实物验证的内容，应明确标记为文档、代码、编译或台架阶段。
-
-详细设计边界和系统方案见 [`Main_ project/upper_limb_exoskeleton_technical_document (1).md`](Main_%20project/upper_limb_exoskeleton_technical_document%20%281%29.md)。
-
+不含独立 Git 历史的参考快照，以及项目文档、硬件资料和 CAD，直接保存在本仓库中。

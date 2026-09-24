@@ -1,12 +1,63 @@
+[submodule "Main_ project/Hardware_information_list/all_hardware_relevant_documents/STM32-Libraries-HX711"]
+	path = Main_ project/Hardware_information_list/all_hardware_relevant_documents/STM32-Libraries-HX711
+	url = https://github.com/DanielMartensson/STM32-Libraries.git
+[submodule "Main_ project/Hardware_information_list/all_hardware_relevant_documents/WitStandardProtocol_JY901"]
+	path = Main_ project/Hardware_information_list/all_hardware_relevant_documents/WitStandardProtocol_JY901
+	url = https://github.com/WITMOTION/WitStandardProtocol_JY901.git
+[submodule "Open-source projects/BetaRobot"]
+	path = Open-source projects/BetaRobot
+	url = https://github.com/itgz123/BetaRobot.git
+[submodule "Open-source projects/CMSIS-DSP"]
+	path = Open-source projects/CMSIS-DSP
+	url = https://github.com/ARM-software/CMSIS-DSP.git
+[submodule "Open-source projects/Ceedling"]
+	path = Open-source projects/Ceedling
+	url = https://github.com/ThrowTheSwitch/Ceedling.git
+[submodule "Open-source projects/FreeRTOS-Kernel"]
+	path = Open-source projects/FreeRTOS-Kernel
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+[submodule "Open-source projects/GALAXEA-A1Z"]
+	path = Open-source projects/GALAXEA-A1Z
+	url = https://github.com/userguide-galaxea/GALAXEA-A1Z.git
 [submodule "Open-source projects/OpenExo"]
 	path = Open-source projects/OpenExo
 	url = https://github.com/naubiomech/OpenExo.git
-[submodule "Open-source projects/STM32-Libraries-HX711"]
-	path = Open-source projects/STM32-Libraries-HX711
+[submodule "Open-source projects/Rhino-Pi-X1-ROS2HomeRobots"]
+	path = Open-source projects/Rhino-Pi-X1-ROS2HomeRobots
+	url = https://github.com/Coderyne/Rhino-Pi-X1-ROS2HomeRobots.git
+[submodule "Open-source projects/STM32-Libraries"]
+	path = Open-source projects/STM32-Libraries
 	url = https://github.com/DanielMartensson/STM32-Libraries.git
+[submodule "Open-source projects/STM32CubeF4"]
+	path = Open-source projects/STM32CubeF4
+	url = https://github.com/STMicroelectronics/STM32CubeF4.git
+[submodule "Open-source projects/Serial-Studio"]
+	path = Open-source projects/Serial-Studio
+	url = https://github.com/Serial-Studio/Serial-Studio.git
+[submodule "Open-source projects/StateSmith"]
+	path = Open-source projects/StateSmith
+	url = https://github.com/StateSmith/StateSmith.git
+[submodule "Open-source projects/SymPyBotics"]
+	path = Open-source projects/SymPyBotics
+	url = https://github.com/cdsousa/SymPyBotics.git
 [submodule "Open-source projects/UICRM-Embedded"]
 	path = Open-source projects/UICRM-Embedded
 	url = https://github.com/UIC-RoboMaster/UICRM-Embedded.git
-[submodule "Open-source projects/WitStandardProtocol_JY901"]
-	path = Open-source projects/WitStandardProtocol_JY901
-	url = https://github.com/WITMOTION/WitStandardProtocol_JY901.git
+[submodule "Open-source projects/Unity"]
+	path = Open-source projects/Unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "Open-source projects/clip"]
+	path = Open-source projects/clip
+	url = https://github.com/marcinbor85/clip.git
+[submodule "Open-source projects/lwrb"]
+	path = Open-source projects/lwrb
+	url = https://github.com/MaJerle/lwrb.git
+[submodule "Open-source projects/stm32-usart-uart-dma-rx-tx"]
+	path = Open-source projects/stm32-usart-uart-dma-rx-tx
+	url = https://github.com/MaJerle/stm32-usart-uart-dma-rx-tx.git
+[submodule "Open-source projects/stm32-util-eeprom-emulation"]
+	path = Open-source projects/stm32-util-eeprom-emulation
+	url = https://github.com/STMicroelectronics/stm32-util-eeprom-emulation.git
+[submodule "Open-source projects/sympy"]
+	path = Open-source projects/sympy
+	url = https://github.com/sympy/sympy.git
