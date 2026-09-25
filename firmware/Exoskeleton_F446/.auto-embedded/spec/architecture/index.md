@@ -1,5 +1,12 @@
 # 分层架构 spec（architecture）
 
+## 本项目适配（优先于下方通用六层模板）
+
+依据根AGENTS.md及系统架构蓝图6.1–6.3，沿用L1平台、L2设备、L3控制、L4应用。
+S1的Core/Src/board_*.c属于L1，App/application属于L4；本轮没有为了凑层数新增L2/L3空模块。
+App/application只包含无HAL类型的平台接口。模板中的“app目录”不代表整个App树全是应用层。
+CubeMX生成main保留初始化编排，官方库不手改；机械检查的生成main调用数量和build探测源文件长度告警单独记录并人工核查，不宣称检查全绿。
+
 > index.md 是本层入口：开发前清单（Pre-Development Checklist）+ 质量门（Quality Check）。
 > RESEARCH/PLAN 必读；派 Builder/Verifier 时按 implement/verify.jsonl 自动注入。
 

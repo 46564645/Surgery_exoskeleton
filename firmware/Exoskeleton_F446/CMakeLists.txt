@@ -44,12 +44,24 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+    Core/Src/board_console.c
+    Core/Src/board_runtime.c
+    App/application/app_main.c
+    App/application/console_commands.c
+    third_party/lwrb/src/lwrb/lwrb.c
+    third_party/clip/src/clip_cmd_parse.c
+    third_party/clip/src/clip_cmd_call.c
+    third_party/clip/src/clip_notify.c
+    third_party/clip/src/clip_utils_arg.c
+    third_party/clip/src/clip_utils_parse.c
+    third_party/clip/src/clip_utils_hex.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    App/application
+    third_party/lwrb/src/include
+    third_party/clip/src
 )
 
 # Add project symbols (macros)

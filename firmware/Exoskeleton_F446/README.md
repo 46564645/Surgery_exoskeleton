@@ -21,8 +21,8 @@ CMake Tools已配置本机cmake路径；需要使用扩展配置工程时选择L
 
 - NUCLEO-F446RE / STM32F446RET6；ioc记录 CubeMX 6.18.1、STM32CubeF4 V1.28.3。
 - 迁移时工具路径对应 CMake 4.3.1+st.1、GCC 14.3.1+st.2、Ninja 1.13.2+st.1。
-- Core及Drivers保持原样，仍为LED闪烁示例；双CAN、HX711与控制算法尚未接入。
-- App/devices、App/control、App/application按需要逐步实现；当前仅有目录说明。
+- S1通信代码已实现：USART2循环DMA接收、DMA发送、静态命令与非阻塞调度；双CAN、HX711、StateSmith与电机控制尚未接入。
+- App/application包含调度和命令；Core中的board_console/board_runtime提供平台接口，应用层不持有HAL句柄。App/devices、App/control仍预留。
 - Drivers不手改；Core中的接入代码放USER CODE区。自有源文件加入顶层CMakeLists.txt；不手改生成的cmake/stm32cubemx清单。
 - 顶层AGENTS.md及硬件接口登记仍为工作依据。根目录到这里的路径为 firmware/Exoskeleton_F446。
 
@@ -32,4 +32,31 @@ CMake Tools已配置本机cmake路径；需要使用扩展配置工程时选择L
 
 ## 验证边界
 
-迁移后须在新目录重新编译，不复用旧build缓存。本轮不烧录、不运行电机；ST-LINK下载及断点调试配置留待连接开发板后核实，不提供未经验证的启动配置。
+2026-09-25：Debug构建及13项主机模拟测试通过，CubeMX重新生成后自有代码保留。硬件串口尚无回复，SWD连接报USB错误；虚拟磁盘HEX写入尝试不等于读回校验通过。S1实物验证未完成，详见项目唯一开发日志。
+
+## S1通信与检查
+
+- USB VCP使用USART2 PA2/PA3，115200、8N1、无流控；只支持无参数的`ping`、`status`、`help`、`?`，区分大小写，以LF或CRLF结束。
+- `status`固定报告`stage=S1_COMM output_allowed=0`；无电机控制命令。正常LD2每500 ms翻转；启动核验失败或通信故障每100 ms翻转，复位恢复。
+- DMA1 Stream5/Channel4循环RX、Stream6/Channel4普通TX；与USART2同抢占优先级5。BSP按键初始化后由`BoardRuntime_FinalizeInterrupts`将EXTI最终设为10并读回核验；SysTick为0，GROUP4。
+- 参数集中在`Core/Inc/s1_config.h`。RX DMA为512字节，LwRB RX/TX存储1024/2048字节（各保留1字节区分满空），TX暂存256字节。中断服务延迟须小于半个DMA数组接收时间（115200下约22 ms）；位置差不能识别完全未服务的一整圈。
+- 通信每1 ms处理最多128字节及一条完整命令；行最多96字节，非法/超长行整行丢弃。UART/DMA错误、RX溢出或TX超过100 ms锁存故障，停止命令处理。
+
+在本目录运行：
+
+```sh
+./build.sh Debug
+python3 tests/run_host_tests.py
+python3 tests/check_generated.py
+python3 .auto-embedded/scripts/check.py --json
+```
+
+主机测试使用模拟HAL，不代表板上DMA或IRQ已验证。机械检查当前有三项已人工说明的告警：CubeMX主函数初始化调用数、build内编译器探测文件行数，以及刻意保持相同的通信IRQ优先级；详见任务`edits.md`。未为消除告警修改官方代码。
+
+开发板仅接USB且电机动力断开时，可使用下列只读命令测试；端口以当次枚举结果为准：
+
+```sh
+python3 tests/bench_serial.py --port /dev/cu.usbmodem1103 --seconds 600 --report build/bench/soak.json
+```
+
+该脚本不烧录、不复位；初始状态无回复即失败，不会把未执行的10分钟测试记为通过。完整验收还需SWD校验、实际IRQ读回、三次复位及USB重插后恢复查询。

@@ -1,16 +1,29 @@
-# 硬件资源锁（机器可读）。RESEARCH 阶段填写并冻结；SessionStart hook 注入其摘要。
-# 同一资源不可重复占用——填写时自查 pin/dma/irq/timer 无重复。
-# 示例条目见注释，正式条目顶格写在各 section 下。
-
+# 2026-09-25 S1 design/configuration lock, NOT physical verification.
+# Truth: Exoskeleton_F446.ioc + hardware_interface_registry.md section 4.1.4.
+# Reserved CAN/HX711 pins have no firmware driver. No DMA/IRQ invented for them.
 pins:
-  # - {id: PA9,  func: USART1_TX, owner: bsp_uart}
-  # - {id: PA10, func: USART1_RX, owner: bsp_uart}
-
+  - {id: PA2, func: USART2_TX_AF7, owner: board_console, status: configured_not_validated}
+  - {id: PA3, func: USART2_RX_AF7, owner: board_console, status: configured_not_validated}
+  - {id: PA5, func: LED2, owner: board_runtime, status: configured_not_validated}
+  - {id: PC13, func: USER_BUTTON_EXTI13, owner: board_runtime, status: configured_not_validated}
+  - {id: PA13, func: SWDIO, owner: debug, status: reserved}
+  - {id: PA14, func: SWCLK, owner: debug, status: reserved}
+  - {id: PB3, func: SWO, owner: debug, status: reserved}
+  - {id: PB9, func: CAN1_TX_AF9, owner: shoulder_can, status: design_reserved}
+  - {id: PB8, func: CAN1_RX_AF9, owner: shoulder_can, status: design_reserved}
+  - {id: PB13, func: CAN2_TX_AF9, owner: elbow_can, status: design_reserved}
+  - {id: PB12, func: CAN2_RX_AF9, owner: elbow_can, status: design_reserved}
+  - {id: PC3, func: HX711_SCK_LEVEL_SHIFT, owner: hx711, status: design_reserved}
+  - {id: PC2, func: HX711_DOUT_LEVEL_SHIFT, owner: hx711, status: design_reserved}
 dma:
-  # - {stream: DMA1_CH4, peripheral: USART1_TX, owner: drv_uart_dma}
-
+  - {stream: DMA1_Stream5, channel: 4, peripheral: USART2_RX, owner: board_console}
+  - {stream: DMA1_Stream6, channel: 4, peripheral: USART2_TX, owner: board_console}
 irq:
-  # - {irqn: USART1_IRQn, priority_preempt: 1, priority_sub: 0, owner: drv_uart}
-
+  - {irqn: USART2_IRQn, priority_preempt: 5, priority_sub: 0, owner: board_console}
+  - {irqn: DMA1_Stream5_IRQn, priority_preempt: 5, priority_sub: 0, owner: board_console}
+  - {irqn: DMA1_Stream6_IRQn, priority_preempt: 5, priority_sub: 0, owner: board_console}
+  # BSP writes 15; board_runtime overwrites to 10 and checks AFTER BSP_PB_Init.
+  - {irqn: EXTI15_10_IRQn, priority_preempt: 10, priority_sub: 0, owner: board_runtime}
+  - {irqn: SysTick_IRQn, priority_preempt: 0, priority_sub: 0, owner: HAL_timebase}
 timers:
-  # - {id: TIM2, func: 1ms_tick, owner: svc_scheduler}
+  - {id: SysTick, func: HAL_1ms_tick, owner: HAL_timebase}

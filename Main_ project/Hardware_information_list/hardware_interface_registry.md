@@ -117,9 +117,11 @@
 |---|---|---|---|---|
 | `MCU-01.LR01` | `SHOULDER_SIDE` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN1 PB9/TX、PB8/RX、AF9；IRQ/滤波器待固件设计 |
 | `MCU-01.LR02` | `ELBOW` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN2 PB13/TX、PB12/RX、AF9；IRQ/滤波器待固件设计 |
-| `MCU-01.LR03` | 命令与遥测 | 1 路串口，可评估 VCP | `PLANNED` | USART、波特率、DMA |
+| `MCU-01.LR03` | 命令与遥测 | ST-LINK VCP / USART2 | `DESIGN_SELECTED` | PA2/TX、PA3/RX、AF7，115200 8N1无流控；DMA1 Stream5/Channel4 RX循环、Stream6/Channel4 TX普通；S1已生成并构建，实物通信验证另见开发日志 |
 | `MCU-01.LR04` | HX711 | 数字输出 `PD_SCK`、数字输入 `DOUT` | `DESIGN_SELECTED` | PC3/SCK输出、PC2/DOUT输入无上下拉；电平转换，10SPS新样本 |
 | `MCU-01.LR05` | 未来 `assist_enable_permission` | 安全定义的数字输入 | `PLANNED` | 硬件、GPIO、电平、去抖 |
+
+S1固件中断配置（2026-09-25）：NVIC GROUP4；USART2、DMA1 Stream5/6抢占优先级5、子优先级0；SysTick抢占优先级0。用户按键EXTI15_10的最终抢占优先级为10：官方BSP初始化会写15，因此由自有`BoardRuntime_FinalizeInterrupts()`在`BSP_PB_Init()`之后重新设置并读回检查。检查失败不启动命令接收。此段记录软件配置，不证明实物焊桥、USB链路或电机安全。
 
 ### 4.2 ACT-01：GIM6010-8 + GDS68
 
