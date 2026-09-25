@@ -24,13 +24,12 @@
 |---|---|---|
 | ./build.sh Debug | 退出码0；22项编译/链接完成；FLASH 7340 B、RAM 1592 B；本次输出未见编译警告 | 当前LED固件可构建；不是下载或运行证明 |
 | aemb doctor . | 输出 ALL OK | 框架文件及Codex配置接线检查通过，不证明本会话hook已执行 |
-| STM32_Programmer_CLI --help（下列绝对路径） | 可运行，版本2.23.0；列出 -l st-link-only 为不连接目标的枚举方式 | 工具存在，不证明SWD可用 |
+| STM32_Programmer_CLI --help（本机安装路径） | 可运行，版本2.23.0；列出 -l st-link-only 为不连接目标的枚举方式 | 工具存在，不证明SWD可用 |
 | STM32_Programmer_CLI -l st-link-only | No ST-Link detected! | 本轮未枚举到探针，未尝试连接、擦写或复位目标 |
 | ls /dev/cu.*；ioreg -p IOUSB -l -w 0 的ST/USB名称筛选 | 串口只有Bluetooth-Incoming-Port和debug-console；未发现ST-LINK/STM32 | 当前未观察到开发板串口；不据此推断是未插线、线材还是设备问题 |
 | command -v openocd | 当前PATH未找到 | 不宣称整台电脑未安装，不为本轮安装工具 |
 
-本机已核实的程序路径：
-`/Users/mzc/Library/Application Support/stm32cube/bundles/programmer/2.23.0/bin/STM32_Programmer_CLI`。
+本机已核实ST工具包中的`programmer/2.23.0/bin/STM32_Programmer_CLI`；安装根路径由各电脑配置，不写入共享文档。
 
 产物：`firmware/Exoskeleton_F446/build/Debug/Exoskeleton_F446.elf`。
 VS Code当前只有构建任务，未见launch.json或已验证的下载任务。烧录与断点调试均未执行。
