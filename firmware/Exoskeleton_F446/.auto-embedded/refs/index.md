@@ -1,0 +1,85 @@
+# refs —— 嵌入式离线知识库（按需加载）
+
+> 沿用并 bundle 自上一代 `embedded-dev`：装进工程 `.auto-embedded/refs/`，**按需读取**（不自动全量注入，防撑爆上下文）。
+> 命中相关主题时由 AI 主动打开对应文件；比赛/MATLAB/板级专项的总入口见 `.auto-embedded/modes/`。
+
+| 文件 | 主题 |
+|---|---|
+| `arch-gate.md` | 分层架构门禁（arch-check）使用与强制化 |
+| `attitude-estimation-sota.md` | 高精度姿态解算 SOTA：VQF / MEKF / UKF-M / InEKF / 学习法 |
+| `attitude-init-single-frame.md` | 单帧确定性定姿（TRIAD/QUEST/SVD）：滤波器初始对准 |
+| `balance-car-cascade-control.md` | 两轮平衡车串级控制（直立环+速度环+转向环，手调 PID 实战） |
+| `case-dcar-control-defects.md` | 案例复盘（反例）：四轮全向小车惯导/控制方案缺陷 |
+| `chassis-kinematics.md` | 底盘运动学全集：差速/阿克曼/舵轮 4WIS（正反解·限幅·标定） |
+| `checklist-mechanism.md` | 四文件磁盘记忆机制 |
+| `checklist-templates.md` | 清单格式模板参考 |
+| `cli-command-framework.md` | CLI 命令解析框架（嵌入式串口命令行） |
+| `coding-standards.md` | 嵌入式代码规范（风格细则） |
+| `comms-protocol-bus-reliability.md` | 板间通信协议与总线可靠性：UART/CAN/RS485/SPI/I2C 帧·CRC·超时重传·心跳 |
+| `companion-skills.md` | 配套全局技能：电路(multisim-spice) / Simulink(simubridge) 何时用、怎么衔接 RIPER-5 |
+| `competition-ai-max-workflow.md` | 自动完赛极限工作流（AI Max Throughput Mode） |
+| `competition-index.md` | 全国大学生电子设计竞赛赛题索引 |
+| `competition-quickstart-1page.md` | 竞赛 AI 完赛 — 单页 15 分钟快速通道 |
+| `competition-scoring-checklist-template.md` | 竞赛评分点 → 验收表通用模板 |
+| `competition-task-router.md` | 竞赛题型路由器（Task Router） |
+| `contracts.md` | 共享约定 |
+| `control-loop-sign-debug.md` | 闭环控制符号陷阱与对照实验诊断法 |
+| `control-safety-limits.md` | 控制安全/限幅/故障：限流限矩·堵转·软限位·急停·看门狗·无扰切换·故障态 |
+| `driver-porting.md` | 驱动库移植完整流程参考 |
+| `embedded-architecture.md` | 嵌入式分层架构规范（避免屎山） |
+| `embed-libs-index.md` | 嵌入式常用开源库速查索引 |
+| `example-siemens-cimc-2025.md` | 端到端示例：2025 CIMC 西门子杯工业嵌入式开发初赛 |
+| `failure-taxonomy.md` | 失败分类 |
+| `foc-control-overview.md` | FOC 矢量控制总览：流水线(Clarke/Park/SVPWM) + 三环 + 选型 + 落地 |
+| `foc-current-loop.md` | FOC 电流环：dq 模型/PI 整定(零极点对消)/解耦前馈/SVPWM/电流采样 |
+| `foc-speed-position-loop.md` | FOC 速度环+位置环：串级、带宽分离、前馈、抗饱和 |
+| `foc-sensorless.md` | FOC 无感：SMO/磁链观测/HFI/I-F 启动与切换 |
+| `foc-calibration-checklist.md` | FOC 标定清单：电流零偏/电角度对齐/霍尔/死区/参数辨识 |
+| `gd32f4xx-api.md` | GD32F4xx 固件库 (Standard Peripheral Library) API 速查手册 |
+| `gimbal-control.md` | 云台稳定控制（二/三轴：角度环+角速度环串级，IMU 稳像） |
+| `git-snapshot.md` | Git 备份与回档规则 |
+| `hooks-design.md` | Hooks 设计文档 |
+| `imu-fusion-filter-selection.md` | IMU 姿态/状态估计滤波器选型决策（互补/Mahony/Madgwick/VQF/MEKF/EKF/ESKF/UKF/InEKF + 单帧初始对准） |
+| `imu-gyroscope-checklist.md` | IMU / 陀螺仪模块开发检查清单 |
+| `imu-wheel-ekf-fusion.md` | IMU + 轮速里程计的 ESKF 卡尔曼融合（MCU 落地） |
+| `line-follow-vision-sensing.md` | 循迹与竞赛视觉传感：灰度阵列/线阵CCD(TSL1401)/OpenMV 中心线提取 |
+| `lqr-example-bicycle-cornell.md` | 进阶示例：纯舵机单车 LQR（Cornell 点质量模型）— MATLAB 重建模 |
+| `lqr-example-segway.md` | 端到端示例：两轮平衡车 LQR 设计 |
+| `mahony-ahrs-reference.md` | Mahony AHRS 姿态解算算法参考 |
+| `matlab-example-dds-signal-gen.md` | 实战示例：DDS 信号发生器（电赛 2001A / 2005A） |
+| `matlab-example-iir-filter.md` | 入门示例：一阶低通 IIR 滤波器设计 |
+| `matlab-example-modem-am.md` | 实战示例：AM 信号调制度测量（电赛 2022F） |
+| `matlab-example-serial-plot.md` | 入门示例：串口 CSV 日志可视化与分析 |
+| `matlab-example-step-id.md` | 入门示例：阶跃响应辨识温度对象 |
+| `matlab-example-thd-meter.md` | 实战示例：失真度分析仪（电赛 2021A） |
+| `matlab-hello-5min.md` | 5 分钟 Hello World — 零基础也能成功一次 |
+| `mcp-tools.md` | MCP / 外部工具调用细则 |
+| `motion-profiling-trajectory.md` | 运动规划/轨迹生成：梯形 / S 曲线(jerk-limited) / 点到点 / 多轴同步 |
+| `motor-drive-simple-actuators.md` | 简单执行器控制：有刷 DC / 方波六步 BLDC / 舵机 / 步进（FOC 之外） |
+| `mspm0g3507-seekfree-api.md` | MSPM0G3507 Seekfree 开源库 API 速查手册 |
+| `omni-wheel-odometry.md` | 全向/麦轮运动学解耦 + 轮式里程计航位推算（限制与验证） |
+| `path-planning-obstacle-avoidance.md` | 路径规划与避障：全局 A*/Dijkstra · 局部 DWA/人工势场 · 与跟踪分层 |
+| `path-tracking-pure-pursuit-stanley.md` | 路径跟踪横向控制：Pure Pursuit / Stanley / LQR 选型 |
+| `pid-control-reference.md` | PID 控制参考：位置式/增量式 · 抗饱和 · 微分处理 · 离散化时序 · 整定 · 串级 |
+| `pin-planning.md` | 引脚规划指南 |
+| `platform-compatibility.md` | 平台兼容性 |
+| `platform-migration.md` | 跨平台迁移指南 |
+| `ranging-localization-sensors.md` | 测距/定位传感器选型与融合：ToF/超声/红外/UWB/激光雷达 |
+| `realtime-scheduling-isr-dma.md` | 实时控制调度与 ISR/DMA 架构：控制环频率·定时器-ADC-DMA 同步·裸机 vs RTOS |
+| `riper5-protocol.md` | RIPER-5 嵌入式芯片开发协议 |
+| `riper5-stages.md` | RIPER-5 五阶段详细规则 |
+| `shared-contracts.md` | 共享约定 |
+| `shared-failure-taxonomy.md` | 失败分类 |
+| `shared-platform-compatibility.md` | 平台兼容性 |
+| `static-analysis-pipeline.md` | 静态检查管线（cppcheck + clang-tidy + lizard） |
+| `stm32-hal-api.md` | STM32F1xx HAL 库 API 速查手册 |
+| `stm32-stdperiph-api.md` | STM32F10x 标准外设库 (StdPeriph) API 速查手册 |
+| `systematic-debugging.md` | 系统化调试方法论（四阶段根因分析） |
+| `task-template.md` | 任务文件模板 |
+| `tool-routing.md` | 工具路由表 + 优先级总表 |
+| `troubleshooting.md` | 嵌入式故障快速排查指南 |
+| `vibe-workflow.md` | Vibe 工作流补充规范 |
+
+## 领域包
+
+- `stm32-hal/` —— STM32 HAL 开发方法论 + BSP 模板（`references/` 指南 + `assets/` bsp-template.c/.h + `overview.md`）。配合 `aemb-peripheral-driver` 工具技能用。

@@ -1,12 +1,12 @@
 # 硬件接口编码表
 
-> 状态：型号资料级接口登记稿，尚未进行项目接线分配。
+> 状态：型号资料接口登记 + 2026-09-24台架接线设计分配；尚未实物通电验证。
 >
 > 本文件是当前项目的权威接口登记。历史目录中的同名文件仅作为旧副本，不再被项目文档引用。
 >
 > 硬件范围：严格来自同目录 `hardware_components_reference.md`。
 >
-> 规则：厂家资料只证明设备本身具有什么接口；本表中的接口编码不表示已经选定 STM32 引脚、线束、CAN ID、供电支路或控制参数。
+> 规则：厂家资料确认与项目设计分配分开记录；第10节列出已选引脚和逐线关系，不代表实物一致性、保护器件或运行参数均已验证。
 
 ## 1. 编码与证据规则
 
@@ -16,11 +16,11 @@
 | 物理接口组 | `设备.IF序号` | `ACT-01.IF01` | 连接器、焊盘或固定线缆接口 |
 | 接口信号 | `接口组.S序号` | `ACT-01.IF01.S01` | 接口内的一条厂家定义信号 |
 | 板上操作件 | `设备.CTL序号` | `ESC-01.CTL01` | 按键、选择开关等非线缆接口 |
-| 软件资源槽 | `设备.LR序号` | `MCU-01.LR01` | 尚未分配到物理引脚的 MCU 逻辑需求 |
+| 软件资源槽 | `设备.LR序号` | `MCU-01.LR01` | MCU逻辑需求；已选引脚见第10节 |
 | 电源域 | `PD-名称` | `PD-24V-MOTOR` | 具有共同电气性质的电源范围 |
 | 逻辑网络 | `NET-名称` | `NET-CAN-ELBOW` | 后续连接映射使用的逻辑网络身份 |
 
-编码只表达稳定身份。厂家端子名称可以记录，但“某信号接到另一设备的哪一针”必须在后续接线映射表中单独确认。
+编码只表达稳定身份。厂家端子名称可以记录，但“某信号接到另一设备的哪一针”在第10节接线映射表中单独记录。
 
 ### 1.1 状态
 
@@ -29,6 +29,7 @@
 | `CONFIRMED` | 对应型号官方资料明确给出，且型号身份已确认 |
 | `REFERENCE_ONLY` | 资料来自参考板、芯片或商品页，尚不能证明到货实物完全一致 |
 | `PLANNED` | 当前架构需要，但尚未分配物理资源 |
+| `DESIGN_SELECTED` | 项目已选择连接关系或物理资源，尚未实物验证；不是厂家证据等级 |
 | `TBD` | 缺少型号、版本、实物标识或对应资料，不能继续细化 |
 | `INACTIVE` | 设备存在，但当前编码器控制架构不使用 |
 
@@ -52,18 +53,18 @@
 | `FORCE-01` | 5 kg 直梁式四线全桥应变称重传感器 | 随购买套装提供的技术参数表、安装图和接线图 | C | 已确认所购规格与资料基准；尺寸、线色和桥阻仍需到货实测 |
 | `ADC-01` | HX711-BF / HX711AD 模块；资料原理图版本 | 随购买套装原理图及 Avia《HX711 数据手册》 | B+C | 原理图确认 `RATE`接地、固定10 SPS；实物排针和PCB一致性待核对 |
 | `CAN-01/02` | 商品页展示为 Waveshare SN65HVD230 CAN Board 样式 | Waveshare 参考板原理图；TI 数据手册 | B+C | 到货板是否同版尚未确认 |
-| `PWR-01` | 商品选择 S-250-24、24 V/10 A | 用户提供商品截图 | C | 没有对应厂家手册或实物铭牌照片 |
+| `PWR-01` | S-250-24；商品24V/10A，规格书24V/10.4A | 卖家规格书001读取记录、第7页派生图、商品截图 | C | 原PDF待补；供应商/到货批次、输入档位未核对 |
 | `IMU-01/02` | WitMotion WT901C-TTL | WitMotion 官方产品页、协议和教程 | A | 当前停用；排针物理顺序仍需实物核对 |
 
 ## 3. 电源域
 
 | 编码 | 名称 | 已知范围 | 状态与边界 |
 |---|---|---|---|
-| `PD-AC-MAINS` | 台架交流输入域 | `PWR-01` 交流输入、保护接地和防触碰边界 | `TBD`：实物端子与输入档位未核对 |
-| `PD-24V-MOTOR` | 24 V 动力域 | `PWR-01` 计划向 `ACT-01`、`ESC-01` 供电 | `PLANNED`：未设计支路、保护、开关和线径 |
-| `PD-LOGIC-3V3` | 3.3 V 逻辑域 | `CAN-01/02` 和可能的 MCU 扩展逻辑 | `PLANNED`：来源和容量未分配 |
-| `PD-MCU-5V` | MCU 板 5 V 域 | NUCLEO 的 USB 5 V、E5V 或板载 5 V 路径 | `PLANNED`：尚未选择供电路径 |
-| `PD-SENSOR-LOW-VOLTAGE` | 传感器低压域 | `ADC-01`、`FORCE-01`；IMU 库存保留 | `PLANNED`：HX711资料标示VCC/GND，但项目供电来源尚未分配 |
+| `PD-AC-MAINS` | 台架交流输入域 | `PWR-01` 交流输入、保护接地和防触碰边界 | `DESIGN_SELECTED`：规格书针号已记录；实物与输入档位待核对 |
+| `PD-24V-MOTOR` | 24 V 动力域 | `PWR-01` 计划向 `ACT-01`、`ESC-01` 供电 | `DESIGN_SELECTED`：两驱动独立支路已选；保护、开关和载流验证待定 |
+| `PD-LOGIC-3V3` | 3.3 V 逻辑域 | `CAN-01/02` 和可能的 MCU 扩展逻辑 | `DESIGN_SELECTED`：CN7-16供3.3V，容量待核验 |
+| `PD-MCU-5V` | MCU 板 5 V 域 | NUCLEO 的 USB 5 V、E5V 或板载 5 V 路径 | `DESIGN_SELECTED`：CN1 USB供电，CN7-18向逻辑模块分线 |
+| `PD-SENSOR-LOW-VOLTAGE` | 传感器低压域 | `ADC-01`、`FORCE-01`；IMU 库存保留 | `DESIGN_SELECTED`：HX711选CN7-18的5V供电；称重桥由HX711激励，IMU停用 |
 
 ## 4. 设备接口详细编码
 
@@ -108,16 +109,16 @@
 | `MCU-01.IF04.S03` | `CN6 pin 5` | `+5V` | `CONFIRMED` |
 | `MCU-01.IF04.S04` | `CN6 pin 6/7` | `GND` | `CONFIRMED` |
 
-本表不选择 USB、VIN、E5V 或 3.3 V 中的任何一种作为最终方案，也不允许并联多个入口。
+本项目选择CN1 USB供电；不并联外部VIN/E5V/3.3V入口。按UM1724第21–23页核对JP1、JP5、JP6及USB供电总预算，见第10节。
 
-#### 4.1.4 待分配资源槽
+#### 4.1.4 资源槽与设计分配
 
-| 编码 | 用途 | 所需能力 | 状态 | 暂不填写 |
+| 编码 | 用途 | 所需能力 | 状态 | 分配或待定内容 |
 |---|---|---|---|---|
-| `MCU-01.LR01` | `SHOULDER_SIDE` | 1 路 CAN TX/RX | `PLANNED` | CAN1/2、GPIO、AF、IRQ、滤波器 |
-| `MCU-01.LR02` | `ELBOW` | 1 路 CAN TX/RX | `PLANNED` | CAN1/2、GPIO、AF、IRQ、滤波器 |
+| `MCU-01.LR01` | `SHOULDER_SIDE` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN1 PB9/TX、PB8/RX、AF9；IRQ/滤波器待固件设计 |
+| `MCU-01.LR02` | `ELBOW` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN2 PB13/TX、PB12/RX、AF9；IRQ/滤波器待固件设计 |
 | `MCU-01.LR03` | 命令与遥测 | 1 路串口，可评估 VCP | `PLANNED` | USART、波特率、DMA |
-| `MCU-01.LR04` | HX711 | 数字输出 `PD_SCK`、数字输入 `DOUT` | `PLANNED` | GPIO、上下拉、周期 |
+| `MCU-01.LR04` | HX711 | 数字输出 `PD_SCK`、数字输入 `DOUT` | `DESIGN_SELECTED` | PC3/SCK输出、PC2/DOUT输入无上下拉；电平转换，10SPS新样本 |
 | `MCU-01.LR05` | 未来 `assist_enable_permission` | 安全定义的数字输入 | `PLANNED` | 硬件、GPIO、电平、去抖 |
 
 ### 4.2 ACT-01：GIM6010-8 + GDS68
@@ -227,7 +228,7 @@ C620 手册禁止同时接入 CAN 与 PWM，切换方式前必须断电。本项
 | `ADC-01.IF01` | 通道 A 称重桥输入 | `E+`、`E-`、`A+`、`A-` | `REFERENCE_ONLY`：按套装接线图，待实物丝印确认 |
 | `ADC-01.IF02` | 通道 B 输入 | `B+`、`B-` | `INACTIVE`：当前不使用 |
 | `ADC-01.IF03` | MCU 数字接口 | `DT/DOUT`、`SCK/PD_SCK`、`GND` | `REFERENCE_ONLY`：待实物排针确认 |
-| `ADC-01.IF04` | 模块供电 | `VCC`、`GND` | `REFERENCE_ONLY`：供电来源尚未分配 |
+| `ADC-01.IF04` | 模块供电 | `VCC`、`GND` | `DESIGN_SELECTED`：CN7-18 +5V，实物板待核对 |
 | `ADC-01.CFG01` | HX711 `RATE`硬件配置 | 15脚接`GND`，固定10 SPS | `REFERENCE_ONLY`：套装原理图已确认，实物PCB待核对 |
 
 ADC-01只发布低速辅助力监测值，用于显示、记录、标定观察和后续研究。它不作为快速助力触发、关节主控制反馈、安全触发或高带宽力闭环输入。软件不得把重复读取旧样本描述为高于10 SPS的新测量。
@@ -262,13 +263,18 @@ Waveshare 原理图确认：`Rs` 经 10 kΩ 接地，CANH/CANL 固定跨接 120 
 
 ### 4.8 PWR-01：S-250-24
 
-| 编码 | 功能组 | 状态 | 当前证据 |
-|---|---|---|---|
-| `PWR-01.IF01` | 交流输入与保护接地 | `TBD` | S-250-24 商品截图没有显示实物端子 |
-| `PWR-01.IF02` | 24 V 直流输出 | `TBD` | 商品选项标称 24 V/10 A，端子数量/顺序未知 |
-| `PWR-01.IF03` | 输出电压调节 | `TBD` | 只有另一型号 S-350-24 截图出现 `ADJ` |
+卖家规格书001第7页已给针号。原PDF临时文件在归档时失效，保留[第7页派生图](all_hardware_relevant_documents/S-250-24_power_supply/specification_page7_render.png)与[读取记录](all_hardware_relevant_documents/S-250-24_power_supply/specification_reading_record.md)，证据等级C，实物仍待核对。
 
-当前不能给 `L/N/PE/+V/-V/ADJ` 分配信号编码：端子说明图对应 S-350-24，不是所选 S-250-24。需提供 PWR-01 到货铭牌与端子照片，或完全匹配厂家/型号的手册。
+| 接口/信号编码 | 针号或名称 | 职责 | 状态 |
+|---|---|---|---|
+| `PWR-01.IF01.S01` | 9 / AC/L | 交流火线 | `REFERENCE_ONLY` |
+| `PWR-01.IF01.S02` | 8 / AC/N | 交流零线 | `REFERENCE_ONLY` |
+| `PWR-01.IF01.S03` | 7 / GND保护接地 | PE；不是DC负极 | `REFERENCE_ONLY` |
+| `PWR-01.IF02.S01` | 1/2/3 / +V | 同一路+24V输出 | `REFERENCE_ONLY` |
+| `PWR-01.IF02.S02` | 4/5/6 / −V | 同一路动力0V | `REFERENCE_ONLY` |
+| `PWR-01.IF03` | ADJ | 输出调节；规格書22.7–25.2V | `REFERENCE_ONLY` |
+
+观察方向：风扇面朝上、端子朝向观察者，从左向右1–9，调压器不计入针号。三组正负端子共享电源总额定10.4A，不乘三；原商品标10A的差异保留。L接火线，N接零线，不采纳卖家“无需区分”说法。输入选择档位、接线端子扭矩和回生吸收能力未确认。
 
 ### 4.9 IMU-01 / IMU-02：WT901C-TTL
 
@@ -290,12 +296,12 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 | 编码 | 功能 | 端点角色 | 状态 | 尚未决定 |
 |---|---|---|---|---|
 | `NET-PWR-24V-MOTOR` | 24 V 动力母线 | `PWR-01.IF02`、`ACT-01.IF01`、`ESC-01.IF03` | `PLANNED` | 分支、保护、线径、连接器、同时输出能力 |
-| `NET-CAN-SHOULDER-SIDE` | SHOULDER_SIDE CAN | `MCU-01.LR01`、`CAN-01`、`ACT-01.IF01` | `PLANNED` | MCU 资源、终端、线束、CAN 参数 |
-| `NET-CAN-ELBOW` | ELBOW CAN | `MCU-01.LR02`、`CAN-02`、`ESC-01.IF04` | `PLANNED` | MCU 资源、终端、线束、C620 ID |
+| `NET-CAN-SHOULDER-SIDE` | SHOULDER_SIDE CAN | `MCU-01.LR01`、`CAN-01`、`ACT-01.IF01` | `DESIGN_SELECTED` | MCU引脚见第10节；实物终端、线束、CAN配置待验证 |
+| `NET-CAN-ELBOW` | ELBOW CAN | `MCU-01.LR02`、`CAN-02`、`ESC-01.IF04` | `DESIGN_SELECTED` | MCU引脚见第10节；实物终端、线束、C620 ID待验证 |
 | `NET-M3508-DATA` | M3508 数据链 | `ESC-01.IF01`、`MOTOR-01.IF01`、原厂 7-Pin 线 | `CONFIRMED` | 不拆未公开针位 |
 | `NET-M3508-PHASE` | M3508 三相链 | `ESC-01.IF02`、`MOTOR-01.IF02` | `CONFIRMED` | 实物线色和接头检查 |
 | `NET-FORCE-BRIDGE` | 力传感器桥路 | `FORCE-01.IF01`、`ADC-01.IF01/04` | `PLANNED` | 实物端子、激励、桥阻和方向标定 |
-| `NET-HX711-DIGITAL` | HX711 10 SPS低速数字采集 | `ADC-01.IF03`、`MCU-01.LR04` | `PLANNED` | 实物排针、GPIO、非阻塞读取和超时 |
+| `NET-HX711-DIGITAL` | HX711 10 SPS低速数字采集 | `ADC-01.IF03`、`MCU-01.LR04` | `DESIGN_SELECTED` | GPIO见第10节；实物排针、电平转换板、读取超时待落实 |
 | `NET-DEBUG-VCP` | 调试与遥测 | PC、`MCU-01.IF01/06`、`MCU-01.LR03` | `PLANNED` | USART2 是否占用、波特率、格式 |
 
 ## 6. 无法由型号资料确认的项目
@@ -305,7 +311,7 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 3. `FORCE-01`已确定购买5 kg规格，但缺少到货实物、厂家型号和铭牌，线色、桥阻及尺寸仍需实测。
 4. `ADC-01`已有套装原理图并确认固定10 SPS，但缺少到货PCB正反面照片，不能把资料排针顺序直接视为实物事实。
 5. `CAN-01/02` 未核对到货板，Waveshare 参考板针序不能视为实物事实。
-6. `PWR-01` 缺少对应厂家 S-250-24 手册、铭牌和端子照片。
+6. `PWR-01` 已读取S-250-24规格书并保存第7页派生图；原PDF待补，实物铭牌、输入档位和端子一致性未核对。
 7. `IMU-01/02` 当前停用且缺少本批排针照片，不登记物理针序。
 
 ## 7. 接线设计前的实物核对
@@ -322,26 +328,95 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 | `PWR-01` | 铭牌、输入选择、端子排和丝印 | 交流与 24 V 支路 |
 | `IMU-01/02` | 未来启用时核对排针、供电版本和配置 | IMU 资源分配 |
 
-## 8. 本轮不做的决定
+## 8. 尚未完成的设计与验证
 
-- 不指定 STM32 的 CAN1/CAN2、USART、GPIO、AF、DMA、中断和定时器。
-- 不把 CAN 报文 ID、波特率、控制周期或限值写成最终参数。
-- 不设计 24 V 分线、保险、急停、接触器、DC-DC、保护地和线束。
-- 不添加 Hardware List 中不存在的电磁铁、吸附传感器或保护器件。
-- 不把商品信息、参考板原理图或开源示例提升为已验证实物结论。
+- CAN1/CAN2及HX711引脚已分配；CAN ID、实际波特率配置、控制周期、控制限值、DMA/IRQ/滤波器仍由固件设计与设备读取落实。C620要求1Mbps不是另一条GDS68总线已配置的证明。
+- 24V两支路拓扑已选；保险、急停/接触器、浪涌、回生处理、线束载流与电平转换板具体型号未选定。图中占位不代表已安装器件。
+- 不把旧款商品参数、参考板针序、规格书数值或开源程序提升为实物已验证结论。IMU保持停用。
 
 ## 9. 资料索引
 
 | 编号 | 本地资料 | 用途 |
 |---|---|---|
-| `SRC-MCU-01` | `official_documents/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.pdf` | NUCLEO 接口、供电、VCP、按键和 LED |
-| `SRC-ACT-01` | `official_documents/ABUIABA9GAAgzpi6wQYoh9D9CQ.pdf` | GIM6010-8/GDS68 rev2.2 第 2.2–2.4 节 |
-| `SRC-ESC-01` | `official_documents/RoboMaster_C620_Brushless_DC_Motor_Speed_Controller_V1.01.pdf` | C620 接口、线色、终端和限制 |
-| `SRC-MOTOR-01` | `official_documents/RoboMaster_M3508_Brushless_DC_Motor_User_Guide_v1.0_2025.10.pdf` | 裸 M3508 接口 |
-| `SRC-ADC-01` | `official_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/hx711(海芯).pdf` | HX711 芯片信号与时序 |
-| `SRC-FORCE-01` | `official_documents/拉力传感器资料/2.设计开发原理说明/技术参数表.png`及同目录安装、接线图 | 5 kg传感器参数、尺寸、安装与线色 |
-| `SRC-ADC-REF` | `official_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/ADC模块原理图.pdf`及`official_documents/拉力传感器资料/6.HX711AD模块原理图/` | 确认资料版本固定10 SPS；不直接证明到货排针 |
-| `SRC-CAN-BOARD` | `official_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Schematic.pdf` | 参考板排针、120 Ω 与 10 kΩ |
-| `SRC-CAN-IC` | `official_documents/SN65HVD230_CAN_module/TI_SN65HVD23x_3.3V_CAN_Transceivers_RevO.pdf` | 芯片引脚和职责 |
-| `SRC-PWR-01` | `official_documents/S-250-24_power_supply/user_selected_S-250-24_24V_10A.png` | 商品选项，不含端子确认 |
+| `SRC-MCU-01` | `all_hardware_relevant_documents/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.pdf` | NUCLEO 接口、供电、VCP、按键和 LED |
+| `SRC-ACT-01` | `all_hardware_relevant_documents/ABUIABA9GAAgzpi6wQYoh9D9CQ.pdf` | GIM6010-8/GDS68 rev2.2 第 2.2–2.4 节 |
+| `SRC-ESC-01` | `all_hardware_relevant_documents/RoboMaster_C620_Brushless_DC_Motor_Speed_Controller_V1.01.pdf` | C620 接口、线色、终端和限制 |
+| `SRC-MOTOR-01` | `all_hardware_relevant_documents/RoboMaster_M3508_Brushless_DC_Motor_User_Guide_v1.0_2025.10.pdf` | 裸 M3508 接口 |
+| `SRC-ADC-01` | `all_hardware_relevant_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/hx711(海芯).pdf` | HX711 芯片信号与时序 |
+| `SRC-FORCE-01` | `all_hardware_relevant_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/称重传感器的原理及使用.pdf`（旧技术参数表目录不在当前树中） | 5 kg传感器参数、尺寸、安装与线色 |
+| `SRC-ADC-REF` | `all_hardware_relevant_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/ADC模块原理图.pdf` | 确认资料版本固定10 SPS；不直接证明到货排针 |
+| `SRC-CAN-BOARD` | `all_hardware_relevant_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Schematic.pdf` | 参考板排针、120 Ω 与 10 kΩ |
+| `SRC-CAN-IC` | `all_hardware_relevant_documents/SN65HVD230_CAN_module/TI_SN65HVD23x_3.3V_CAN_Transceivers_RevO.pdf` | 芯片引脚和职责 |
+| `SRC-PWR-01` | [来源及派生资料](all_hardware_relevant_documents/S-250-24_power_supply/SOURCE.md) | 商品、规格书读取记录与第7页派生图；原PDF待补 |
 | `SRC-IMU-01` | WitMotion 官方 WT901C 产品页及 WIT Standard Protocol | WT901C-TTL 串口角色；当前停用 |
+
+## 10. 台架接线设计分配（2026-09-24）
+
+以下均为`DESIGN_SELECTED`，与厂家资料级`CONFIRMED`分开。CN7-35指连接器第35针，不是MCU芯片封装第35脚。针号见UM1724 Rev17第59页表29；CAN复用AF9见STM32F446RE DS10693复用功能表。板上针1标记/单双排方向按实物核对，不能按照片左右猜针号。
+
+### 10.1 整体连接图
+
+```mermaid
+flowchart TD
+  PC[电脑USB] --> MCU[NUCLEO CN1 Mini-B]
+  MCU -->|CN7-16 3.3V| L33[3.3V分线]
+  MCU -->|CN7-18 5V| L5[5V分线]
+  L33 --> CAN1[CAN-01]
+  L33 --> CAN2[CAN-02]
+  L33 -->|低压侧| LS[电平转换板 型号待定]
+  L5 -->|高压侧| LS
+  L5 --> HX[HX711]
+  MCU -->|PB9 TX / PB8 RX| CAN1
+  MCU -->|PB13 TX / PB12 RX| CAN2
+  MCU <-->|PC3 SCK输出 / PC2 DOUT输入| LS
+  LS <-->|SCK / DOUT| HX
+  HX --> FORCE[称重桥 E+ E- A+ A-]
+  CAN1 <-->|CANH/CANL 独立总线| GDS[GDS68 / 肩部]
+  CAN2 <-->|CANH/CANL 独立总线| C620[C620 / 肘部]
+  AC[交流 L N PE] --> PSU[S-250-24]
+  PSU -->|24V及0V| DIST[动力保护与分配 器件待定]
+  DIST --> GDS
+  DIST --> C620
+  C620 -->|原厂三相线及7-pin| MOTOR[裸M3508]
+```
+
+图省略各逻辑GND线，实际必须按下表接地。两条CAN不合并H/L；非隔离系统通过专用参考连接共地，电机回流直接到动力0V分配，不经过开发板、面包板或杜邦线。PE与DC0V分开标识，不能任意短接。
+
+### 10.2 逐线连接表
+
+| 网络/用途 | 起点 | 终点 | 要求 |
+|---|---|---|---|
+| USB逻辑供电/调试 | 电脑USB | NUCLEO CN1 Mini-B | 已有数据线；不为电机供动力 |
+| 肩部CAN发送 | PB9 / CN10-5 / CAN1_TX AF9 | CAN-01 TX（D） | TX对TX，不交叉 |
+| 肩部CAN接收 | CAN-01 RX（R） | PB8 / CN10-3 / CAN1_RX AF9 | 3.3V逻辑 |
+| 肘部CAN发送 | PB13 / CN10-30 / CAN2_TX AF9 | CAN-02 TX（D） | TX对TX |
+| 肘部CAN接收 | CAN-02 RX（R） | PB12 / CN10-16 / CAN2_RX AF9 | 3.3V逻辑 |
+| 3.3V | CN7-16 | 两CAN模块3.3V及转换板低压侧 | 通过分线，不接5V |
+| 5V | CN7-18 | HX711 VCC及转换板高压侧 | 不直接进入MCU信号脚 |
+| 逻辑地 | CN7-20 | 两CAN GND、HX711 GND、转换板GND | 分线端子互联建立同一逻辑地 |
+| HX711时钟 | PC3 / CN7-37 | 转换板3.3→5V通道→HX711 SCK | 复位/上电默认低；高脉冲不超过50µs |
+| HX711数据 | HX711 DOUT | 转换板5→3.3V通道→PC2 / CN7-35 | GPIO输入无内部上下拉；不误接桥路B+ |
+| 肩部CAN高/低 | CAN-01 H/L | GDS68配套线CANH/CANL | 一对双绞线；按触点功能核对线束，不猜颜色 |
+| 肘部CAN高 | CAN-02 H | C620 CAN B红线 | 此红线不是24V |
+| 肘部CAN低 | CAN-02 L | C620 CAN A黑线 | 此黑线不是GND |
+| +24V主干 | 电源+V（1/2/3选一） | 动力保护/正极分配 | 具体保护器件待选；总电流不乘三 |
+| 动力0V主干 | 电源−V（4/5/6选一） | 动力负极分配 | 按总回流选线 |
+| 肩部动力 | 动力正/负分配 | GDS68 VBUS/GND | 使用已有XT30(2+2)-F配套线 |
+| 肘部动力 | 动力正/负分配 | C620电源正/负 | 使用已有配套电源线，核对极性 |
+| 公共参考地 | 动力0V分配 | 逻辑GND分配 | 专用连接；不承担电机负载回流 |
+| 电机连接 | C620三相和7-pin接口 | M3508同色三相与7-pin | 原厂线束，不定义未公开内部针序 |
+| 称重桥 | 传感器红/黑/绿（部分图蓝）/白 | HX711 E+/E−/A+/A− | 核对实际传感器；B通道不接 |
+| 交流输入 | 火线/零线/PE | 电源9/L、8/N、7/保护地 | 先核对输入档位及防触碰结构 |
+
+### 10.3 供电、终端与线束约束
+
+- USB供电按UM1724第21–23页：JP5选U5V（1–2），JP6接通，JP1按相应USB枚举方案核对；JP1 OFF枚举方案总板及扩展负载上限300mA，不能把该值当扩展余量。还须计入NUCLEO、两收发器、HX711和转换板；3.3V稳压器额定值不替代USB总预算。
+- 每条CAN总线设计为两个末端各120Ω：收发器参考板固定120Ω，远端GDS68软件使能/C620开关接入。实物确认后全系统断电测H/L约60Ω；不是用万用表验证线缆特性阻抗。GDS68参数与板版本对应后再设置，不盲目加第三只120Ω。
+- 参考板P1为1TX/2GND/3V3.3/4RX，商品图却显示3.3V/GND/RX/TX顺序；接线以实物信号丝印和电路一致性为准。黄色双针为H/L并行接口，不是终端开关。
+- HX711参考板VCC连DVDD，选5V供电并做双向相反通道的电平转换。具体板及端子编号TBD，不直接采购仅写“自动双向”的板；须满足DOUT输入负载及SCK默认低的要求。
+- RV2.5mm²红/黑各2m是固定台架主干采购建议，不是厂家规定或已验证载流能力；关节活动段另核验柔性、弯折和应力释放。CAN建议2×0.3mm²双绞线，特性阻抗向供应商核实。
+- WAGO221-415六个仅为分线用量预估（动力两组、3.3V、5V、逻辑地两组）；221-412四个仅在两路CAN都需延长时使用。一只端子各孔同电位，不能将正负或H/L插入同一只。需确认实际产品适用细绞线截面积；0.14mm²下限不适合常见26/28AWG细线，优先匹配0.2–0.3mm²逻辑线。不得把杜邦金属接头当裸线夹入。数量及品牌不作为已采购事实。
+
+### 10.4 后续验证与配置边界
+
+电源输入档位和实物丝印、GDS68硬件/固件、CAN模块排针及电阻、HX711 PCB一致性尚待核对。终端配置、GDS68协议/波特率/ID、C620 ID、限流与控制周期在通信/动力调试前落实；手册通信方法存在不代表当前设备已经配置。初次测试前还需完成动力保护、急停和回生设计；不得用本表宣称系统已经可以直接上电或穿戴。C620控制模式固定CAN，不同时连接PWM。

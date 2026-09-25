@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "name": "Firmware — F446",
+      "path": "firmware/Exoskeleton_F446"
+    },
+    {
+      "name": "Project — docs and references",
+      "path": "."
+    }
+  ]
+}

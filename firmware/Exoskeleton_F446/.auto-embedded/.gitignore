@@ -1,0 +1,7 @@
+# auto-embedded 运行时 git 卫生（init 生成，可按需调整）。
+# 切勿用 `git add -f .auto-embedded/`：-f 会强加忽略目录，把 .runtime/ 缓存、备份、*.new 一并提交
+# （Trellis 曾因此误提交 548 个无关文件）。要提交就按精确路径 git add，绝不 -f 整个目录。
+.runtime/
+.cache/
+*.new
+*.aemb-bak

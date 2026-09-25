@@ -134,11 +134,13 @@ IMU-02 与 IMU-01 为相同型号，基本参数和官方资料相同。
 | 数量 | 1 | 订单图片 |
 | 绕组方式 | Y-48 行星绕组 | 订单配置图片 |
 | 驱动器 | GDS68（12–48 V） | 订单配置图片中的选项名称 |
-| 第二编码 | 断电记住单圈位置 | 订单配置图片中的选项名称 |
+| 位置功能描述 | 断电记住单圈位置 | 订单配置图片中的选项名称 |
 
-> 上表按订单页面原文记录，不对“第二编码”的具体器件型号或断电保持范围作额外推断。
+> 订单选项另明确标注【旧24v】。保留“Y-48”原文，不将其直接解释为额定48V；“断电记住单圈位置”不证明已安装输出轴第二编码器。见[订单配置摘录](all_hardware_relevant_documents/GIM6010-8/purchase_evidence/order_configuration.md)。
 
-### 5.2 GIM6010-8 官方基本参数
+### 5.2 GIM6010-8 手册参考参数（不等同于所购旧款）
+
+下表仅保留 rev2.2 的资料值，项目旧款参考见5.5；不得直接将额定/堵转电流或扭矩常数作为固件限值。
 
 | 参数 | 官方手册 rev2.2 |
 |---|---:|
@@ -188,6 +190,38 @@ IMU-02 与 IMU-01 为相同型号，基本参数和官方资料相同。
 | GIM6010-8 使用手册 | [SteadyWin GIM6010-8 使用手册 rev2.2（PDF）](http://14180476.s21i.faiusr.com/61/ABUIABA9GAAgzpi6wQYoh9D9CQ.pdf) |
 
 手册第 1.1 节含电机尺寸图，第 2.1–2.4 节含 GDS68 尺寸、接口总览和引脚定义，可作为以后核对接线的官方原始资料。
+
+### 5.5 旧款与不同来源的参数差异
+
+2026-09-24 核对；各列独立，不拼接成一份实物规格。依据订单【旧24v】，暂以商品旧款表第一列作为性能参考，未经台架验证。
+
+| 参数 | 旧款商品图：24V/GDS68 | 官网中文页24V图 | 官网英文页24V/GDS68 | 下载参数PDF/Excel的GDS68列 |
+|---|---:|---:|---:|---:|
+| 功率 W | 69.60 | 158.4 | 252 | 252 |
+| 额定电流 A | 2.9 | 6.6 | 10.5 | 10.5 |
+| 额定扭矩 N·m | 4.6 | 4.85 | 5 | 5 |
+| 额定转速 rpm | 81.9 | 245 | 120 | 120 |
+| 相间电阻 Ω | 1.45 | 0.44 | 0.44 | 0.44 |
+| 扭矩常数 N·m/A | 1.2 | 0.61 | 0.47 | 0.47 |
+
+旧款图另标：12–48V、堵转电流10.36A、堵转扭矩13N·m、相间电感0.82mH、减速比8:1。堵转参数不作为连续运行或安全限值。商品和选型资料写16bit，rev2.2驱动器表写14bit，实际编码器版本未确定。中文官网参数图的电感数值/单位也不与其他表直接合并。
+
+来源：[旧款截图](all_hardware_relevant_documents/GIM6010-8/purchase_evidence/old_24V_product_parameters.png)、[中文产品页](https://steadywin.cn/pd.jsp?id=115)、[英文产品页](https://www.steadywin.cn/en/pd.jsp?fromColId=0&id=116)、[归档来源索引](all_hardware_relevant_documents/GIM6010-8/SOURCE.md)。官网下载表没有证明购买批次，硬件/固件版本可后续用上位机读取。
+
+### 5.6 GDS68 接口及配置细节
+
+| 项目 | 已有资料结论 | rev2.2页码 / 边界 |
+|---|---|---|
+| 电源/CAN | 板端XT30PB(2+2)-M；配套线XT30(2+2)-F；VBUS/GND/CANH/CANL | 10；按图观察方向核对，不能把板端正视图直接当线端背视图 |
+| USB | Type-C用于调试；需要外部动力电源 | 15–16；不能靠电脑USB驱动电机 |
+| 版本读取 | 电机精灵“电机参数”页显示硬件/固件版本 | 20；不以“旧24v”推断3.x版本 |
+| 节点ID | `odrv0.axis0.config.can.node_id`；修改后保存配置 | 27–28；项目实际ID未选定 |
+| 波特率/终端 | `odrv0.can.config.baud_rate`、`enable_r120`；内置120Ω可控制 | 34、38；示例`r120_gpio_num=5`须对应板版本，未执行 |
+| USB与CAN | 硬件≤3.7有兼容切换限制 | 37；更高版本按手册说明 |
+| 扩展口 | v3.9及以后不再提供20-pin扩展接口 | 10–11；未认定实物附加口存在 |
+| 泄放 | EMG与GND间接刹车电阻；可设置`enable_brake_resistor`、`brake_resistance`、`max_regen_current`及电压泄放范围 | 13、38–39；阻值、功率、散热和实际接口未定，不能套用示例占位值 |
+
+抱闸与泄放电阻用途不同，不假定同一接口可同时使用。驱动器无防反接；手册15–16页提示避免动力热插拔及用空开切换单根动力线。上述资料不构成完整急停/回生保护设计。用户已有匹配电源/CAN线束，不重复采购。上位机与Zadig仅[归档](all_hardware_relevant_documents/GDS68_tools/SOURCE.md)，未安装、未升级固件。
 
 ## 6. MOTOR-01：RoboMaster M3508 直流无刷电机
 
@@ -269,8 +303,7 @@ IMU-02 与 IMU-01 为相同型号，基本参数和官方资料相同。
 
 | 资料 | 官方链接 |
 |---|---|
-| M3508 官方使用说明 | [本地保存：M3508 Brushless DC Motor User Guide v1.0（2025.10）](official_documents/RoboMaster_M3508_Brushless_DC_Motor_User_Guide_v1.0_2025.10.pdf) |
-| M3508/C620 官方混控教程 | [本地保存：M3508 直流无刷减速电机混控教程 V1.0（2017.10）](official_documents/RoboMaster_M3508_C620_Mixing_Tutorial_V1.0_2017.10.pdf) |
+| M3508 官方使用说明 | [本地保存：M3508 Brushless DC Motor User Guide v1.0（2025.10）](all_hardware_relevant_documents/RoboMaster_M3508_Brushless_DC_Motor_User_Guide_v1.0_2025.10.pdf) |
 
 ## 7. ESC-01：RoboMaster C620 无刷电机调速器
 
@@ -319,8 +352,7 @@ IMU-02 与 IMU-01 为相同型号，基本参数和官方资料相同。
 | 资料 | 官方链接 |
 |---|---|
 | C620 官方使用说明 | [在线：RoboMaster C620 Brushless DC Motor Speed Controller V1.01（PDF）](https://cdn-hz.robomaster.com/robomasters/public/document/RoboMaster%20C620%20Brushless%20DC%20Motor%20Speed%20Controller%20V1.01.pdf) |
-| C620 官方使用说明（本地副本） | [本地保存：C620 User Guide V1.01](official_documents/RoboMaster_C620_Brushless_DC_Motor_Speed_Controller_V1.01.pdf) |
-| M3508/C620 官方混控教程 | [本地保存：M3508/C620 Mixing Tutorial V1.0](official_documents/RoboMaster_M3508_C620_Mixing_Tutorial_V1.0_2017.10.pdf) |
+| C620 官方使用说明（本地副本） | [本地保存：C620 User Guide V1.01](all_hardware_relevant_documents/RoboMaster_C620_Brushless_DC_Motor_Speed_Controller_V1.01.pdf) |
 
 ## 8. FORCE-01：5 kg 直梁式应变称重传感器
 
@@ -377,9 +409,17 @@ IMU-02 与 IMU-01 为相同型号，基本参数和官方资料相同。
 | 输出速率 | 固定 10 SPS：随附模块原理图中 HX711 `RATE`（15脚）直接接 `GND` |
 | 当前用途 | 低速辅助力监测、显示、记录和标定观察 |
 | 不承担的功能 | 不作为快速助力触发、关节主控制反馈、安全触发或高带宽力闭环输入 |
-| 资料位置 | `all_hardware_relevant_documents/拉力传感器资料/`及`all_hardware_relevant_documents/电子秤HX71..料包/` |
+| 资料位置 | `all_hardware_relevant_documents/电子秤HX71..料包/` |
 
 > 本项目接受该模块的 10 SPS 限制。软件只能按新数据到达速率更新力监测值，不得用控制循环频率伪装成更高的传感器采样率。到货实物若与资料原理图不同，应重新核对 `RATE` 接法。
+
+### 9.2 模块供电与数字电平
+
+配套ADC原理图把VSUP及DVDD连到VCC，8550与20k/8.2k网络的模拟稳压目标约4.3V；配套使用图指定+5V。项目选择NUCLEO的5V供电，不能因HX711芯片允许低电压就认定这块模块整板3.3V供电已经验证。
+
+STM32端为3.3V逻辑；DOUT按5V→3.3V转换后接PC2，PC3的SCK按3.3V→5V转换。需要两个方向相反的通道，转换板型号及端子编号尚未选定；上电/复位时须保证SCK不误保持高电平。HX711芯片11脚是PD_SCK、12脚是DOUT，并非模块排针11/12。配套原理图数字接口附近存在“B+”标注歧义，应按实物DOUT/DT丝印和连通关系核对，不接桥路B+。
+
+HX711手册第5页规定SCK高电平0.2–50µs，超过60µs进入掉电；MCU DOUT输入不启用内部上下拉。传感器按配套资料红E+、黑E−、绿（部分图示蓝）A+、白A−，具体以所购传感器核对；不随意延长原传感器线。无需单独购买HX711电源适配器。
 
 ## 10. CAN-01 / CAN-02：SN65HVD230 CAN 总线收发器模块
 
@@ -426,55 +466,59 @@ IMU-02 与 IMU-01 为相同型号，基本参数和官方资料相同。
 
 这是当前建议的双 CAN 分路方案，不表示已经完成实际接线。120 Ω 终端电阻只应位于每条 CAN 总线的两个物理末端。本模块的 120 Ω 电阻按原理图为固定接入；若实际拓扑不需要该端终端电阻，只能在确认实物电路后拆除相应电阻，不能把黄色两针接口当作开关。正式通电前还必须核对到货模块丝印、供电极性、CANH/CANL，并测量总线断电后的等效电阻。
 
+模块商品图排针从上至下为3.3V/GND/RX/TX，而参考原理图P1编号为1TX、2GND、3V3.3、4RX；必须按信号名称对应实物，不套用参考P1针序。TI芯片D=1、R=4、VCC=3、GND=2、CANH=7、CANL=6仅用于电路核查，不是模块排针编号。完整断电且每条总线只有两只120Ω时，H/L间约60Ω；这不等于测得电缆120Ω特性阻抗。
+
 ### 10.4 资料与下载位置
 
 | 资料 | 位置 |
 |---|---|
 | 用户提供的芯路城 CAN 资料汇总页 | [芯路城：几款 CAN 模块资料汇总](https://www.xinlucity.com/?s=plugins/index/pluginsname/ask/pluginscontrol/index/pluginsaction/detail/id/93.html) |
 | 商品截图所示 Waveshare Wiki | [Waveshare SN65HVD230 CAN Board](https://www.waveshare.com/wiki/SN65HVD230_CAN_Board) |
-| Waveshare 原理图本地副本 | `official_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Schematic.pdf` |
-| Waveshare 配套数据手册本地副本 | `official_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Datasheets.pdf` |
-| Waveshare 示例代码本地副本 | `official_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Code.7z` |
-| 用户提供的商品截图本地副本 | `official_documents/SN65HVD230_CAN_module/user_provided_product_screenshot.png` |
+| Waveshare 原理图本地副本 | `all_hardware_relevant_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Schematic.pdf` |
+| Waveshare 配套数据手册本地副本 | `all_hardware_relevant_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Datasheets.pdf` |
+| Waveshare 示例代码本地副本 | `all_hardware_relevant_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Code.7z` |
+| 用户提供的商品截图本地副本 | `all_hardware_relevant_documents/SN65HVD230_CAN_module/user_provided_product_screenshot.png` |
 | TI SN65HVD230 产品页 | [Texas Instruments SN65HVD230](https://www.ti.com/product/SN65HVD230) |
 | TI SN65HVD23x 官方数据手册 | [在线 PDF](https://www.ti.com/lit/ds/symlink/sn65hvd230.pdf) |
-| TI 官方数据手册本地副本 | `official_documents/SN65HVD230_CAN_module/TI_SN65HVD23x_3.3V_CAN_Transceivers_RevO.pdf` |
+| TI 官方数据手册本地副本 | `all_hardware_relevant_documents/SN65HVD230_CAN_module/TI_SN65HVD23x_3.3V_CAN_Transceivers_RevO.pdf` |
 
 最初提供的芯路城页面是多种 CAN 分析仪资料汇总，没有列出该小模块的专用附件。本次商品截图给出了 Waveshare 对应页面，因此已补充下载原理图、配套数据手册和示例代码。示例代码仅作为接口参考，后续编程仍应先判断与 STM32F446RE 工程的适配范围，不得未经核对直接并入主程序。
 
 ## 11. PWR-01：S-250-24 开关电源
 
-### 11.1 当前选定规格
+### 11.1 规格来源与差异
 
-| 项目 | 当前依据 |
-|---|---|
-| 型号 | S-250-24 |
-| 数量 | 1 台 |
-| 输出电压 | DC 24 V |
-| 输出电流 | 10 A |
-| 商品标称功率 | 250 W |
-| 按额定电压和电流计算 | 24 V × 10 A = 240 W |
-| 输入电压 | AC 95–132 V / 185–264 V，50/60 Hz |
-| 商品标注尺寸 | 215 × 115 × 50 mm |
-| 商品标注保护 | 过载、过压、短路保护 |
+| 项目 | 既有商品截图 | 卖家提供规格书001（2024-09-20） |
+|---|---|---|
+| 输出 | 24V/10A，标250W | 24V/10.4A，250W（第2页） |
+| 调压 | 不作为定值 | 出厂23.7–24.3V；可调22.7–25.2V（第2页） |
+| 输入 | 95–132 / 185–264Vac | 100–240Vac、额定115/230Vac，同时写180Vac启动；第2页说通过开关选择，档位待核对 |
+| 尺寸 | 215×115×50mm | 215×113×50mm（第3页） |
+| 保护 | 商品宣称过载/过压/短路 | 过流12.5–14.5A恒功率，过功率300–350W，短路解除自动恢复（第3页） |
 
-上述信息来自用户提供的商品选择截图，尚未通过到货铭牌、厂家数据手册或实测确认。截图中的 `S-350-24、24 V / 14.6 A` 是商家用于说明 `L`、`N`、保护接地、`+V`、`-V` 和 `ADJ` 端子的另一型号示意图，不是本项目所选电源，不能把 14.6 A 写入本项目参数。
+规格书第2页另列过温/过压保护，但不据此编造阈值。供应商栏空白，尚未核对到货批次。**原PDF临时路径在归档时已失效，当前仅保存此前的读取记录及第7页派生图；原PDF待补，不宣称已保存原件。**
 
-### 11.2 当前用途与限制
+### 11.2 电源端子与项目用途
 
-PWR-01 计划作为原型台架的 24 V 直流母线，为 `SHOULDER_SIDE` 的 GDS68 和 `ELBOW` 的 C620 提供动力电源。NUCLEO-F446RE、WT901C-TTL、HX711 和其他低压逻辑器件不得直接接入 24 V；其 USB 供电或 DC-DC 降压方案尚未最终确定。
+按规格书第7页风扇面朝上、端子朝向观察者，从左至右1–9编号，调压器不计入端子：
 
-GIM6010-8 与 M3508+C620 的额定工作点合计可能超过该电源 10 A 的连续输出能力，因此当前不能宣称两个关节能够同时达到各自额定输出。初期应采用限流和低负载台架测试，记录 24 V 母线电压、总输入电流与电源温升，再决定允许的同时输出范围。
+| 端子 | 定义 | 连接职责 |
+|---|---|---|
+| 1/2/3 | +V | 同一路+24V，接动力正极分配 |
+| 4/5/6 | −V | 同一路直流0V，接动力负极分配 |
+| 7 | GND（保护接地） | 接PE，不当作逻辑GND/直流负极 |
+| 8 | AC/N | 交流零线 |
+| 9 | AC/L | 交流火线 |
 
-该电源带有交流市电端子和金属外壳，只按台架电源记录。实际接线必须以到货铭牌和端子丝印为准，并设置保护接地、绝缘外罩、应力释放和防误触结构；未经处理不得安装在人体穿戴部分。
+不得采用卖家“零火线无需区分”的说法；L/N按标识接。三个+V/−V端子不是三路独立额定输出，电流不能乘三。实物丝印与输入选择开关仍待核对；S-350-24商品接线图只说明名称，不替代本型号编号。
+
+项目采用USB给NUCLEO和低压模块供电，24V动力域向GDS68与C620独立分支，M3508只接C620输出。逻辑电源不得接24V。电机工作点、电源温升及回生尚未验证，不能由250W标签推断双关节同时输出能力。保护地、绝缘罩、应力释放、保险、急停和回生处理须在通电验证前落实；当前尚未完成保护器件选型。
 
 ### 11.3 本地资料
 
-| 资料 | 本地位置 |
-|---|---|
-| 用户选定 S-250-24 商品截图 | `official_documents/S-250-24_power_supply/user_selected_S-250-24_24V_10A.png` |
-| 商家端子说明截图（S-350-24，仅作端子名称参考） | `official_documents/S-250-24_power_supply/seller_terminal_wiring_reference_S-350-24.png` |
-| 截图来源与校验记录 | `official_documents/S-250-24_power_supply/SOURCE.md` |
+- [原商品截图及来源](all_hardware_relevant_documents/S-250-24_power_supply/SOURCE.md)
+- [规格书读取记录（原PDF待补）](all_hardware_relevant_documents/S-250-24_power_supply/specification_reading_record.md)
+- [规格书第7页派生图](all_hardware_relevant_documents/S-250-24_power_supply/specification_page7_render.png)
 
 ## 12. 资料使用说明
 
@@ -486,5 +530,9 @@ GIM6010-8 与 M3508+C620 的额定工作点合计可能超过该电源 10 A 的�
 - M3508 电机和 C620 电调是两个独立配件；C620 需另外购买。
 - C620 电源、CAN 帧、PWM、终端电阻和线束定义应以 C620 V1.01 官方使用说明为准。
 - SN65HVD230 的芯片级电气参数以 TI 官方数据手册为准；当前板级记录以 Waveshare 原理图和用户提供的商品截图为准，到货后仍须用实物 PCB 丝印和测量结果复核。
-- S-250-24 当前只有商品截图证据；输入档位、端子定义、保护功能和连续输出能力必须以到货铭牌、厂家资料和台架实测为准。
+- S-250-24 已读取卖家规格书并保留第7页派生图；原PDF待补。型号级端子已登记，实物一致性、输入档位及系统供电能力仍待核对。
 - 本文不记录无法由照片或官方资料确认的购买批次、传感器内部芯片型号和模块默认配置。
+
+## 13. 已有线束与连接边界
+
+用户已拥有NUCLEO Mini-B数据线、GDS68 XT30(2+2)-F配套线、C620电源线及M3508原厂连接线。C620的CAN线是否已有尚未明确。C620手册24–25页：24V动力输入；CAN固定1Mbps；A黑=CANL、B红=CANH（不是电源黑/红）；CAN运行不同时接PWM。120Ω终端开关断电设置。M3508手册中文第6页（PDF第8页）：用原厂7-pin及同色三相接头连接C620，不拆未公开针序，不直接接24V。具体项目接线见[接口登记表](hardware_interface_registry.md)。
