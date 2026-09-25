@@ -15,7 +15,16 @@ VS Code选择任务 `Firmware: Build Debug`（默认构建任务）或 Release�
 脚本先配置再编译；`build/` 为可重新生成的产物，不提交。
 
 本机 `.local-tools.sh` 已配置 ST 工具路径；此文件不提交。换电脑应安装工具并将 cmake、ninja、arm-none-eabi-gcc 加入 PATH，或重建该本地文件。
-CMake Tools已配置本机cmake路径；需要使用扩展配置工程时选择LocalDebug或LocalRelease预设（其环境包含编译工具路径）。换电脑需调整.vscode/settings.json和本地预设。日常直接使用上述构建任务。
+CMake Tools通过PATH寻找cmake；需要指定安装位置时，在各电脑的VS Code用户设置配置`cmake.cmakePath`，不向共享设置写入绝对路径。本机LocalDebug/LocalRelease预设仅存在于被忽略的CMakeUserPresets.json中，换电脑需自行配置。
+
+Windows接续开发时，先把cmake、ninja和arm-none-eabi-gcc加入当前终端PATH，然后在本目录运行：
+
+```powershell
+cmake --preset Debug
+cmake --build --preset Debug
+```
+
+现有VS Code构建任务调用`/bin/sh`，不能直接在原生Windows使用；先用上述终端命令。不要复制Mac的build缓存或本机工具配置。建议先匹配工程记录的工具版本；Windows构建尚待实测，不用旧版CubeMX重新生成。构建所需HAL/CMSIS及LwRB/CLIP源码已在固件目录内，参考子模块不是本轮固件构建的必要依赖。主机模拟测试还需支持ASan/UBSan的宿主C编译器；ARM GCC不替代宿主编译器。
 
 ## 当前基线及编辑边界
 
@@ -32,7 +41,7 @@ CMake Tools已配置本机cmake路径；需要使用扩展配置工程时选择L
 
 ## 验证边界
 
-2026-09-25：Debug构建及13项主机模拟测试通过，CubeMX重新生成后自有代码保留。硬件串口尚无回复，SWD连接报USB错误；虚拟磁盘HEX写入尝试不等于读回校验通过。S1实物验证未完成，详见项目唯一开发日志。
+2026-09-25：Mac端Debug构建及13项主机模拟测试通过，CubeMX重新生成后自有代码保留。Mac端SWD连接报USB错误，虚拟磁盘HEX写入尝试不等于读回校验通过。用户转述Windows端已恢复SWD连接并读出STM32F446xx（Device ID 0x421、512 KB），但尚未烧录S1或验证串口。S1实物验证未完成，详见项目唯一开发日志。
 
 ## S1通信与检查
 
@@ -60,3 +69,5 @@ python3 tests/bench_serial.py --port /dev/cu.usbmodem1103 --seconds 600 --report
 ```
 
 该脚本不烧录、不复位；初始状态无回复即失败，不会把未执行的10分钟测试记为通过。完整验收还需SWD校验、实际IRQ读回、三次复位及USB重插后恢复查询。
+
+Windows端需安装Python及pyserial；用`python tests/bench_serial.py --port COM10 --seconds 600 --report build/bench/soak.json`测试。COM10是用户本次报告的端口，运行前重新枚举确认。先完成S1固件烧录与校验，再执行串口验收。
