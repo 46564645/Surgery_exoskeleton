@@ -1,6 +1,6 @@
 # 硬件接口编码表
 
-> 状态：型号资料接口登记 + 2026-09-24台架接线设计分配；尚未实物通电验证。
+> 状态：型号资料接口登记 + 台架接线设计；2026-10-01已在用户报告 GIM 上电后观察到肩侧 CAN 原始报文，尚未完成协议解码或动力电压的独立实测。
 >
 > 本文件是当前项目的权威接口登记。历史目录中的同名文件仅作为旧副本，不再被项目文档引用。
 >
@@ -46,7 +46,7 @@
 
 | 设备 | 已确认型号 | 主资料 | 证据 | 资料边界 |
 |---|---|---|---|---|
-| `MCU-01` | NUCLEO-F446RE；MB1136 rev C；STM32F446RET6 | ST `UM1724 Rev 17` | A | 未确认 C03/C04，暂不使用版本专属原理图锁定焊桥差异 |
+| `MCU-01` | NUCLEO-F446RE；MB1136 rev C；用户报告 C04；STM32F446RET6 | ST `UM1724 Rev 17`、`MB1136-DEFAULT-C04` 原理图 | A+用户报告 | 正面照片可见 rev C；C04 来自用户文字，背面完整标识尚未拍照核对；板上焊桥/跳线现状仍需实物核对 |
 | `ACT-01` | GIM6010-8；GDS68；订单 Y-48、12–48 V 选项 | SteadyWin《GIM6010-8 使用手册 rev2.2》 | A+C | 扩展口是否存在取决于驱动板硬件版本 |
 | `ESC-01` | RoboMaster C620 | DJI《C620 无刷电机调速器使用说明 V1.01》 | A | 接口以中文版第 23–25 页为准 |
 | `MOTOR-01` | 裸 RoboMaster M3508 | DJI《M3508 直流无刷电机使用说明 v1.0 2025.10》 | A | 不使用 P19 减速器资料 |
@@ -84,7 +84,9 @@
 | `MCU-01.IF08` | `B2` RESET | 目标 MCU 复位 | `CONFIRMED` | UM1724 第 7.7 节 |
 | `MCU-01.IF09` | `LD2` USER LED | 用户输出，连接 D13 / `PA5` | `CONFIRMED` | UM1724 第 7.6 节 |
 
-`CN4` 用于板载 ST-LINK 调试另一块目标板。UM1724 要求此时移除 CN2 两只跳线；当前不把 CN4 与板载目标调试路径同时使用。
+`CN4` 用于板载 ST-LINK 调试另一块目标板。UM1724 要求此时移除 CN2 两只跳线；若使用 CN4 第5针 NRST 复位外部目标，还必须断开 SB12，隔离板载 MCU 的复位路径。当前不把 CN4 与板载目标调试路径同时使用。CN2 仅控制 SWDIO/SWCLK 两条路径；板载 PB3 的 SWO 另经 SB15 接到 ST-LINK/CN4 的 SWO 网络，不能由 CN2 跳线状态推断其连接。
+
+默认 USART2 VCP 路径按 UM1724 表10要求 SB13/SB14 ON、SB61/SB62/SB63 OFF；这是资料配置条件，当前实物焊桥状态仍未逐项核查。
 
 #### 4.1.2 CN4 信号
 
@@ -95,7 +97,7 @@
 | `MCU-01.IF03.S03` | 3 | `GND` | 参考地 |
 | `MCU-01.IF03.S04` | 4 | `SWDIO` | 双向 |
 | `MCU-01.IF03.S05` | 5 | `NRST` | 输出 |
-| `MCU-01.IF03.S06` | 6 | `SWO` | 保留/未用 |
+| `MCU-01.IF03.S06` | 6 | `SWO` | 手册表5标为 Reserved（保留）；本项目未用；与板载 PB3 的连接受 SB15 影响，不据此断言电气悬空 |
 
 #### 4.1.3 可用供电入口和电源脚
 
@@ -115,13 +117,15 @@
 
 | 编码 | 用途 | 所需能力 | 状态 | 分配或待定内容 |
 |---|---|---|---|---|
-| `MCU-01.LR01` | `SHOULDER_SIDE` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN1 PB9/TX、PB8/RX、AF9；IRQ/滤波器待固件设计 |
-| `MCU-01.LR02` | `ELBOW` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN2 PB13/TX、PB12/RX、AF9；IRQ/滤波器待固件设计 |
+| `MCU-01.LR01` | `SHOULDER_SIDE` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN1 PB9/TX、PB8/RX、AF9；500kbps准备值；bank0/FIFO0，RX0/SCE IRQ 5/0；接GDS前核实速率 |
+| `MCU-01.LR02` | `ELBOW` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN2 PB13/TX、PB12/RX、AF9；1Mbps；bank14/FIFO1，RX1/SCE IRQ 5/0；实物总线待测 |
 | `MCU-01.LR03` | 命令与遥测 | ST-LINK VCP / USART2 | `DESIGN_SELECTED` | PA2/TX、PA3/RX、AF7，115200 8N1无流控；DMA1 Stream5/Channel4 RX循环、Stream6/Channel4 TX普通；S1已生成并构建，实物通信验证另见开发日志 |
 | `MCU-01.LR04` | HX711 | 数字输出 `PD_SCK`、数字输入 `DOUT` | `DESIGN_SELECTED` | PC3/SCK输出、PC2/DOUT输入无上下拉；电平转换，10SPS新样本 |
 | `MCU-01.LR05` | 未来 `assist_enable_permission` | 安全定义的数字输入 | `PLANNED` | 硬件、GPIO、电平、去抖 |
 
 S1固件中断配置（2026-09-25）：NVIC GROUP4；USART2、DMA1 Stream5/6抢占优先级5、子优先级0；SysTick抢占优先级0。用户按键EXTI15_10的最终抢占优先级为10：官方BSP初始化会写15，因此由自有`BoardRuntime_FinalizeInterrupts()`在`BSP_PB_Init()`之后重新设置并读回检查。检查失败不启动命令接收。此段记录软件配置，不证明实物焊桥、USB链路或电机安全。
+
+S2第一轮软件配置（2026-09-25）：APB1=42MHz，BS1=11、BS2=2、SJW=1，CAN1/2分频6/3；正常模式，允许硬件ACK，无应用发送接口。共享过滤器分界14，仅标准数据帧，不限制11位ID。启用GPIOB及CAN1/CAN2时钟，CAN2保留CAN1时钟依赖；CAN1_RX0、CAN2_RX1和两路SCE均5/0；不自动恢复bus-off。每路64帧队列、ISR最多3帧、主循环每1ms每路最多16帧。USB实测两路started=1、seen=0，仅证明控制器启动与查询，不证明线路收帧或电机在线。
 
 ### 4.2 ACT-01：GIM6010-8 + GDS68
 
@@ -171,7 +175,26 @@ GDS68 手册明确说明驱动板没有电源反接保护。本表把它记录�
 | `ACT-01.IF08.S03` | `LW1` | 最小位置限位输入 | `CONFIRMED`：未启用 |
 | `ACT-01.IF08.S04` | `LW2` | 最大位置限位输入 | `CONFIRMED`：未启用 |
 
-限位口允许两线开关或三线 NPN 开关，但项目未选定开关。20-pin 扩展口的板端为 `X0812FVS-20CS-9TV01`，扩展板端为 `X0812WVS-20AS-9TV01`；因 ACT-01 板版本未知，不为其内部信号建立项目连接。
+限位口允许两线开关或三线 NPN 开关，但项目未选定开关。20-pin 扩展口的板端为 `X0812FVS-20CS-9TV01`，扩展板端为 `X0812WVS-20AS-9TV01`；ACT-01实读硬件3.11.1，手册标注v3.9+无此20-pin口；该未启用扩展口不建立项目连接，实物PCB外观未由本次界面读取验证。
+
+#### 4.2.3 当前实物版本、通信配置与USB绑定（2026-10-02只读）
+
+以下是肩侧静态供电、MotorWizard已连接后的实际界面和Windows在线设备读数；不是手册示例，未修改设备配置。唯一进度与操作经过见development_schedule.md当日日志。
+
+| 项目 | 实际读取结果 | 证据/边界 |
+|---|---|---|
+| 硬件/固件版本 | 3.11.1 / 0.6.5 | 电机参数页头；不再使用手册3.8/0.5.13示例代表实物 |
+| 通信接口/波特率 | CAN / 500000 bit/s | 通信参数页；与MCU CAN1名义500kbps一致，不证明物理链路无错 |
+| 节点/协议 | ID 1 / SIMPLE | 实际配置支持既有0x029按节点1、命令0x009核对；载荷含义和真实反馈对应仍待确认 |
+| 减速比/极对数 | 8.00 / 14 | 客户端存量配置，未独立标定；不改变S2原生转子单位或确认关节零位 |
+| 显示运行状态 | 空闲、0 RPM、母线23.2 V | 连接主界面快照，不代替外部仪表测量或全部启动行为验收 |
+| USB Interface 2 | USB\VID_1209&PID_0D32&MI_02 | 在线Code0；oem249.inf / libusb0 / libusb-win32 1.4.0.0 |
+| USB Interface 0 | COM5 / usbser.inf / usbser | 仍为原Microsoft串口驱动，未改绑 |
+| 120Ω/启动参数 | 尚未可靠读取/未验证 | 不从USB连接、界面颜色或历史120Ω测量推定软件终端状态 |
+
+实物版本3.11.1不属于手册“硬件≤3.7时USB/CAN互斥”条件，当前CAN配置下USB实际可连接；未发Disable_Can、保存或重启命令。协议字段仍须核对0.6.5适用资料，不把旧手册全部行为自动套用。现有HAL 0x10是STM32帧格式错误，USB驱动修复不证明CAN错误已消除。S2肩侧解析、必要真实反馈/离线恢复及双路验收尚未完成；本记录不作为运动或人体安全验收。
+
+本机证据目录：D:/codex_tasks/2026-10-01/task/gds-tool-preparation/gds-interface2-correct-binding/；actual-binding.json、pnputil-install.log、motorwizard-after-binding.png、motor-parameters.png。本次只安装授权的Interface2驱动包及其对应证书；Logitech原驱动未变，未启动、校准或同步保存设备参数。
 
 ### 4.3 ESC-01：RoboMaster C620
 
@@ -255,9 +278,9 @@ ADC-01只发布低速辅助力监测值，用于显示、记录、标定观察�
 | 信号后缀 | 参考板针位 | 信号 | 方向（相对模块） |
 |---|---:|---|---|
 | `.IF01.S01` | P1-1 | `CAN_TX`，接收发器 D | 输入 |
-| `.IF01.S02` | P1-2 | `GND` | 参考地 |
-| `.IF01.S03` | P1-3 | `3.3V` | 电源输入 |
-| `.IF01.S04` | P1-4 | `CAN_RX`，来自收发器 R | 输出 |
+| `.IF01.S02` | P1-2 | `CAN_RX`，来自收发器 R | 输出 |
+| `.IF01.S03` | P1-3 | `GND` | 参考地 |
+| `.IF01.S04` | P1-4 | `3.3V` | 电源输入 |
 | `.IF02.S01` | can1-1 | `CANL` | 双向总线 |
 | `.IF02.S02` | can1-2 | `CANH` | 双向总线 |
 
@@ -277,6 +300,8 @@ Waveshare 原理图确认：`Rs` 经 10 kΩ 接地，CANH/CANL 固定跨接 120 
 | `PWR-01.IF03` | ADJ | 输出调节；规格書22.7–25.2V | `REFERENCE_ONLY` |
 
 观察方向：风扇面朝上、端子朝向观察者，从左向右1–9，调压器不计入针号。三组正负端子共享电源总额定10.4A，不乘三；原商品标10A的差异保留。L接火线，N接零线，不采纳卖家“无需区分”说法。输入选择档位、接线端子扭矩和回生吸收能力未确认。
+
+保护资料边界（既有S-250-24规格书读取记录、原PDF未归档）：过流12.5–14.5A恒功率、过功率300–350W及短路消除后自动恢复；ADJ为调压，未记录可调恒流限流能力。供应商/实物一致性和保护实测未验证，固定保护不代替支路保险；现有用户选择为暂不安装动力保险，动力线径尚未核实。
 
 ### 4.9 IMU-01 / IMU-02：WT901C-TTL
 
@@ -308,8 +333,8 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 
 ## 6. 无法由型号资料确认的项目
 
-1. `MCU-01` 背面完整版本贴纸未确认，不能在 C03/C04 原理图之间选定。
-2. `ACT-01` 的 GDS68 板版本未确认，不能认定 20-pin 扩展口存在。
+1. `MCU-01` 用户报告 C04，已选用 C04 原理图作为资料依据；背面完整版本贴纸和当前焊桥/跳线状态仍未照片核对。
+2. `ACT-01` 已实读GDS68硬件3.11.1/固件0.6.5及CAN 500kbps/ID1/SIMPLE（第4.2.3节）；实际PCB接口外观、120Ω软件开关和肩侧反馈/错误根因仍未确认，不认定20-pin扩展口存在。
 3. `FORCE-01`已确定购买5 kg规格，但缺少到货实物、厂家型号和铭牌，线色、桥阻及尺寸仍需实测。
 4. `ADC-01`已有套装原理图并确认固定10 SPS，但缺少到货PCB正反面照片，不能把资料排针顺序直接视为实物事实。
 5. `CAN-01/02` 未核对到货板，Waveshare 参考板针序不能视为实物事实。
@@ -320,7 +345,7 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 
 | 对象 | 必须获取或测量 | 解锁工作 |
 |---|---|---|
-| `MCU-01` | C03/C04 贴纸、当前焊桥/跳线 | CubeMX 资源锁定 |
+| `MCU-01` | C04 背标照片、当前焊桥/跳线 | 板级差异与实物接线核对 |
 | `ACT-01` | GDS68 板版本、端子朝向、CAN 模式与配置 | SHOULDER_SIDE 线束 |
 | `ESC-01` | XT30 极性、终端开关、ID、CAN/PWM 未同时接入 | ELBOW 线束 |
 | `MOTOR-01` | 原厂 7-Pin 与三相线完好、同色对应 | C620-M3508 配套确认 |
@@ -338,17 +363,21 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 
 ## 9. 资料索引
 
+AI 读取手册时，有对应型号和版本且正文可读的 Word 就优先读 Word；完整格式规则和图示核对要求见[图纸文字说明第0.1节](motor_can_diagrams_text.md#01-手册读取入口)。Word 页码可能因重排变化，以下章节/页码依据原 PDF。
+
 | 编号 | 本地资料 | 用途 |
 |---|---|---|
-| `SRC-MCU-01` | `all_hardware_relevant_documents/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.pdf` | NUCLEO 接口、供电、VCP、按键和 LED |
-| `SRC-ACT-01` | `all_hardware_relevant_documents/ABUIABA9GAAgzpi6wQYoh9D9CQ.pdf` | GIM6010-8/GDS68 rev2.2 第 2.2–2.4 节 |
-| `SRC-ESC-01` | `all_hardware_relevant_documents/RoboMaster_C620_Brushless_DC_Motor_Speed_Controller_V1.01.pdf` | C620 接口、线色、终端和限制 |
-| `SRC-MOTOR-01` | `all_hardware_relevant_documents/RoboMaster_M3508_Brushless_DC_Motor_User_Guide_v1.0_2025.10.pdf` | 裸 M3508 接口 |
+| `SRC-PROJECT-DIAGRAMS` | [电机与 CAN 模块图纸的详细文字描述](motor_can_diagrams_text.md) | 项目整理的逐线说明和 Word/PDF 读取入口；不替代厂家原件或本表的当前接线状态 |
+| `SRC-MCU-01` | [Word](all_hardware_relevant_documents/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.docx)；[原 PDF](all_hardware_relevant_documents/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.pdf) | NUCLEO 接口、供电、VCP、按键和 LED |
+| `SRC-MCU-C04` | [ST 官方 MB1136-DEFAULT-C04 原理图](https://www.st.com/resource/en/schematic_pack/mb1136-default-c04_schematic.pdf)；[项目所用接口的结构化摘录](nucleo_f446re_mb1136_c04_ai.json) | 5 页 C04 参考电路；JSON 为不完整摘录，不能代替整板网表或实物焊桥检查 |
+| `SRC-ACT-01` | [Word](all_hardware_relevant_documents/ABUIABA9GAAgzpi6wQYoh9D9CQ.docx)；[原 PDF](all_hardware_relevant_documents/ABUIABA9GAAgzpi6wQYoh9D9CQ.pdf) | GIM6010-8/GDS68 rev2.2 第 2.2–2.4 节 |
+| `SRC-ESC-01` | [原 PDF](all_hardware_relevant_documents/RoboMaster_C620_Brushless_DC_Motor_Speed_Controller_V1.01.pdf)（当前无对应 Word） | C620 接口、线色、终端和限制 |
+| `SRC-MOTOR-01` | [Word](all_hardware_relevant_documents/RoboMaster_M3508_Brushless_DC_Motor_User_Guide_v1.0_2025.10.docx)；[原 PDF](all_hardware_relevant_documents/RoboMaster_M3508_Brushless_DC_Motor_User_Guide_v1.0_2025.10.pdf) | 裸 M3508 接口 |
 | `SRC-ADC-01` | `all_hardware_relevant_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/hx711(海芯).pdf` | HX711 芯片信号与时序 |
 | `SRC-FORCE-01` | `all_hardware_relevant_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/称重传感器的原理及使用.pdf`（旧技术参数表目录不在当前树中） | 5 kg传感器参数、尺寸、安装与线色 |
 | `SRC-ADC-REF` | `all_hardware_relevant_documents/电子秤HX71..料包/电子秤HX711AD模块资料包/ADC模块原理图.pdf` | 确认资料版本固定10 SPS；不直接证明到货排针 |
-| `SRC-CAN-BOARD` | `all_hardware_relevant_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Schematic.pdf` | 参考板排针、120 Ω 与 10 kΩ |
-| `SRC-CAN-IC` | `all_hardware_relevant_documents/SN65HVD230_CAN_module/TI_SN65HVD23x_3.3V_CAN_Transceivers_RevO.pdf` | 芯片引脚和职责 |
+| `SRC-CAN-BOARD` | [原理图 PDF](all_hardware_relevant_documents/SN65HVD230_CAN_module/Waveshare_SN65HVD230_CAN_Board_Schematic.pdf)（当前无原理图 Word） | 参考板排针、120 Ω 与 10 kΩ |
+| `SRC-CAN-IC` | [TI Rev O Word](all_hardware_relevant_documents/SN65HVD230_CAN_module/TI_SN65HVD23x_3.3V_CAN_Transceivers_RevO.docx)；[原 PDF](all_hardware_relevant_documents/SN65HVD230_CAN_module/TI_SN65HVD23x_3.3V_CAN_Transceivers_RevO.pdf) | 芯片引脚和职责；旧 Waveshare Datasheets Word 是 Rev G 芯片资料，不是模块原理图 |
 | `SRC-PWR-01` | [来源及派生资料](all_hardware_relevant_documents/S-250-24_power_supply/SOURCE.md) | 商品、规格书读取记录与第7页派生图；原PDF待补 |
 | `SRC-IMU-01` | WitMotion 官方 WT901C 产品页及 WIT Standard Protocol | WT901C-TTL 串口角色；当前停用 |
 
@@ -386,6 +415,38 @@ flowchart TD
 
 ### 10.2 逐线连接表
 
+2026-09-25现场记录（照片辨识+用户确认，不是电压/通断仪器测量）：肩侧TX白线→PB9/CN10-5，RX红线→PB8/CN10-3；肘部TX紫线→PB13/CN10-30，RX橙线→PB12/CN10-16。CN7-16分线至肩侧3.3V紫线、肘部3.3V蓝线，CN7-20分配两模块GND。两根紫线用途不同，所有线色以端点信号为准。用户确认面包板分段与针位；USB已接，当前安排24V断开、H/L不接驱动器。电压与远端终端仍待测。
+
+2026-09-30现场线色补记：以下以模块端近照及上段用户确认记录为依据。上段“H/L 不接驱动器”是2026-09-25当时的状态；照片可见肩侧模块 H/L 端子已插入导线，GIM 四芯插头已插入。用户此前口头确认黑线到 GDS68 CANL、白线到 CANH；后续电机端特写按丝印和出线位置判断为细黑在 CANL 侧、白线在 CANH 侧，与模块端一致。此为照片判断，尚未做两根小触点的逐线通断核对，不能写成实物电气验收或已收到 CAN 帧。
+
+| 对象/模块端丝印 | 当前线色 | 已知去向及证据边界 |
+|---|---|---|
+| 肩侧 `CAN-01 TX` | 白 | 本次照片可见模块端；此前用户确认至 PB9/CN10-5 |
+| 肩侧 `CAN-01 RX` | 红 | 本次照片可见模块端；此前用户确认至 PB8/CN10-3；不是动力 +24 V |
+| 肩侧 `CAN-01 GND` | 灰 | 本次照片可见模块端；逻辑地分配的远端未在本次照片中追线 |
+| 肩侧 `CAN-01 3.3V` | 浅紫 | 本次照片可见模块端；此前用户确认来自 CN7-16 分线；不是肘部 TX 的紫线 |
+| 肩侧 `CAN-01 CANL` 蓝色端子左孔 | 黑 | 照片可见模块端；GIM 端细黑线也位于 CANL 丝印对应侧，照片判断一致，未逐针复测 |
+| 肩侧 `CAN-01 CANH` 蓝色端子右孔 | 白 | 照片可见模块端；不是上方 TX 白线；GIM 端白线也位于 CANH 丝印对应侧，照片判断一致，未逐针复测 |
+| 肘部 `CAN-02 TX` | 紫 | 2026-09-25用户确认至 PB13/CN10-30；本次照片未拍到 CAN-02 |
+| 肘部 `CAN-02 RX` | 橙 | 2026-09-25用户确认至 PB12/CN10-16；本次照片未拍到 CAN-02 |
+| 肘部 `CAN-02 3.3V` | 蓝 | 2026-09-25用户确认来自 CN7-16 分线；本次照片未拍到 CAN-02 |
+| GDS68 配套线粗红 | 红 | 用户报告粗红线与其识别为 VBUS 的触点约 0 Ω；测量部位和插头朝向未由照片复核，不作为完整线束验收 |
+
+用户按前述断电测量步骤报告 CAN-01 H/L 间约 120 Ω；该值可能仅来自模块端终端电阻，不能证明 GDS68 端终端已使能或真实通信。肘部 `CAN-02 GND` 的现场线色、GDS68 除粗红 VBUS 外三根线的触点对应仍缺少逐线测量。线色只用于定位这次台架上的导线，不替代丝印、端点核对或断电测量。
+
+2026-09-30 后续五张现场照片复核：
+
+| 部位 | 照片可见 | 不能由照片证明/待核对 |
+|---|---|---|
+| GIM6010-8 插座及四芯插头 | 板面丝印 `VBUS`、`GND`、`CANH`、`CANL`；插头已插入，出线为粗红、粗黑、细黑、白。按丝印与出线位置判断：粗红 VBUS、粗黑 GND、细黑 CANL、白线 CANH | 粗红到 VBUS 另有此前用户报告约 0 Ω；其余三根线尚未逐线通断测量，照片判断不等于触点电气验收。此前曾把细黑/白的上下位置误看成疑似交叉，复核本组特写后已更正 |
+| GIM 动力线端 | 粗红、粗黑分别进入两只独立的 WAGO 221-412；各自另一孔在照片中未见接入电源线 | 未见可调电源鳄鱼夹或其他电源输出接入；未验证端子夹持、电源电压/极性或上电状态 |
+| 肩侧 CAN-01 | 排针按实物丝印从 `TX/RX/GND/3.3V` 依次插白/红/灰/浅紫；蓝色端子 `CANL` 插黑、`CANH` 插白 | 排针远端的 NUCLEO 针号、GIM 插头两个 CAN 小触点未在本组照片中逐线追踪；黄色两针不视为终端开关 |
+| NUCLEO 与分线 | 开发板接有多根跳线，分线处可见多色插接线 | 线束在照片中交叉、遮挡，不能仅凭颜色核实全部 CN 针号、3.3 V、逻辑 GND 与 CAN-02 的实际端点；C620/M3508 动力与 CAN 接线不在本组照片中 |
+
+用户在确认万用表表笔自检正常后，曾报告断电测量 GIM 粗黑动力负极所在端子与 CAN-01 `GND` 为 `0L/OL`（未导通）；此前将其短暂误读为 `0 Ω` 已纠正。随后用户按指导加接动力 0 V 与逻辑 GND 的专用参考线，并报告两点间断电电阻已接近表笔短接读数；未提供具体数值或装配照片，此结果按用户报告记录为公共参考地已导通，不证明 GIM 粗黑线到插头 `GND` 触点本身已逐线核验。用户另报告可调电源空载时红夹相对黑夹为直流约 `+24 V`，未提供万用表照片；随后报告已将可调电源低压输出线接到 WAGO，并自查接线无问题。在要求暂时隔离 GIM 粗红正线、测量 WAGO 正负后，用户回复“都没有问题”；未提供改线后照片、具体表显或 GIM 粗红线复位状态，先前照片只显示未接电源的旧状态。用户决定先不安装动力保险，不等于已具备过流保护。正负分组及夹持情况目前仅有用户自查报告，驱动器动力是否仍断开尚未核实；照片对 CANH/CANL 的线色判断一致，但不把本接线记为已上电或已收到 CAN 反馈。
+
+2026-10-01 动态观察：上述段落记述的是首次通电前的证据边界。用户明确报告打开 GIM 电源后，NUCLEO 的 COM10 `shoulder` 查询显示 CAN1 `rx` 从 10549 增至 10605，随后从 29505 增至 29672；`seen=1`，最近帧为标准数据帧 ID `0x029`、DLC 8、数据 `00 00 00 00 00 00 00 00`、年龄 2–9 ms。CAN2 `elbow` 同期 `rx=0 seen=0`，`output_allowed=0`。CAN1 `err` 从 1 增至 11，`last_err=0x00000010` 对应当前 STM32 HAL 的帧格式错误，`bus_off=0`，无软件丢帧或 FIFO 溢出。按 GIM 手册 rev2.2 CAN Simple 的 ID 分段，`0x029` 可拆为节点 1、命令 `0x009`（编码器位置/速度估计）；但尚未独立读取该驱动器当前协议/节点配置，也未验证全零载荷与真实轴状态的对应关系，因此只确认持续收到肩侧原始帧，不将其记作有效角度、无错链路或运动安全验收。此刻未发送运动命令，未安装动力保险；电源实际电压和接线端子温升均未由工具实测。
+
 | 网络/用途 | 起点 | 终点 | 要求 |
 |---|---|---|---|
 | USB逻辑供电/调试 | 电脑USB | NUCLEO CN1 Mini-B | 已有数据线；不为电机供动力 |
@@ -396,7 +457,7 @@ flowchart TD
 | 3.3V | CN7-16 | 两CAN模块3.3V及转换板低压侧 | 通过分线，不接5V |
 | 5V | CN7-18 | HX711 VCC及转换板高压侧 | 不直接进入MCU信号脚 |
 | 逻辑地 | CN7-20 | 两CAN GND、HX711 GND、转换板GND | 分线端子互联建立同一逻辑地 |
-| HX711时钟 | PC3 / CN7-37 | 转换板3.3→5V通道→HX711 SCK | 复位/上电默认低；高脉冲不超过50µs |
+| HX711时钟 | PC3 / CN7-37 | 转换板3.3→5V通道→HX711 SCK | 设计要求上电/复位期间保持低；实现方式待选；高脉冲不超过50µs；当前固件尚未接入 |
 | HX711数据 | HX711 DOUT | 转换板5→3.3V通道→PC2 / CN7-35 | GPIO输入无内部上下拉；不误接桥路B+ |
 | 肩部CAN高/低 | CAN-01 H/L | GDS68配套线CANH/CANL | 一对双绞线；按触点功能核对线束，不猜颜色 |
 | 肘部CAN高 | CAN-02 H | C620 CAN B红线 | 此红线不是24V |
@@ -410,15 +471,23 @@ flowchart TD
 | 称重桥 | 传感器红/黑/绿（部分图蓝）/白 | HX711 E+/E−/A+/A− | 核对实际传感器；B通道不接 |
 | 交流输入 | 火线/零线/PE | 电源9/L、8/N、7/保护地 | 先核对输入档位及防触碰结构 |
 
+2026-10-01肘侧现场更新（用户断电测量/自查报告）：CAN-02单独H/L约120Ω，C620单独H/L约120Ω，恢复完整肘侧连接后H/L约60Ω；该组重测替代此次此前不可靠的0Ω/OL/120Ω读数，不替代肩侧CAN-01既有120Ω记录。用户确认C620动力粗红为正、粗黑为负，CAN_H/L、原厂三相和7-Pin已连接并自查完成，PWM不接；记录为用户报告，不声称本代理独立仪器验收。24V保持断开；当前仅NUCLEO USB供电的COM10查询确认S2_CAN_RX、output_allowed=0、CAN2启动成功/名义1Mbps，尚无驱动器真实反馈或24V静态验收。GDS68动力支路与C620共用24V源，安排C620单路供电前需在断电下物理隔离GDS68正极支路，避免一并上电。
+
+2026-10-01肘侧只读接收更新：COM10的180秒记录已收到累计9185帧、最近ID0x201/DLC8，按C620手册对应ID1原始反馈；累计2次HAL CAN错误（0x08 Stuff、0x80 Bit dominant），此窗口现场供电切换时刻尚未对应，不能记为无错链路或完整S2反馈验收。该次采集的板上固件只有原始监视。随后按用户批准新增C620转子rad/rad/s解析和有效接收时间戳，ID1/暂定100ms集中在s2_config.h，离线测试与Debug构建通过，尚未烧录；当前板上镜像仍不能查询新反馈或设备在线状态。GDS68动力插头已获用户确认拔下并保护，肩侧在该窗口无帧；用户事后确认两次上电但未提供精确时刻，目前24V已关闭、USB保留。
+
 ### 10.3 供电、终端与线束约束
 
 - USB供电按UM1724第21–23页：JP5选U5V（1–2），JP6接通，JP1按相应USB枚举方案核对；JP1 OFF枚举方案总板及扩展负载上限300mA，不能把该值当扩展余量。还须计入NUCLEO、两收发器、HX711和转换板；3.3V稳压器额定值不替代USB总预算。
 - 每条CAN总线设计为两个末端各120Ω：收发器参考板固定120Ω，远端GDS68软件使能/C620开关接入。实物确认后全系统断电测H/L约60Ω；不是用万用表验证线缆特性阻抗。GDS68参数与板版本对应后再设置，不盲目加第三只120Ω。
-- 参考板P1为1TX/2GND/3V3.3/4RX，商品图却显示3.3V/GND/RX/TX顺序；接线以实物信号丝印和电路一致性为准。黄色双针为H/L并行接口，不是终端开关。
+- Waveshare参考原理图P1针号为1TX/2RX/3GND/4(3.3V)；商品图从上到下显示3.3V/GND/RX/TX，方向相反，不能据此给到货模块直接编号。接线以实物信号丝印和电路一致性为准。黄色双针为H/L并行接口，不是终端开关。
 - HX711参考板VCC连DVDD，选5V供电并做双向相反通道的电平转换。具体板及端子编号TBD，不直接采购仅写“自动双向”的板；须满足DOUT输入负载及SCK默认低的要求。
 - RV2.5mm²红/黑各2m是固定台架主干采购建议，不是厂家规定或已验证载流能力；关节活动段另核验柔性、弯折和应力释放。CAN建议2×0.3mm²双绞线，特性阻抗向供应商核实。
 - WAGO221-415六个仅为分线用量预估（动力两组、3.3V、5V、逻辑地两组）；221-412四个仅在两路CAN都需延长时使用。一只端子各孔同电位，不能将正负或H/L插入同一只。需确认实际产品适用细绞线截面积；0.14mm²下限不适合常见26/28AWG细线，优先匹配0.2–0.3mm²逻辑线。不得把杜邦金属接头当裸线夹入。数量及品牌不作为已采购事实。
 
 ### 10.4 后续验证与配置边界
 
-电源输入档位和实物丝印、GDS68硬件/固件、CAN模块排针及电阻、HX711 PCB一致性尚待核对。终端配置、GDS68协议/波特率/ID、C620 ID、限流与控制周期在通信/动力调试前落实；手册通信方法存在不代表当前设备已经配置。初次测试前还需完成动力保护、急停和回生设计；不得用本表宣称系统已经可以直接上电或穿戴。C620控制模式固定CAN，不同时连接PWM。
+GDS68硬件/固件及当前CAN接口/波特率/ID/协议已于2026-10-02只读核实，见第4.2.3节；电源输入档位和实物丝印、GDS68软件终端状态、CAN模块排针及电阻、HX711 PCB一致性仍按各自记录核对。终端配置、GDS68协议/波特率/ID、C620 ID、限流与控制周期在通信/动力调试前落实；手册通信方法存在不代表当前设备已经配置。初次测试前还需完成动力保护、急停和回生设计；不得用本表宣称系统已经可以直接上电或穿戴。C620控制模式固定CAN，不同时连接PWM。
+
+2026-10-02当前板上状态更新：按用户明确确认24V关闭、仅USB连接，已将上述C620只读源码对应Debug ELF烧录并校验成功，ST-LINK/STM32F446身份匹配；USB-only新elbowfeedback可查询ID1，seen/valid/online均0、数据和时间为na，两路CAN收帧/错误计数0、output_allowed=0。此前2026-10-01“尚未烧录/当前板不能查询”的记录是当时状态，现已被本次实测更新。24V未由本机独立测量；没有进行带电反馈、超时恢复或运动验收，不能由无样本记为S2完成。GDS动力隔离及其他现场条件仍由主对话协调下一步，不重测已确认肘侧60Ω。
+
+2026-10-02 C620静态接收状态：同一只读采集中已实测有效收帧、断电后valid/online=0且旧时间戳不刷新、2026-10-02T01:24:21.1462311Z新帧恢复valid/online=1；全窗口CAN/串口/调度错误0、output_allowed=0，GDS隔离无帧。按用户减少测试要求，恢复确认后于01:24:56.459 UTC关闭串口，不追加已过项。100ms精确边界、独立角度/非零速度真值未测；S2肩侧及双路仍待完成。最后观察C620在线，现场24V是否随后关闭须按用户报告记录，不由端口关闭推定。

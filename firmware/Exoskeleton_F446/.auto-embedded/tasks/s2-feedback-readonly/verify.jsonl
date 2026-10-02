@@ -1,0 +1,2 @@
+{"file": "spec/hardware/index.md", "reason": "compare actual CAN and power evidence"}
+{"file": "spec/architecture/index.md", "reason": "validate receive path and output gate"}

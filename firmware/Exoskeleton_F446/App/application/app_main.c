@@ -1,8 +1,9 @@
-/* L4: static S1 scheduling, using HAL-backed millisecond time through L1 API. */
+/* L4: static scheduling, using HAL-backed millisecond time through L1 API. */
 #include "app_main.h"
 #include "board_console.h"
 #include "board_runtime.h"
 #include "console_commands.h"
+#include "can_monitor.h"
 #include "s1_config.h"
 #include <stdint.h>
 
@@ -15,6 +16,7 @@ void App_Init(void)
     overruns = 0U;
     ConsoleCommands_Init();
     (void)BoardConsole_Start(); /* Failure is latched; Poll shows fault heartbeat. */
+    CanMonitor_Init();
 }
 
 void App_Poll(void)
@@ -25,6 +27,7 @@ void App_Poll(void)
         if (elapsed > S1_SERVICE_MS && overruns != UINT32_MAX) { overruns++; }
         last_service = now; /* Skip missed slots, never replay a backlog. */
         BoardConsole_Poll(now);
+        CanMonitor_Poll();
         ConsoleCommands_Poll(now, overruns);
     }
     uint32_t led_period = BoardConsole_HasFault() ? S1_FAULT_LED_MS : S1_LED_MS;

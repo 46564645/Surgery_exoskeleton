@@ -1,0 +1,559 @@
+{
+  "format_version": 1,
+  "title": "NUCLEO-F446RE / MB1136 C04：项目所用电路与接口的 AI 结构化摘录",
+  "updated_on": "2026-09-26",
+  "language": "zh-CN",
+  "scope": {
+    "kind": "project_relevant_schematic_and_interface_extract",
+    "complete_board_netlist": false,
+    "official_json": false,
+    "description": "由官方资料及项目接口登记人工整理，包含项目所用 MCU 引脚、板级接口和外部连接设计。",
+    "omitted": [
+      "整板所有电阻、电容、晶体管及每个焊桥的逐针连接",
+      "ST-LINK 全部内部电路",
+      "所有扩展排针的完整针表",
+      "不同 MCU 装配变体的完整 BOM 与焊桥配置"
+    ],
+    "interpretation_rules": [
+      "固定板级连接、软件复用功能和外部接线设计分别记录。",
+      "未记录的连接表示未整理，不能推断为不连接。",
+      "官方默认装配不代表当前实物；本文件不证明电压、通断或焊桥状态。",
+      "读取对应型号和版本的手册时，优先可提取正文的 Word；针号、接头方向、图中线路和原始页码同时核对原 PDF/原理图。",
+      "后续接口变化以 hardware_interface_registry.md 为准，本文件需同步更新。"
+    ]
+  },
+  "board": {
+    "project_device_id": "MCU-01",
+    "product": "NUCLEO-F446RE",
+    "pcb_reference": "MB1136",
+    "pcb_revision": "C04",
+    "mcu": "STM32F446RET6",
+    "mcu_package": "LQFP64",
+    "identification_evidence": [
+      {
+        "type": "user_photo",
+        "observation": "正面丝印 MB1136 rev C",
+        "confirms": "MB1136 主修订 C，不能单独区分 C03/C04"
+      },
+      {
+        "type": "user_report",
+        "reported_text": "co4",
+        "interpreted_as": "C04",
+        "date": "2026-09-26"
+      }
+    ],
+    "rear_label_photo_checked": false
+  },
+  "sources": [
+    {
+      "id": "ST-C04",
+      "title": "MB1136-DEFAULT-C04 Board schematic",
+      "url": "https://www.st.com/resource/en/schematic_pack/mb1136-default-c04_schematic.pdf",
+      "document_revision": "C-04",
+      "drawing_date": "2022-08-17",
+      "page_count": 5,
+      "project_label": "NUCLEO-XXXXRX",
+      "variant_label": "No Variations",
+      "access": "本轮通过网页工具读取官方 PDF 内容；直接下载失败，未归档 PDF 原件，未取得有效 PDF 哈希。",
+      "caveat": "通用 MB1136 图含多型号共用符号及装配注释，不能把每个候选引脚名都当作 F446RE。"
+    },
+    {
+      "id": "ST-UM1724",
+      "title": "STM32 Nucleo-64 boards (MB1136)",
+      "revision": "17",
+      "url": "https://www.st.com/resource/en/user_manual/dm00105823-stm32-nucleo-64-boards-mb1136-stmicroelectronics.pdf",
+      "preferred_text_format": "docx",
+      "project_word_source_path": "all_hardware_relevant_documents/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.docx",
+      "project_source_path": "all_hardware_relevant_documents/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.pdf",
+      "reading_note": "仓库已有 Word 版本优先用于正文和表格读取；图示、关键针号及页码核对原 PDF。Word 重排页码不能直接套用。",
+      "relevant_sections": [
+        "7.4 ST-LINK",
+        "7.5 供电",
+        "7.6 LED",
+        "7.7 按键",
+        "7.10/7.11 USART/VCP",
+        "7.14 表29：F446RE Morpho 针表"
+      ]
+    },
+    {
+      "id": "ST-DS10693",
+      "title": "STM32F446xC/E datasheet",
+      "revision": "11",
+      "url": "https://www.st.com/resource/en/datasheet/DM00141306.pdf",
+      "relevant_content": "F446 LQFP64 引脚定义和表11复用功能；PB8/PB9 为 CAN1_RX/TX AF9，PB12/PB13 为 CAN2_RX/TX AF9。"
+    },
+    {
+      "id": "PROJECT-REGISTRY",
+      "path": "hardware_interface_registry.md",
+      "sections": [
+        "4.1",
+        "10.2",
+        "10.3"
+      ],
+      "role": "外部接线设计与验证状态的项目主记录"
+    },
+    {
+      "id": "PROJECT-FIRMWARE",
+      "path": "../../firmware/Exoskeleton_F446/Exoskeleton_F446.ioc",
+      "role": "实际固件外设配置入口；本文件不替代 .ioc"
+    }
+  ],
+  "schematic_sheets": [
+    {
+      "pdf_page": 1,
+      "title": "Project overview"
+    },
+    {
+      "pdf_page": 2,
+      "title": "Top & Power"
+    },
+    {
+      "pdf_page": 3,
+      "title": "MCU"
+    },
+    {
+      "pdf_page": 4,
+      "title": "STLINK/V2-1"
+    },
+    {
+      "pdf_page": 5,
+      "title": "Extension connectors"
+    }
+  ],
+  "pin_numbering": {
+    "connector_pin": "CN7-16 等表示板连接器针号",
+    "mcu_package_pin": "U5-61 等表示目标 MCU 封装脚号",
+    "orientation": "针1、奇偶排和观察方向需看实物标记；不能依据照片左右推断。",
+    "electrical_domain": "CAN 模块的 TX/RX 是 3.3V 逻辑信号，CANH/CANL 是收发器另一侧的总线信号。"
+  },
+  "board_pin_connections": [
+    {
+      "id": "PB9",
+      "mcu": "U5",
+      "package_pin": 62,
+      "connector": "CN10",
+      "connector_pin": 5,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:table29"
+      ],
+      "verification": "documented_board_mapping"
+    },
+    {
+      "id": "PB8",
+      "mcu": "U5",
+      "package_pin": 61,
+      "connector": "CN10",
+      "connector_pin": 3,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:table29"
+      ],
+      "verification": "documented_board_mapping"
+    },
+    {
+      "id": "PB13",
+      "mcu": "U5",
+      "package_pin": 34,
+      "connector": "CN10",
+      "connector_pin": 30,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:table29"
+      ],
+      "verification": "documented_board_mapping"
+    },
+    {
+      "id": "PB12",
+      "mcu": "U5",
+      "package_pin": 33,
+      "connector": "CN10",
+      "connector_pin": 16,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:table29"
+      ],
+      "verification": "documented_board_mapping"
+    },
+    {
+      "id": "PC2",
+      "mcu": "U5",
+      "package_pin": 10,
+      "connector": "CN7",
+      "connector_pin": 35,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:table29"
+      ],
+      "verification": "documented_board_mapping"
+    },
+    {
+      "id": "PC3",
+      "mcu": "U5",
+      "package_pin": 11,
+      "connector": "CN7",
+      "connector_pin": 37,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:table29"
+      ],
+      "verification": "documented_board_mapping"
+    }
+  ],
+  "board_interfaces": {
+    "usb": {
+      "connector": "CN1",
+      "type": "USB Mini-B",
+      "functions": [
+        "逻辑供电",
+        "板载 ST-LINK 下载/调试",
+        "虚拟串口 VCP"
+      ],
+      "pins": [
+        {
+          "pin": 1,
+          "signal": "USB VBUS 5V"
+        },
+        {
+          "pin": 2,
+          "signal": "USB D-"
+        },
+        {
+          "pin": 3,
+          "signal": "USB D+"
+        },
+        {
+          "pin": 4,
+          "signal": "ID"
+        },
+        {
+          "pin": 5,
+          "signal": "GND"
+        },
+        {
+          "pin": 6,
+          "signal": "SHELL"
+        }
+      ],
+      "source": "ST-C04:p4",
+      "note": "外壳脚 SHELL 不在本摘录中推断为直接接 GND；CN1 不能给电机提供动力。"
+    },
+    "external_swd": {
+      "connector": "CN4",
+      "role": "板载 ST-LINK 调试外部目标",
+      "pins": [
+        {
+          "pin": 1,
+          "signal": "VDD_TARGET",
+          "direction_relative_to_stlink": "input_voltage_reference"
+        },
+        {
+          "pin": 2,
+          "signal": "SWCLK",
+          "direction_relative_to_stlink": "output"
+        },
+        {
+          "pin": 3,
+          "signal": "GND"
+        },
+        {
+          "pin": 4,
+          "signal": "SWDIO",
+          "direction_relative_to_stlink": "bidirectional"
+        },
+        {
+          "pin": 5,
+          "signal": "NRST",
+          "direction_relative_to_stlink": "output",
+          "configuration_requirement": "若用于复位外部目标，SB12 必须 OFF，以隔离板载目标 MCU 的 NRST。"
+        },
+        {
+          "pin": 6,
+          "signal": "SWO",
+          "manual_usage": "Reserved",
+          "note": "UM1724 表5标为保留；该网络与板载 PB3 的连接受 SB15 影响，当前状态未验证，不据此断言电气悬空。"
+        }
+      ],
+      "source": [
+        "ST-UM1724:7.4.5,table5,table10",
+        "ST-C04:p4"
+      ],
+      "note": "调试外部目标时按手册移除 CN2 两只跳线；若使用 CN4 第5针 NRST，还须将 SB12 设为 OFF。当前实物跳线/焊桥状态未验证。"
+    },
+    "onboard_debug": {
+      "connector": "CN2",
+      "role": "板载 ST-LINK 与目标 MCU 的 SWD 跳线连接",
+      "target_signals": [
+        {
+          "signal": "SWDIO",
+          "mcu_gpio": "PA13",
+          "package_pin": 46
+        },
+        {
+          "signal": "SWCLK",
+          "mcu_gpio": "PA14",
+          "package_pin": 49
+        }
+      ],
+      "physical_jumper_state": "not_verified",
+      "source": [
+        "ST-C04:p3,p4",
+        "ST-UM1724:7.4"
+      ]
+    },
+    "onboard_trace": {
+      "role": "板载目标 MCU 的单线跟踪信号；独立于 CN2 的 SWD 跳线",
+      "signal": "SWO",
+      "mcu_gpio": "PB3",
+      "package_pin": 55,
+      "solder_bridge": "SB15",
+      "documented_route": "PB3 → SB15 → T_SWO（ST-LINK/CN4-6 的 SWO 网络）",
+      "connected_when": "SB15 ON",
+      "physical_bridge_state": "not_verified",
+      "source": [
+        "ST-C04:p3,p4",
+        "ST-UM1724:table10"
+      ],
+      "note": "CN4 第6针在手册表5标为 Reserved；不能将此路径列为由 CN2 跳线控制。"
+    },
+    "vcp": {
+      "target_peripheral": "USART2",
+      "target_tx": {
+        "gpio": "PA2",
+        "package_pin": 16
+      },
+      "target_rx": {
+        "gpio": "PA3",
+        "package_pin": 17
+      },
+      "configuration_dependencies": [
+        "SB13",
+        "SB14",
+        "SB61",
+        "SB62",
+        "SB63"
+      ],
+      "documented_vcp_configuration": {
+        "SB13": "ON",
+        "SB14": "ON",
+        "SB61": "OFF",
+        "SB62": "OFF",
+        "SB63": "OFF"
+      },
+      "physical_bridge_state": "not_verified",
+      "source": [
+        "ST-C04:p3,p4",
+        "ST-UM1724:7.10,7.11,table10"
+      ],
+      "note": "UART 的目标 TX 对应 ST-LINK 接收路径；目标 RX 对应 ST-LINK 发送路径。这里没有逐针整理每个焊桥，也未确认其当前通断。"
+    },
+    "user_button": {
+      "component": "B1",
+      "label": "USER",
+      "mcu_gpio": "PC13",
+      "package_pin": 2,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:7.7"
+      ]
+    },
+    "reset_button": {
+      "component": "B2",
+      "label": "RESET",
+      "signal": "NRST",
+      "target_package_pin": 7,
+      "source": [
+        "ST-C04:p3",
+        "ST-UM1724:7.7"
+      ]
+    },
+    "user_led": {
+      "component": "LD2",
+      "color": "green",
+      "mcu_gpio": "PA5",
+      "package_pin": 21,
+      "arduino_signal": "D13",
+      "source": [
+        "ST-C04:p5",
+        "ST-UM1724:7.6"
+      ],
+      "note": "LED 支路与扩展接口受板上元件及焊桥连接影响；本摘录没有重建该支路的完整网络。"
+    }
+  },
+  "power_interfaces": [
+    {
+      "connector": "CN7",
+      "pin": 16,
+      "signal": "+3V3",
+      "nominal_voltage_v": 3.3,
+      "role": "逻辑电源接口",
+      "source": "ST-UM1724:table29",
+      "measured_voltage_v": null
+    },
+    {
+      "connector": "CN7",
+      "pin": 18,
+      "signal": "+5V",
+      "nominal_voltage_v": 5,
+      "role": "板级 5V 接口",
+      "source": "ST-UM1724:table29",
+      "measured_voltage_v": null
+    },
+    {
+      "connector": "CN7",
+      "pin": 20,
+      "signal": "GND",
+      "role": "逻辑参考地",
+      "source": "ST-UM1724:table29",
+      "continuity_measured": false
+    },
+    {
+      "connector": "CN7",
+      "pin": 6,
+      "signal": "E5V",
+      "external_input_range_v": [
+        4.75,
+        5.25
+      ],
+      "source": "ST-UM1724:7.5,table29",
+      "used_by_project": false
+    },
+    {
+      "connector": "CN7",
+      "pin": 24,
+      "signal": "VIN",
+      "external_input_range_v": [
+        7,
+        12
+      ],
+      "source": "ST-UM1724:7.5,table29",
+      "used_by_project": false
+    },
+    {
+      "connector": "CN6",
+      "pin": 8,
+      "signal": "VIN",
+      "external_input_range_v": [
+        7,
+        12
+      ],
+      "source": "ST-UM1724:7.5",
+      "used_by_project": false
+    }
+  ],
+  "project_external_connections": [
+    {
+      "role": "肩侧 CAN 发送",
+      "from": "CN10-5 / PB9",
+      "to": "CAN-01.TX",
+      "peripheral": "CAN1_TX",
+      "alternate_function": 9,
+      "source": [
+        "ST-DS10693:table11",
+        "PROJECT-REGISTRY:10.2",
+        "PROJECT-FIRMWARE"
+      ],
+      "status": "DESIGN_SELECTED",
+      "physical_evidence": "2026-09-25 照片辨识和用户确认；未测通断"
+    },
+    {
+      "role": "肩侧 CAN 接收",
+      "from": "CAN-01.RX",
+      "to": "CN10-3 / PB8",
+      "peripheral": "CAN1_RX",
+      "alternate_function": 9,
+      "source": [
+        "ST-DS10693:table11",
+        "PROJECT-REGISTRY:10.2",
+        "PROJECT-FIRMWARE"
+      ],
+      "status": "DESIGN_SELECTED",
+      "physical_evidence": "2026-09-25 照片辨识和用户确认；未测通断"
+    },
+    {
+      "role": "肘部 CAN 发送",
+      "from": "CN10-30 / PB13",
+      "to": "CAN-02.TX",
+      "peripheral": "CAN2_TX",
+      "alternate_function": 9,
+      "source": [
+        "ST-DS10693:table11",
+        "PROJECT-REGISTRY:10.2",
+        "PROJECT-FIRMWARE"
+      ],
+      "status": "DESIGN_SELECTED",
+      "physical_evidence": "2026-09-25 照片辨识和用户确认；未测通断"
+    },
+    {
+      "role": "肘部 CAN 接收",
+      "from": "CAN-02.RX",
+      "to": "CN10-16 / PB12",
+      "peripheral": "CAN2_RX",
+      "alternate_function": 9,
+      "source": [
+        "ST-DS10693:table11",
+        "PROJECT-REGISTRY:10.2",
+        "PROJECT-FIRMWARE"
+      ],
+      "status": "DESIGN_SELECTED",
+      "physical_evidence": "2026-09-25 照片辨识和用户确认；未测通断"
+    },
+    {
+      "role": "CAN 模块供电",
+      "from": "CN7-16 / +3V3",
+      "to": [
+        "CAN-01.3V3",
+        "CAN-02.3V3"
+      ],
+      "status": "DESIGN_SELECTED",
+      "note": "通过分线，不将模块接 5V。"
+    },
+    {
+      "role": "逻辑参考地",
+      "from": "CN7-20 / GND",
+      "to": [
+        "CAN-01.GND",
+        "CAN-02.GND",
+        "HX711.GND",
+        "电平转换板.GND"
+      ],
+      "status": "DESIGN_SELECTED",
+      "note": "电机负载回流不能经过开发板。"
+    },
+    {
+      "role": "HX711 供电",
+      "from": "CN7-18 / +5V",
+      "to": [
+        "HX711.VCC",
+        "电平转换板高压侧"
+      ],
+      "status": "DESIGN_SELECTED",
+      "note": "电平转换板尚未选定，未据此认定已接通。"
+    },
+    {
+      "role": "HX711 数据",
+      "from": "HX711.DOUT",
+      "via": "5V→3.3V 电平转换",
+      "to": "CN7-35 / PC2",
+      "direction": "input_to_mcu",
+      "status": "DESIGN_SELECTED",
+      "note": "不启用 MCU 内部上下拉。"
+    },
+    {
+      "role": "HX711 时钟",
+      "from": "CN7-37 / PC3",
+      "via": "3.3V→5V 电平转换",
+      "to": "HX711.SCK",
+      "direction": "output_from_mcu",
+      "status": "DESIGN_SELECTED",
+      "implementation_status": "not_implemented",
+      "note": "设计要求上电/复位期间 SCK 保持低；实现方式及电平转换板尚未选定。当前固件未配置 PC3 为 HX711 时钟输出，不能据此认定已实现或实测。"
+    }
+  ],
+  "unresolved_physical_facts": [
+    "完整背标尚未照片核对；C04 按用户报告登记。",
+    "当前全部焊桥及 CN2、JP5、JP6 等跳线的通断/位置未逐项核查。",
+    "板电源输出电压和扩展负载电流尚未测量。",
+    "外部 CAN 模块排针、终端电阻及真实驱动器反馈不能由本板原理图确认。"
+  ]
+}

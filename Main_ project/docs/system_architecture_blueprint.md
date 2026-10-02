@@ -139,6 +139,8 @@ flowchart TB
 
 本图回答：电能、执行器反馈、辅助监测和外部命令分别沿哪些独立网络流动？
 
+器件逐线连接见[电机与 CAN 模块图纸的详细文字描述](../Hardware_information_list/motor_can_diagrams_text.md)，STM32 项目接口见[C04 AI 结构化 JSON](../Hardware_information_list/nucleo_f446re_mb1136_c04_ai.json)（非整板完整网表）。现行引脚分配、逐线接线和实物验证状态以[硬件接口登记第10节](../Hardware_information_list/hardware_interface_registry.md#10-台架接线设计分配2026-09-24)为准。AI 查手册时优先读取对应型号/版本且正文可读的 Word，入口见文字说明第0.1节；接头方向、针号和线路同时核对原 PDF/原理图。
+
 ![电气与通信架构](architecture_diagrams/electrical_communication_architecture.svg)
 
 ```mermaid

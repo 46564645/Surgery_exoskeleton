@@ -1,0 +1,2 @@
+{"file": "spec/architecture/index.md", "reason": "L1 to L4 feedback separation"}
+{"file": "spec/conventions/index.md", "reason": "bounded ISR and diagnosis before code changes"}

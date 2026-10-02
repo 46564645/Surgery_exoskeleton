@@ -46,8 +46,11 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/board_console.c
     Core/Src/board_runtime.c
+    Core/Src/board_can.c
     App/application/app_main.c
     App/application/console_commands.c
+    App/application/can_monitor.c
+    App/devices/c620_feedback.c
     third_party/lwrb/src/lwrb/lwrb.c
     third_party/clip/src/clip_cmd_parse.c
     third_party/clip/src/clip_cmd_call.c
@@ -60,6 +63,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     App/application
+    App/devices
     third_party/lwrb/src/include
     third_party/clip/src
 )

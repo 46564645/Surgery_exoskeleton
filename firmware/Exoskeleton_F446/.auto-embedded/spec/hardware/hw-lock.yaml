@@ -1,6 +1,6 @@
-# 2026-09-25 S1 design/configuration lock, NOT physical verification.
+# 2026-09-25 S1/S2 configuration lock; CAN bus traffic NOT physically verified.
 # Truth: Exoskeleton_F446.ioc + hardware_interface_registry.md section 4.1.4.
-# Reserved CAN/HX711 pins have no firmware driver. No DMA/IRQ invented for them.
+# CAN receive configured. HX711 remains reserved without a firmware driver.
 pins:
   - {id: PA2, func: USART2_TX_AF7, owner: board_console, status: configured_not_validated}
   - {id: PA3, func: USART2_RX_AF7, owner: board_console, status: configured_not_validated}
@@ -9,16 +9,20 @@ pins:
   - {id: PA13, func: SWDIO, owner: debug, status: reserved}
   - {id: PA14, func: SWCLK, owner: debug, status: reserved}
   - {id: PB3, func: SWO, owner: debug, status: reserved}
-  - {id: PB9, func: CAN1_TX_AF9, owner: shoulder_can, status: design_reserved}
-  - {id: PB8, func: CAN1_RX_AF9, owner: shoulder_can, status: design_reserved}
-  - {id: PB13, func: CAN2_TX_AF9, owner: elbow_can, status: design_reserved}
-  - {id: PB12, func: CAN2_RX_AF9, owner: elbow_can, status: design_reserved}
+  - {id: PB9, func: CAN1_TX_AF9, owner: shoulder_can, status: configured_no_bus_test}
+  - {id: PB8, func: CAN1_RX_AF9, owner: shoulder_can, status: configured_no_bus_test}
+  - {id: PB13, func: CAN2_TX_AF9, owner: elbow_can, status: configured_no_bus_test}
+  - {id: PB12, func: CAN2_RX_AF9, owner: elbow_can, status: configured_no_bus_test}
   - {id: PC3, func: HX711_SCK_LEVEL_SHIFT, owner: hx711, status: design_reserved}
   - {id: PC2, func: HX711_DOUT_LEVEL_SHIFT, owner: hx711, status: design_reserved}
 dma:
   - {stream: DMA1_Stream5, channel: 4, peripheral: USART2_RX, owner: board_console}
   - {stream: DMA1_Stream6, channel: 4, peripheral: USART2_TX, owner: board_console}
 irq:
+  - {irqn: CAN1_RX0_IRQn, priority_preempt: 5, priority_sub: 0, owner: shoulder_can}
+  - {irqn: CAN1_SCE_IRQn, priority_preempt: 5, priority_sub: 0, owner: shoulder_can}
+  - {irqn: CAN2_RX1_IRQn, priority_preempt: 5, priority_sub: 0, owner: elbow_can}
+  - {irqn: CAN2_SCE_IRQn, priority_preempt: 5, priority_sub: 0, owner: elbow_can}
   - {irqn: USART2_IRQn, priority_preempt: 5, priority_sub: 0, owner: board_console}
   - {irqn: DMA1_Stream5_IRQn, priority_preempt: 5, priority_sub: 0, owner: board_console}
   - {irqn: DMA1_Stream6_IRQn, priority_preempt: 5, priority_sub: 0, owner: board_console}

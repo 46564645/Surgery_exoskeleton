@@ -7,6 +7,10 @@
 #include "console_commands.h"
 #include "app_main.h"
 #include "s1_config.h"
+#include "can_mock.h"
+#include "can_monitor.h"
+#include "test_c620.h"
+#include "s2_config.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,6 +40,7 @@ uint32_t __get_PRIMASK(void)
 void __disable_irq(void) { primask = 1U; }
 void __set_PRIMASK(uint32_t p) { primask = p; }
 uint32_t HAL_GetTick(void) { return ticks; }
+void TestClock_Set(uint32_t value) { ticks = value; }
 uint32_t HAL_NVIC_GetPriorityGrouping(void) { return group; }
 void HAL_NVIC_SetPriority(IRQn_Type irq, uint32_t p, uint32_t s)
 { assert(s == 0U); priorities[irq] = p; }
@@ -113,7 +118,8 @@ static void test_commands(void)
     query("jointlock\n", "ERR unknown\r\n");
     query("ping\rx\n", "ERR syntax\r\n");
     query("ping\t\n", "ERR syntax\r\n");
-    query("help\n?\n", "OK commands=ping,status,help,?\r\nOK commands=ping,status,help,?\r\n");
+    query("help\n?\n", "OK commands=ping,status,help,?,canstatus,shoulder,elbow,elbowfeedback\r\n"
+          "OK commands=ping,status,help,?,canstatus,shoulder,elbow,elbowfeedback\r\n");
     char boundary[100]; memset(boundary, ' ', 96); memcpy(boundary, "ping", 4);
     boundary[96] = '\n'; boundary[97] = 0;
     query(boundary, "OK pong\r\n");
@@ -124,7 +130,7 @@ static void test_commands(void)
     size_t before = wire_length; feed(bad, sizeof(bad)); service(3);
     assert(strcmp(wire + before, "ERR syntax\r\n") == 0);
     before = wire_length; feed("status\n", 7); service(3);
-    assert(strstr(wire + before, "stage=S1_COMM") && strstr(wire + before, "output_allowed=0"));
+    assert(strstr(wire + before, "stage=S2_CAN_RX") && strstr(wire + before, "output_allowed=0"));
     assert(strstr(wire + before, "uart_errors=0"));
 }
 
@@ -249,10 +255,110 @@ static void test_priorities(void)
     priorities[DMA1_Stream5_IRQn] = 6; assert(!BoardRuntime_FinalizeInterrupts());
 }
 
+static void test_can_commands(bool fail_start)
+{
+    if (fail_start) { TestCan_Fail(BOARD_CAN_SHOULDER, "start"); }
+    App_Init();
+    query("ping\n", "OK pong\r\n");
+    size_t before = wire_length;
+    feed("canstatus\n", 10); service(5);
+    assert(strstr(wire + before, fail_start ? "can1_started=0" : "can1_started=1"));
+    assert(strstr(wire + before, "can2_started=1"));
+    assert(strstr(wire + before, "can1_baud=500000") && strstr(wire + before, "can2_baud=1000000"));
+    before = wire_length; feed("shoulder\n", 9); service(5);
+    assert(strstr(wire + before, "seen=0") && strstr(wire + before, "age_ms=na"));
+    ticks = UINT32_MAX - 1U;
+    TestCan_Inject(BOARD_CAN_ELBOW, 0x201, 8, 0, 0, 0xAB);
+    TestCan_Interrupt(BOARD_CAN_ELBOW); CanMonitor_Poll();
+    ticks = 0;
+    before = wire_length; feed("elbow\n", 6); service(1);
+    service(1); /* Complete the queued DMA transmission. */
+    assert(strstr(wire + before, "seen=1 id=201 dlc=8 data=ABABABABABABABAB age_ms=3"));
+    assert(wire_length - before < S1_REPLY_SIZE);
+    /* ISR records a new frame after App_Poll sampled its scheduling time. */
+    ticks = 51U;
+    TestCan_Inject(BOARD_CAN_ELBOW, 0x202, 8, 0, 0, 0xCD);
+    TestCan_Interrupt(BOARD_CAN_ELBOW); CanMonitor_Poll();
+    before = wire_length; feed("elbow\n", 6);
+    ConsoleCommands_Poll(50U, 0U); service(2);
+    assert(strstr(wire + before, "id=202 dlc=8 data=CDCDCDCDCDCDCDCD age_ms=0\r\n"));
+    query("elbow extra\n", "ERR args\r\n");
+    before = wire_length; feed("status\n", 7); service(5);
+    assert(strstr(wire + before, "output_allowed=0") && strstr(wire + before, "stage=S2_CAN_RX"));
+}
+
+static void test_c620_console(bool fail_start)
+{
+    if (fail_start) { TestCan_Fail(BOARD_CAN_ELBOW, "start"); }
+    App_Init();
+    size_t before = wire_length;
+    feed("elbowfeedback\n", 14); service(5);
+    assert(strstr(wire + before, "seen=0 valid=0 online=0 rotor_pos_rad=na"));
+    assert(strstr(wire + before, "received_ms=na age_ms=na output_allowed=0\r\n"));
+    query("elbowfeedback extra\n", "ERR args\r\n");
+    if (fail_start) {
+        before = wire_length; feed("canstatus\n", 10); service(5);
+        assert(strstr(wire + before, "can2_started=0") && strstr(wire + before, "output_allowed=0"));
+        return;
+    }
+    const uint8_t captured[8] = {0x0C,0x13,0xFF,0xC4,0xFF,0xFC,0x1E,0};
+    ticks = 1000;
+    TestCan_InjectData(BOARD_CAN_ELBOW, 0x201, 8, 0, 0, captured);
+    TestCan_Interrupt(BOARD_CAN_ELBOW); CanMonitor_Poll();
+    before = wire_length; feed("elbowfeedback\n", 14); service(5);
+    assert(strstr(wire + before, "seen=1 valid=1 online=1"));
+    const char *position = strstr(wire + before, "rotor_pos_rad=");
+    assert(position != NULL);
+    float radians = strtof(position + strlen("rotor_pos_rad="), NULL);
+    assert(radians > 2.370765f && radians < 2.370769f);
+    assert(strstr(wire + before, "rotor_vel_rad_s=-6.283 angle_ticks=3091 rpm=-60 current_raw=-4 temp_c=30"));
+    assert(strstr(wire + before, "received_ms=1000 age_ms=1 output_allowed=0\r\n"));
+    assert(wire_length - before < S1_REPLY_SIZE);
+    ticks = 1040;
+    TestCan_InjectData(BOARD_CAN_ELBOW, 0x201, 7, 0, 0, captured);
+    TestCan_Interrupt(BOARD_CAN_ELBOW); CanMonitor_Poll();
+    before = wire_length; feed("elbowfeedback\n", 14); service(5);
+    assert(strstr(wire + before, "valid=1 online=1"));
+    assert(strstr(wire + before, "received_ms=1000 age_ms=41"));
+    ticks = 1101;
+    before = wire_length; feed("elbowfeedback\n", 14); service(5);
+    assert(strstr(wire + before, "seen=1 valid=0 online=0"));
+    assert(strstr(wire + before, "received_ms=1000 age_ms=102"));
+    /* New fresh valid frame recovers without clearing raw diagnostics. */
+    hcan2.ErrorCode = HAL_CAN_ERROR_ACK; HAL_CAN_ErrorCallback(&hcan2);
+    ticks = 1120;
+    const uint8_t recovered[8] = {0x10,0,0,0x3C,0,1,0x1F,0};
+    TestCan_InjectData(BOARD_CAN_ELBOW, 0x201, 8, 0, 0, recovered);
+    TestCan_Interrupt(BOARD_CAN_ELBOW); CanMonitor_Poll();
+    before = wire_length; feed("elbowfeedback\n", 14); service(5);
+    assert(strstr(wire + before, "valid=1 online=1") && strstr(wire + before, "rotor_vel_rad_s=6.283"));
+    assert(strstr(wire + before, "received_ms=1120 age_ms=1"));
+    before = wire_length; feed("elbow\n", 6); service(5);
+    assert(strstr(wire + before, "err=1") && strstr(wire + before, "seen=1 id=201 dlc=8"));
+    /* Extreme representable values and 10-digit clocks must fit one reply. */
+    const uint8_t extreme[8] = {0x1F,0xFF,0x80,0,0x80,0,0xFF,0};
+    ticks = UINT32_MAX - 10U;
+    TestCan_InjectData(BOARD_CAN_ELBOW, 0x201, 8, 0, 0, extreme);
+    TestCan_Interrupt(BOARD_CAN_ELBOW); CanMonitor_Poll();
+    before = wire_length; feed("elbowfeedback\n", 14); service(5);
+    assert(strstr(wire + before, "rpm=-32768 current_raw=-32768 temp_c=255"));
+    assert(!strstr(wire + before, "ERR format") && wire_length - before < S1_REPLY_SIZE);
+    ticks = UINT32_MAX - 20U;
+    before = wire_length; feed("elbowfeedback\n", 14); service(5);
+    assert(strstr(wire + before, "valid=0 online=0"));
+    assert(!strstr(wire + before, "ERR format") && wire_length - before < S1_REPLY_SIZE);
+}
+
 int main(int argc, char **argv)
 {
     assert(argc == 2);
     if (!strcmp(argv[1], "commands")) { test_commands(); }
+    else if (!strcmp(argv[1], "can_commands")) { test_can_commands(false); }
+    else if (!strcmp(argv[1], "can_failure_console")) { test_can_commands(true); }
+    else if (!strcmp(argv[1], "c620_console")) { test_c620_console(false); }
+    else if (!strcmp(argv[1], "c620_failure_console")) { test_c620_console(true); }
+    else if (!strncmp(argv[1], "c620_", 5)) { TestC620_Run(argv[1]); }
+    else if (!strncmp(argv[1], "can_", 4)) { TestCan_Run(argv[1]); }
     else if (!strcmp(argv[1], "rx_positions")) { test_rx_positions(); }
     else if (!strcmp(argv[1], "tx_queue")) { test_tx_queue(); }
     else if (!strcmp(argv[1], "backpressure")) { test_backpressure(); }

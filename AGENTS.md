@@ -98,10 +98,16 @@ AI 辅助开发遵循以下原则：
 | 分层、动作和控制关系 | [系统架构](<Main_ project/docs/system_architecture_blueprint.md>) |
 | 器件型号、旧款参数与证据冲突 | [硬件参考](<Main_ project/Hardware_information_list/hardware_components_reference.md>) |
 | 引脚、逐线连接及设计状态 | [接口登记](<Main_ project/Hardware_information_list/hardware_interface_registry.md>)，尤其第10节 |
+| 电机/CAN 图纸的逐线文字与手册读取入口 | [电机与 CAN 模块图纸的详细文字描述](<Main_ project/Hardware_information_list/motor_can_diagrams_text.md>)，第0.1节列出 Word/PDF 入口 |
+| STM32 C04 项目接口的 AI 结构化资料 | [NUCLEO-F446RE / MB1136 C04 JSON](<Main_ project/Hardware_information_list/nucleo_f446re_mb1136_c04_ai.json>)；仅为项目接口摘录，非整板完整网表 |
 | 手册、原理图及来源记录 | [hardware资料目录](<Main_ project/Hardware_information_list/all_hardware_relevant_documents/>)；各子目录SOURCE.md |
 | 参考项目职责与入口 | [开源借鉴索引](<Open-source projects/开源项目借鉴索引表.md>) |
 
-现有`Hardware_information_list`就是本项目hardware入口，不另建同内容的hardware副本。优先读文字表和原手册；涉及接头朝向、针号、图中线路时同时检查原图，不因已有文字就忽略图示。
+现有`Hardware_information_list`就是本项目hardware入口，不另建同内容的hardware副本。先读接口登记、图纸文字说明和相关 JSON，再按任务查对应原手册。
+
+**AI 读取手册的格式规则：**有对应型号和版本、且能提取正文的 Word（`.docx`/`.doc`）时，优先读取 Word 正文和表格；没有合适或可读的 Word 时再读 PDF。Word 入口见图纸文字说明第0.1节。Word 是阅读版本，资料权威仍按厂家来源和版本判断；涉及接头朝向、针号、图中线路时同时检查原 PDF/原理图，不能忽略 Word 中的图片，也不能把格式转换漏掉的内容当成不存在。引用页码按原 PDF，并记录手册章节；Word 重排后的页码不能直接套用。正文乱码、关键字段缺失或版本不一致时，回查对应原件，不猜测。
+
+稀疏检出时先用 Git 已跟踪文件列表核查 Word 是否已收集，不能把未展开的文件说成仓库没有。仅对确认被稀疏检出跳过的所需资料补齐原路径；保留用户已有修改和删除。
 
 本文件只作摘要，不替代完整接线表。发现文档冲突时核对证据并报告，不能按某个文件更晚修改就判定所有内容正确。已明确的接线设计以接口登记表为准，蓝图中旧的“引脚/低压电源均TBD”不推翻该分配；未验证项仍保持未验证。
 
@@ -114,7 +120,7 @@ AI 辅助开发遵循以下原则：
 | 肘部CAN发送 | PB13 / CAN2_TX / AF9 | CN10-30 | CAN-02 TX |
 | 肘部CAN接收 | PB12 / CAN2_RX / AF9 | CN10-16 | CAN-02 RX |
 | HX711数据 | PC2 / GPIO输入 | CN7-35 | 经5→3.3V转换的DOUT，不启用内部上下拉 |
-| HX711时钟 | PC3 / GPIO输出 | CN7-37 | 经3.3→5V转换后接SCK，上电默认低 |
+| HX711时钟 | PC3 / GPIO输出 | CN7-37 | 经3.3→5V转换后接SCK；设计要求上电/复位期间保持低，当前固件尚未接入 |
 | 3.3V | 板电源输出 | CN7-16 | 两CAN模块与转换板低压侧 |
 | 5V | 板电源输出 | CN7-18 | HX711与转换板高压侧 |
 | 逻辑地 | GND | CN7-20 | 逻辑地分配 |
@@ -134,10 +140,10 @@ CAN模块TX接MCU TX、RX接MCU RX，不按UART交叉。CN编号是板连接器�
 
 ### 3.5 工具链、库版本与构建入口
 
-- 唯一固件入口：[firmware/Exoskeleton_F446](firmware/Exoskeleton_F446/README.md)；VS Code打开根目录`Exoskeleton.code-workspace`，CubeMX打开新目录内的`Exoskeleton_F446.ioc`。桌面STM32Projects原工程仅作备份。
-- 工程记录：CubeMX 6.18.1、STM32CubeF4 V1.28.3，HAL/CMSIS、裸机。已验证本机CMake 4.3.1、GCC 14.3.1、Ninja工具链的Debug构建；详细命令及本机路径配置见固件README。
-- 在固件目录执行`./build.sh Debug`，或VS Code任务`Firmware: Build Debug`。新增源文件显式加入顶层CMakeLists.txt；Core生成代码的修改放USER CODE区，自有逻辑放App，Drivers不手改。
-- FreeRTOS当前不适用；若以后引入，先讨论调度变化，再记录任务优先级、堆及中断约束。现有固件已实现S1 LED心跳、DMA串口与非阻塞调度，固定输出未许可；构建通过不代表烧录、串口或硬件验收通过，双CAN与HX711尚未接入。
+- 唯一固件入口：[firmware/Exoskeleton_F446](firmware/Exoskeleton_F446/README.md)；VS Code打开根目录`Exoskeleton.code-workspace`，选择`Firmware — F446`为活动CMake工程；CubeMX打开活动目录内的`Exoskeleton_F446.ioc`。旧Mac桌面STM32Projects原工程仅作历史备份。
+- 工程记录：CubeMX 6.18.1、STM32CubeF4 V1.28.3，HAL/CMSIS、裸机。Windows已验证CMake 4.3.1、ARM GCC 13.3.1、Ninja 1.13.2的WindowsDebug构建；GCC 14.3.1属于此前Mac记录。详细命令及本机路径配置见固件README，不因文档迁移升级工具链。
+- Windows在固件目录按README设置CMake入口后执行`cmake --preset WindowsDebug`、`cmake --build --preset WindowsDebug`；也可在VS Code选择匹配的配置/构建预设后运行默认任务`Firmware: Build`（先执行`Firmware: Configure`）。WindowsDebug/WindowsRelease是本机忽略文件中的预设；共享Debug/Release及Mac的`./build.sh Debug`入口保留。新增源文件显式加入顶层CMakeLists.txt；Core生成代码的修改放USER CODE区，自有逻辑放App，Drivers不手改。
+- FreeRTOS当前不适用；若以后引入，先讨论调度变化，再记录任务优先级、堆及中断约束。现有固件已实现S1 LED心跳、DMA串口与非阻塞调度，固定输出未许可；构建通过不代表烧录、串口或硬件验收通过。S2双CAN原始接收基础已接入；2026-10-01 肩侧CAN1已收到真实原始帧，但帧格式错误原因未明，设备反馈解析、有效性及离线验证与HX711尚未完成，详见开发日志。
 
 ### 3.6 文件夹规则与双工具协作
 
@@ -145,7 +151,7 @@ CAN模块TX接MCU TX、RX接MCU RX，不按UART交叉。CN编号是板连接器�
 
 | 位置 | 用途与规则 |
 |---|---|
-| `firmware/Exoskeleton_F446/` | 唯一活动固件工程；桌面`STM32Projects/exosuit_programming/Exoskeleton_F446/`仅作备份，不继续开发或向其生成代码。 |
+| `firmware/Exoskeleton_F446/` | 唯一活动固件工程；旧Mac桌面`STM32Projects/exosuit_programming/Exoskeleton_F446/`仅作历史备份，不继续开发或向其生成代码。 |
 | `Exoskeleton.code-workspace` | VS Code统一入口，同时查看固件和项目资料；两个视图中的固件是同一份文件。 |
 | 固件内`Exoskeleton_F446.ioc` | CubeMX配置入口；生成前确认Project Location为当前固件目录，使用CMake/GCC并保留用户代码。 |
 | 固件内`Core/`、`Drivers/` | 初始化/中断及ST官方库；Core接入代码放USER CODE区，Drivers不手改。 |
@@ -153,9 +159,9 @@ CAN模块TX接MCU TX、RX接MCU RX，不按UART交叉。CN编号是板连接器�
 | 固件内`App/control/` | 重力补偿、Lock、Amplify控制逻辑。 |
 | 固件内`App/application/` | 调度、命令、状态与统一输出许可。 |
 | 固件内`CMakeLists.txt`、`cmake/` | 新源文件和头文件目录加入顶层构建清单；不手改生成的`cmake/stm32cubemx/`清单。 |
-| 固件内`.vscode/`、`build.sh` | 编辑器设置与构建入口；机器路径配置变动同步固件README。 |
+| 固件内`.vscode/`、`build.sh` | VS Code使用CMake Tools原生任务与当前预设；build.sh保留为Mac/POSIX入口。机器路径配置变动同步固件README。 |
 | 固件内`build/` | 可重新生成的编译产物，不提交；迁移工程不沿用旧位置的构建缓存。 |
-| 固件内`.local-tools.sh`、`CMakeUserPresets.json` | 本机工具路径配置，保持Git忽略，不作为共享工程必备文件。 |
+| 固件内`.local-tools.sh`、`CMakeUserPresets.json` | 前者为Mac/POSIX可选路径配置，后者保存本机WindowsDebug/WindowsRelease等个人预设，均保持Git忽略；不假定换电脑后已存在。CMake可执行文件路径配置在VS Code用户设置或终端中。 |
 | 固件内`.agents/`、`.auto-embedded/`、`.codex/` | 已有辅助工具配置，保留；移动后核对路径，不默认嵌套hooks已启用或擅改全局信任。 |
 | `Main_ project/docs/` | 需求、架构、排期与唯一开发日志。 |
 | `Main_ project/Hardware_information_list/` | 硬件参数、接口登记及原始资料；不再复制一份hardware目录。 |
@@ -201,7 +207,15 @@ OpenExo参考职责划分；UICRM-Embedded/BetaRobot参考CAN和电机适配；G
 
 只先保存确有需要的关节零位；Flash布局、有效性检查和写入策略在实现时确定。角度、速度、力矩/电流的协议单位和符号在驱动边界统一；控制环在STM32还是驱动器内，要按两驱动实际能力分别确定。PC用于配置/命令/显示，不承担实时控制循环。
 
-验证保持轻量：修改固件做相关构建及关键逻辑检查；修改协议核对收发字段和实际反馈；运动测试从小输出、小范围开始观察能动、能停、断连能处理。没有连接硬件时只报告能完成的软件检查。限流、范围限制及停止手段不因“个人项目”而省略；不要求与本轮无关的大型测试套件。
+#### 个人原型的必要验收原则
+
+本节是本项目精简测试的统一执行规则（用户2026-10-02明确要求），其他计划和日志引用本节，不另建重复规范。
+
+- 时间效率优先：只做当前阶段极必要、能影响推进决定的验收。提出必要测试前，先说明它要解决哪个未知项、阻断哪个决策；不为文档完备拖延现场结果。
+- 复用已通过且适用条件未改变的证据；仅在相关改动、真实错误或条件变化使旧证据失效时补测。不重复微测试、形式化全覆盖，不新增无关门槛或大型测试套件。
+- 尽量合并查询和验收，用一次必要现场窗口取得相关证据，减少人为开关电和等待；结果或阻塞及时报告，再整理文档。
+- 出现真实错误时针对性保留现象并查明根因，继续遵守第2.1节；不盲改代码、配置或接线。未测项如实说明，并指出是否影响当前决定，不因任何未测项一律阻断，也不把未测写成通过。
+- 意外运动防护、接线和供电基本安全、限流/活动范围/停止手段，以及当前阶段明确必需要求不能省略。修改固件做相关构建和关键逻辑检查；协议修改核对实际字段与反馈；运动验收从小输出、小范围确认能动、能停、断连能处理。无硬件时仅报告已完成的软件检查。
 
 ### 4.5 只维护一处开发日志
 

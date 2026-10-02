@@ -3,6 +3,7 @@
 #define HOST_MAIN_H
 #include <stdint.h>
 typedef enum { HAL_OK, HAL_ERROR, HAL_BUSY } HAL_StatusTypeDef;
+#include "can_hal.h"
 typedef struct { uint32_t remaining; } DMA_HandleTypeDef;
 typedef struct { DMA_HandleTypeDef *hdmarx; } UART_HandleTypeDef;
 typedef enum { SysTick_IRQn, EXTI15_10_IRQn, USART2_IRQn,
