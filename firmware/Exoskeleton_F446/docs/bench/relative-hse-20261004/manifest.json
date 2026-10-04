@@ -1,0 +1,708 @@
+{
+  "version": 1,
+  "description": "Historical supervised relative shoulder trial; materialize in a separate directory only. Default firmware retains HSI and disabled site.",
+  "clock": {
+    "mode": "HSE_BYPASS",
+    "nominal_input_hz": 8000000,
+    "pll_m": 8,
+    "pll_n": 336,
+    "pll_p": 4
+  },
+  "scope": {
+    "S2_approved_scope": "PASS",
+    "dropout_recovery": "CANCELLED_NOT_EXECUTED",
+    "S3_all_complete": false,
+    "velocity_direction_verified": false
+  },
+  "original": {
+    "elf_sha256": "762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54",
+    "bin_sha256": "7f844000b67d9880106a54b2f3fcd3f4487e10666ad2756036fbbdfc0bff6740",
+    "bin_bytes": 91148,
+    "ram_bytes": 10600
+  },
+  "toolchain": {
+    "compiler": "GNU Arm13.3.Rel1/gcc13.3.1",
+    "cmake": "4.3.1",
+    "ninja": "1.13.2",
+    "build_type": "Debug"
+  },
+  "inputs": [
+    {
+      "path": "App/application/app_main.c",
+      "sha256_lf": "dd6f92f94d26979ced44ce14ab28ea637a037e58b43187882bca867157345d3a"
+    },
+    {
+      "path": "App/application/app_main.h",
+      "sha256_lf": "cd3df34d08184d8d8918de73338d00ed12dcbb75ebd47ba0f92b19e6d7e24f9a"
+    },
+    {
+      "path": "App/application/c620_standstill.c",
+      "sha256_lf": "ecd61cc429f91cbf6aafd507e25f8ff3ed6cb985141e63e90a4472525777df2b"
+    },
+    {
+      "path": "App/application/c620_standstill.h",
+      "sha256_lf": "5d2f1440d84d3f7e72061118dcd10eb76ca06147e449fa0d69d77f77b0206462"
+    },
+    {
+      "path": "App/application/can_monitor.c",
+      "sha256_lf": "b4a402932277f2fe218b8b4c004e16a90e3a3edefcae4c8c048998e2c75234c2"
+    },
+    {
+      "path": "App/application/can_monitor.h",
+      "sha256_lf": "cd506fda8c56fd8173d78c3825d56efb7f4d5e881f80bb53106943955195b380"
+    },
+    {
+      "path": "App/application/console_commands.c",
+      "sha256_lf": "59888ed4fc9cd2383893850637be00ffce03c4c21f3bb518dbedf49448d34d4e"
+    },
+    {
+      "path": "App/application/console_commands.h",
+      "sha256_lf": "0dfffaed0578cbf4ef0e019da3dd418d564e30756247daa266d80e6df0c2c5ef"
+    },
+    {
+      "path": "App/application/encoder_stream.c",
+      "sha256_lf": "9bc1806f5e4f0c3bdf188f22557d8ab4fe352d668cb5486d1a392cf67f3ca760"
+    },
+    {
+      "path": "App/application/encoder_stream.h",
+      "sha256_lf": "cd64ef4dc1d37f0f481776b0e688a5aadea06d0768a27ee807c33528a9d9e351"
+    },
+    {
+      "path": "App/application/output_can_transport.c",
+      "sha256_lf": "b33ebf6fc637492ff48181206e114351f7241cdb5bcf853c0a912197f2f1b4cf"
+    },
+    {
+      "path": "App/application/output_can_transport.h",
+      "sha256_lf": "70edaba6cf0aec0f4978bbc63e127b073923feba056863c1310570869963ac87"
+    },
+    {
+      "path": "App/application/output_gateway.c",
+      "sha256_lf": "cdc7312d42fdc1f18b6313e2ee111a9bfbdded8cb2d27b8b7c681629d8d8f8c6"
+    },
+    {
+      "path": "App/application/output_gateway.h",
+      "sha256_lf": "7d34214cbd7ec24505b405bf4d0f659e65315207e0577232eec90c5d215aaf70"
+    },
+    {
+      "path": "App/application/s3_bench.c",
+      "sha256_lf": "47bbcc0ab94f81190114a3f25bdbc5ff27e640ad68f60e1e5289d80679c69445"
+    },
+    {
+      "path": "App/application/s3_bench.h",
+      "sha256_lf": "e3185f6fb0e2d458f87b0fe51c5e6a7b70065c5d7aebf3b33fa65770a9b7ef83"
+    },
+    {
+      "path": "App/application/s3_console.c",
+      "sha256_lf": "7121f1018ca9cdda967371e4aa12db63dfe8dfb2b3b169c8212b7ff2adcf141c"
+    },
+    {
+      "path": "App/application/s3_console.h",
+      "sha256_lf": "e4ee18ed5096f6b6c6a4434cc56d9b5eb77f5e5759ffc9a641825b23767bec26"
+    },
+    {
+      "path": "App/application/s3_feedback.c",
+      "sha256_lf": "79724e63d19556ded975e0b184032600fccaa04dade616aa3a5b2ee5e886a89b"
+    },
+    {
+      "path": "App/application/s3_feedback.h",
+      "sha256_lf": "4a4b3eee01e76ac36b9cd5cec68518b133da2b77914997637bb40c003b4ff7a4"
+    },
+    {
+      "path": "App/application/s3_shoulder_service.c",
+      "sha256_lf": "8e04e240e9b9ed586b8d305ea6e56de08cbc2cd14db38d233842893c97a10c62"
+    },
+    {
+      "path": "App/application/s3_shoulder_service.h",
+      "sha256_lf": "3fe5694db509aba4b24fb9176e8a27a3a6d3de722331b3e6bcb936834d0f6052"
+    },
+    {
+      "path": "App/application/s3_site.c",
+      "sha256_lf": "61a6661e30e293f619fef90d700cd8505034f3791078ae61501af2482baf14e4",
+      "overlay": "overlay/App/application/s3_site.c"
+    },
+    {
+      "path": "App/application/s3_site.h",
+      "sha256_lf": "fba9cef803ec761ab2f89cfa00cdf048f3e5b56d4f78e0b8579f3c96b950d1a5"
+    },
+    {
+      "path": "App/application/s3_stop_input.c",
+      "sha256_lf": "fee9f4e45e283be642f225fa1155cd78b2b41f309f9df7728f90b4f1f5026d5f"
+    },
+    {
+      "path": "App/application/s3_stop_input.h",
+      "sha256_lf": "a17332d4bfc5119577a52d31e114c1ef7867f561670f4a76661a92f6669f7bf5"
+    },
+    {
+      "path": "App/application/shoulder_property_feedback.c",
+      "sha256_lf": "d9f11a7b30885b90195aef1351d992c609c8d014dcd639f81ad4531e9edcf5cd"
+    },
+    {
+      "path": "App/application/shoulder_property_feedback.h",
+      "sha256_lf": "acbf6f11ce1d4b57ea3e74ab4d04e03200463401a21f4e3743f92c81ea646c87"
+    },
+    {
+      "path": "App/application/shoulder_qualification.c",
+      "sha256_lf": "d00da76792e50237f71422dfd2ec77ef115f00844e94ca69577bf6bb2feac68e"
+    },
+    {
+      "path": "App/application/shoulder_qualification.h",
+      "sha256_lf": "75c112be219d5ffc671c01a95f70bf805813bdc7b55a09eaf1435ef2e27eb6d7"
+    },
+    {
+      "path": "App/application/shoulder_read_diagnostic.c",
+      "sha256_lf": "8ab626cdbf127e7f2b76523cc37d30a612804d9583ce352d96a83c41573769b8"
+    },
+    {
+      "path": "App/application/shoulder_read_diagnostic.h",
+      "sha256_lf": "894432fa6d2de846215f2254010f5d31ea6fc8700d0b97ee1db5a98fe6158eb4"
+    },
+    {
+      "path": "App/application/shoulder_standstill.c",
+      "sha256_lf": "9bd7daeb83475946c5cae600ef628e593d6d21165be46ad3889fcdce9822e08e"
+    },
+    {
+      "path": "App/application/shoulder_standstill.h",
+      "sha256_lf": "c1c3ced7362e0e3b73260225e66beade68fe24912e12d319a90a5f3e5fa6f066"
+    },
+    {
+      "path": "App/control/joint_state.c",
+      "sha256_lf": "b09c6121bcc0bb3bbcca8ad042eacc109405dcb86ac35b68869be60758cfb320"
+    },
+    {
+      "path": "App/control/joint_state.h",
+      "sha256_lf": "2bb202da6c57fa40b91fa96f6568b81745d2981bde835d859ab08904a2b4b234"
+    },
+    {
+      "path": "App/control/safety_supervisor.c",
+      "sha256_lf": "e11b55b78268f9f0a2688dcbb615f734d2afabc2a45934d100d2944fb1a904b4"
+    },
+    {
+      "path": "App/control/safety_supervisor.h",
+      "sha256_lf": "4a92e0d9916022e6a36360bebf44441871209611be29bfb52f6a2effdd3ca810"
+    },
+    {
+      "path": "App/devices/c620_feedback.c",
+      "sha256_lf": "edf3495c0dea7f80d40144430c073129d94d3003ed825988794a6edd5447c779"
+    },
+    {
+      "path": "App/devices/c620_feedback.h",
+      "sha256_lf": "ad46b487d24f60e023fdc59e401cbea13dd9b26952725a06bb00c9d9254f3d9e"
+    },
+    {
+      "path": "App/devices/gds_feedback.c",
+      "sha256_lf": "b12f92b6d0f053598013c5f036a26dd88b951426516204014c387ab8ca01509a"
+    },
+    {
+      "path": "App/devices/gds_feedback.h",
+      "sha256_lf": "69b06c467d94154a4282093188745f5824d4dadd8be6920540edea4098812373"
+    },
+    {
+      "path": "App/devices/gds_sdo_read.c",
+      "sha256_lf": "cbd1d68bddf9b7366959f9773b9bd1de78c3da7c101bb5040963cdf44ddf4b1d"
+    },
+    {
+      "path": "App/devices/gds_sdo_read.h",
+      "sha256_lf": "cfc4db8f4f8242de790da9291fa040a4acf169b94050cbc9c1f8e56bdeb2c5a3"
+    },
+    {
+      "path": "App/devices/motor_command.c",
+      "sha256_lf": "904127aaafe3e94dc4acfc8b1786325937d841b75aed85cc3e30d914d81c514f"
+    },
+    {
+      "path": "App/devices/motor_command.h",
+      "sha256_lf": "100a4d29833caba7584dcb736d23f5cf8bf3e88fe8fd3b35ecf27bd16f820ece"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "sha256_lf": "cd92f54e35d58cb4623a68861803f7283dd87274701df021dac7d1512b1e1469"
+    },
+    {
+      "path": "CMakePresets.json",
+      "sha256_lf": "5cfd04cb98883899a9e70bb39dc70f74ee610b88ae34625dafac65f18f322a94"
+    },
+    {
+      "path": "Core/Inc/board_can.h",
+      "sha256_lf": "f67f799e740992c2009667a3a204072ca7e71484be0909764b933fce2d617d01"
+    },
+    {
+      "path": "Core/Inc/board_can_tx.h",
+      "sha256_lf": "10a8b37f2627b3cfce98435c82a6d07fbc7adf85f7561567f1e1f00557a5f675"
+    },
+    {
+      "path": "Core/Inc/board_console.h",
+      "sha256_lf": "b9f636a0780ca9fa2cdf2ad1fac2ee6579c0badc0186304ccdb7c31b742a1c79"
+    },
+    {
+      "path": "Core/Inc/board_runtime.h",
+      "sha256_lf": "140e5e95ac3f099aa750b32e9b33b9d747e14dee80913901e19850f42268d287"
+    },
+    {
+      "path": "Core/Inc/board_stop_input.h",
+      "sha256_lf": "70058916b940d4540eb75bb3c8d478b45866a7f4b651cc9c1d6eca76ed6fb9f7"
+    },
+    {
+      "path": "Core/Inc/main.h",
+      "sha256_lf": "0a7eef275f3baa96f523003ccbae283676d460f4163c3c118afdf322fe0458f1"
+    },
+    {
+      "path": "Core/Inc/s1_config.h",
+      "sha256_lf": "79166fe63c7566c8cb955ef935396b281ba7bbf6361854fed2f696369c5bd22c"
+    },
+    {
+      "path": "Core/Inc/s2_config.h",
+      "sha256_lf": "444ac974bdd49376d90c50ad7db51deb4afa4ff0bb4c4190957fc06d29328b17"
+    },
+    {
+      "path": "Core/Inc/stm32f4xx_hal_conf.h",
+      "sha256_lf": "c166230da8b8b31e8e2438916809393166d14e70cdb22cbadb26cf432b23f4f5"
+    },
+    {
+      "path": "Core/Inc/stm32f4xx_it.h",
+      "sha256_lf": "43fbfebc931943b1e3101ab0c2ad733b22ae0ac45beb124706ed6e7e414e2d1f"
+    },
+    {
+      "path": "Core/Src/board_can.c",
+      "sha256_lf": "9ec21109d497ecd3b7ccf889588e3f84bf655c0d2f85a1133927b46b450ac8e2"
+    },
+    {
+      "path": "Core/Src/board_can_tx.c",
+      "sha256_lf": "24137296c0b9062f37d2042b511b8e51e2be8363bf7a4a702f3899bc84e33417"
+    },
+    {
+      "path": "Core/Src/board_console.c",
+      "sha256_lf": "d83bf5230c3e202a5800e34f48f00ee85a0e04ae262757e4cf149bd5ba28160e"
+    },
+    {
+      "path": "Core/Src/board_runtime.c",
+      "sha256_lf": "b7d3f6ad0e4e14a2e0a98f6018cf7c2f08a6149d12beca7fb5cb728cfaf0b21a"
+    },
+    {
+      "path": "Core/Src/board_stop_input.c",
+      "sha256_lf": "6164d7eaa43859fd96c00ab5981201047508ddb07d78bb6f591f761c6e07a30d"
+    },
+    {
+      "path": "Core/Src/main.c",
+      "sha256_lf": "7acabed8723f6bb38920aefe994b44a94fa5bbdc4d9573c3e19c3e4e715c69a9",
+      "overlay": "overlay/Core/Src/main.c"
+    },
+    {
+      "path": "Core/Src/stm32f4xx_hal_msp.c",
+      "sha256_lf": "c5e80574527aafbe4a48e18bbbf4e09e02fa11f26931c93a38fc962a74287afc"
+    },
+    {
+      "path": "Core/Src/stm32f4xx_it.c",
+      "sha256_lf": "7ffed8086ba8c7e933dd49007f720dba45465046a326eea724a9c0d367645a2b"
+    },
+    {
+      "path": "Core/Src/syscalls.c",
+      "sha256_lf": "03c06c72eafb44b499814cf9234aba57dd830f345d9b8779b5d7090e78517600"
+    },
+    {
+      "path": "Core/Src/sysmem.c",
+      "sha256_lf": "ad20f7b1fa1e7c73330727747222cf2ffa3245ebf035230ee9a157545e79df95"
+    },
+    {
+      "path": "Core/Src/system_stm32f4xx.c",
+      "sha256_lf": "a31929eab936ac98db060c18917118acf79dc96e1f03ed4b57d614535dd06d70"
+    },
+    {
+      "path": "Drivers/BSP/STM32F4xx-Nucleo/stm32f4xx_nucleo.c",
+      "sha256_lf": "4ff202cbb0c90fe230665f4f6c33c5e870d2679f7dd14cffff0f3cf89a6f0a94"
+    },
+    {
+      "path": "Drivers/BSP/STM32F4xx-Nucleo/stm32f4xx_nucleo.h",
+      "sha256_lf": "6d98d88b4af826578f27582a47113e9c6250a76c564ad103107e22704585b5d9"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h",
+      "sha256_lf": "801bae2a07fb7d61ce78512cee4d0c761e7b6cc7a3c7c74437a59a05af70e58a"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h",
+      "sha256_lf": "a19edea6b2f4df2ab3c567782c4d313a52319c4303bd56ad7dd1d0e077014657"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h",
+      "sha256_lf": "02c067d5a135f540c03215dc834b1e60a97bbd4e55bfd3994b0c82a15ea3012a"
+    },
+    {
+      "path": "Drivers/CMSIS/Device/ST/STM32F4xx/LICENSE.txt",
+      "sha256_lf": "135fb2d86e9ecdf6824cc3bba21c72b8e380c07b055fbebb6b995463eb609baf"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cachel1_armv7.h",
+      "sha256_lf": "2e336a64f60a9c0eaf5a08e2c4845d94da86c3fd84d219d0d0c9f530e63bc9c3"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_armcc.h",
+      "sha256_lf": "5bc0d7ed8e36e9bcb868c4042fff350c702eca305df4162fb00384789e35ee1c"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_armclang.h",
+      "sha256_lf": "d5da2b48204f0d0cf1ff38ffccb527e5706cd0a091ff0a331eb41d6596c33fe5"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_armclang_ltm.h",
+      "sha256_lf": "3e8ffb284f4f155de3ea93841cca853b41d5e812b53e52c64c3d4a67b7f1ec7c"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_compiler.h",
+      "sha256_lf": "b51963d271c1571ca3463654c76aa7ea50c4eac5d0a2710df10414ac64d9e0f8"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_gcc.h",
+      "sha256_lf": "43bfd1fe69fbbc2ca70aaf7d43cc3e20f16e0c7f66e1bdef9b51af6dc14b2617"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_iccarm.h",
+      "sha256_lf": "2d255c8429e507e52cb603f2970bed4cc4a6cdcc3eb7fc7997385abad7364837"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/cmsis_version.h",
+      "sha256_lf": "184c19fd3ee73632edf35a0b4d49cd48be75fbf49e6ccb19d9db05fa83bea4b3"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_armv81mml.h",
+      "sha256_lf": "a40954bccbf202bd65ee721ea688122561e005c9f9f9d18e082280c5b897d0e4"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_armv8mbl.h",
+      "sha256_lf": "458b1e6788079ded52adc7d06383701c865ca97b67c5e7a0a44884194f91a842"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_armv8mml.h",
+      "sha256_lf": "5a68204fa31cda7d04d41c9ceaf3f4b1217908f59366f757ee778181c7cc8cb9"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm0.h",
+      "sha256_lf": "ac13cb645f108666a0e57c93467872660d6bc860a839f840dc870b7a5863b4bf"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm0plus.h",
+      "sha256_lf": "a09fa9c6b8b21d1920bce15b98aa56182b027e9278cca0b154812bac2aea3cfa"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm1.h",
+      "sha256_lf": "944bf0c4f940eef30a632cd99d5dcfe8270e8a8431eb98c0f081bcf4f61f728e"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm23.h",
+      "sha256_lf": "77822e9738885394ec52fca6f617452b823a0b55e2664ee225e65576cf0e8f2d"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm3.h",
+      "sha256_lf": "c9937781259a8897adf514445441c68570087d6a72a558d8a4afe75cdb62dbd2"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm33.h",
+      "sha256_lf": "225c47c36230edaa314f1e7a45b38279f6ab4d58faeb132226db35f7007d58aa"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm35p.h",
+      "sha256_lf": "206b427589981b78169c1d9b73e898e4e8de4efbd76fd0c2df7df81d645b9fa2"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm4.h",
+      "sha256_lf": "f5b63d52dd1557b15ca414cb59c264f595a7b5669db2a5878dffe22f4caedc8c"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm55.h",
+      "sha256_lf": "5707f716cf03f7e80151108ae94601fcfdf362dd2d830876040213318f6dee3a"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm7.h",
+      "sha256_lf": "e974d0a91752487d0154457cd422c37667328e9ddb7ba4fa2fed479a63577f63"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_cm85.h",
+      "sha256_lf": "75bc123889f0f5ca33c4d16b6cbdd580a3572663c899fadb2c8e28f6a5e6fead"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_sc000.h",
+      "sha256_lf": "c81377a69a4ea8ecaead42194f2ce8ab59bd4ee7bd638e423f5b1f5ec283d154"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_sc300.h",
+      "sha256_lf": "73dd461c12c7d3a693840df3084fd8f85122095c6f21fa3d779b0f3eceaebad5"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/core_starmc1.h",
+      "sha256_lf": "92d8661f2947d00da91653d04794cde0593fdaafb3438842a0477775716aafc5"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/mpu_armv7.h",
+      "sha256_lf": "29206b52ee02290ed6f5a5415ebd4187de802cf176d9b3cb844390d8e5571372"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/mpu_armv8.h",
+      "sha256_lf": "2c7d22a344cedcc1e35380d1f76f0e6c55da5e3101e6a41fd85497d1841fe8c9"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/pac_armv81.h",
+      "sha256_lf": "d76f5cc0c59a59e035115f700b8e8d95b7b98ecb99a2924e885f82a94903d984"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/pmu_armv8.h",
+      "sha256_lf": "cea8c105c5f41ba831fe4d9e8e39758068cd4c414383348dc2835d6be447cca0"
+    },
+    {
+      "path": "Drivers/CMSIS/Include/tz_context.h",
+      "sha256_lf": "45565c8cb04c653aabaf3cceddfc848b6a0de28c20d4f7e3d475a992c7eee788"
+    },
+    {
+      "path": "Drivers/CMSIS/LICENSE.txt",
+      "sha256_lf": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h",
+      "sha256_lf": "8c2d2feb90e8ed88fe5756f3f1616a2b67aa1cd0858da8b130ed69607688c8c0"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h",
+      "sha256_lf": "6942f40453fee331e026179cfac4c0f24ffe6313fedcb68af9c3382f702dbaf5"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h",
+      "sha256_lf": "b9d9e38908bbc1546e241eeacabeb3a72ade26f99ef3d448334c06ec89bae122"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h",
+      "sha256_lf": "d96dba22903abda49d66cad29ac0c49357e6a27cf9cb03dfd8c6db71b61a7fca"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h",
+      "sha256_lf": "c8eb3f7b393f8c5a0c32e16ccfa101c83ddb59e96bd42239b8a5c5d4da83e97f"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h",
+      "sha256_lf": "71c38dfd65c5415b388375147e5317c7ac018b39893d6fd0ac1c897f4313329c"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma_ex.h",
+      "sha256_lf": "3ee15423d73ac394de39e7b65821775966389b13749ff0849894548ab6968676"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_exti.h",
+      "sha256_lf": "61e8f76bdb45dedf38fef592504e10418ca410952c7a209cd271b45ac835833a"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h",
+      "sha256_lf": "10be06c6e06fcf4eb11e236641948aed861898fea235c606ae221fa72bc46638"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h",
+      "sha256_lf": "7c206f5dbed3c147a6f090ab808933132a1b06b8339623ad7174fd0a222e981c"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h",
+      "sha256_lf": "f18a6eabc99f56483566f9231ca33c780afa98bc93929e60bb419b5e544eee2a"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h",
+      "sha256_lf": "0b40fc83363b64d3c7396a202be7a914ceaa7735ab0fa81d566ed320102b23fb"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio_ex.h",
+      "sha256_lf": "4091beefc5bf8b250f376d400f43ca028ef7378e1c7ba5c9eb5de64ec74231c0"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h",
+      "sha256_lf": "d6f6abc4af3d5a1ca59d886f5a9154e44f257a43af77c7f18173f160825ed6b5"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h",
+      "sha256_lf": "1794b88c5e080858c0205a2e94340c0250ac9171b3a3f01cad6d050005a1b09d"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h",
+      "sha256_lf": "eb6911d964b1cf8a83993b19c8feb9845e8793d7c0e5d643390b53207c8b078e"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc_ex.h",
+      "sha256_lf": "49f0c8068524e1de248738530cff3bbe630dc4784b6e8b5568fbc7e1a154f772"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h",
+      "sha256_lf": "42528bc9caa6e2fe96b7e6d7b3fcdf35d8d85ae38d33195a233e18a072f157a1"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_bus.h",
+      "sha256_lf": "95a518139f74d14a4477519b5172675347990e9fa637bd3948c69bd475bd7c88"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_cortex.h",
+      "sha256_lf": "d8b268ca207e51864d1a71ce14fff316c57d09e62a04d0c28310b4a1008e6f17"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h",
+      "sha256_lf": "39e89050700e16304e04643e29c162b6aaa9f3bfe53880cd78c255ce46104e82"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_exti.h",
+      "sha256_lf": "6da580d41ebdcfd7349e29666a2e561c8e2c2e01f6e7ef29dfec6ebf6ae237df"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_gpio.h",
+      "sha256_lf": "e46857f5f9a5f5a2d13ca2d6925dc9e66dfa7fc56a2cc72e54b891bdb88e2f16"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_pwr.h",
+      "sha256_lf": "229af558bfeef8bb88d2224277b083c3b927c5c2612991fdeba00dad56255abc"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_rcc.h",
+      "sha256_lf": "605960f2e8e57a702b912475f9c154bb58711b58c8f2ff27dd4e75b5d767dc4e"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_system.h",
+      "sha256_lf": "d634a419a55e99b4a641fecc055e1f602d8a418bd7d822cf2f812a0965ac9a3e"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usart.h",
+      "sha256_lf": "982c4448c49ddc7c6c71bd788e5354f05e96aca5e98edd0626f8ffcaefc65e79"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_utils.h",
+      "sha256_lf": "535cb625cfcd461d6054549bf04d25ef939ec5754f77731a5f9fd92728280ded"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/LICENSE.txt",
+      "sha256_lf": "d5a162f3eaf2b7b6762f00700017cae5695ebbdce7932fead8316448baafd9c1"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c",
+      "sha256_lf": "97e715cda2a34bd564b59ce4ba9b16bd29651f8f229161105aaec666d76ea91a"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c",
+      "sha256_lf": "67be4e0b3a9dc93552eb0a506991f5b4042b38c125270d9e703133808c2d40d3"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c",
+      "sha256_lf": "9aaa0f19137d700616bec01a5a806786c24e3f3386120365c5d2addaa4055505"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c",
+      "sha256_lf": "a345a1b1fe0221c827d5ad21d5a0f5387296bc2c075e06e5b8539c23da5678e4"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c",
+      "sha256_lf": "90cafb5a5b17a46b478770ef4abdc9a641cb395419abbb80f288138a63d44582"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c",
+      "sha256_lf": "f56651f86e5d89e8bba3bcb331353e00f291db15c902927a205d81bbe8951e6d"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c",
+      "sha256_lf": "8bf12eeb6e6cfc12a17587ed6d761724e0835a4a3dc0f6b14a8d1ca068bcb55b"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c",
+      "sha256_lf": "51a70deb9b19dd43f6f202430fae052f2deb26c39232c09c79230c8d8a61f773"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c",
+      "sha256_lf": "d3b426e8cb9d617f9064d2b0cea2a1d02b7bb6a74cba3f094779d6e922e477e3"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c",
+      "sha256_lf": "408908b15477b6ce2b0b9703caabcb053293d98f2f109d6e6940e076a6a3902b"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c",
+      "sha256_lf": "d779468a95df34421bf6c8417136a79aa910753381a644afa9ed10b185ae18b5"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c",
+      "sha256_lf": "4409dddc0d2019f918d0ddebecf659f06d4de3f9aa28566621a16ea47203331f"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c",
+      "sha256_lf": "f3ac468e2f415adb74281107c0dec1448008950b64a7bb11c14cbe3ee1a936de"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c",
+      "sha256_lf": "526324811fa113c3eadfa84cd24ea5e607ad8e8bf003a2085456c04b734ca25e"
+    },
+    {
+      "path": "Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c",
+      "sha256_lf": "a74ed3a9a13a4fcbaada9e6f88f7d4fcabe2a75852a6ce4c09f8d4314a2e851a"
+    },
+    {
+      "path": "Exoskeleton_F446.ioc",
+      "sha256_lf": "5fe4876d030196fd79566f336b3731fdf6f9aa2c31a31b7df1e5acb25ebce9ec",
+      "overlay": "overlay/Exoskeleton_F446.ioc"
+    },
+    {
+      "path": "STM32F446xx_FLASH.ld",
+      "sha256_lf": "40d3cfc7e0ebf69681190555540d503ec5e575c6caba160aca0a15fcb91483bf"
+    },
+    {
+      "path": "cmake/gcc-arm-none-eabi.cmake",
+      "sha256_lf": "51b6b7bfd23e531d2d28a80ac343f52ebfc5e6532a2f09693402617badfb1a04"
+    },
+    {
+      "path": "cmake/starm-clang.cmake",
+      "sha256_lf": "14a7ad852347068f5636419773d577ba7513b1e42f024a8330bb2d7c432cd21e"
+    },
+    {
+      "path": "cmake/stm32cubemx/CMakeLists.txt",
+      "sha256_lf": "02551efca8b6c172c1d2c7918c31a0ea66bd7cbda2d0a1785cf2b02d3617a725"
+    },
+    {
+      "path": "startup_stm32f446xx.s",
+      "sha256_lf": "448435eb5d2ffe063490bcac42b9c861461ce05528141d87e62f8425c00131f8"
+    },
+    {
+      "path": "third_party/clip/src/clip.h",
+      "sha256_lf": "41db1a09a6d5d60d818221f5008980d1a68f9ad36fe9f818ebd90bdf49669f19"
+    },
+    {
+      "path": "third_party/clip/src/clip_cmd_call.c",
+      "sha256_lf": "62a29c7fcb11f25c7250f403fae8eeb1e22398348dad179f7e8d4a51bfadf0be"
+    },
+    {
+      "path": "third_party/clip/src/clip_cmd_parse.c",
+      "sha256_lf": "06320cd8fb8666dcc24f563ddfaf9bec4e2ab69ed965262c2fc670b023f83120"
+    },
+    {
+      "path": "third_party/clip/src/clip_config.h",
+      "sha256_lf": "0a6c9a93cccfe5e7a31ebeedf717f61e636168c13742d5a47d8e886701611db5"
+    },
+    {
+      "path": "third_party/clip/src/clip_defs.h",
+      "sha256_lf": "b926c2863d7246e16e41908fc0e330adda470c89a5961513690a72fdf0024dc4"
+    },
+    {
+      "path": "third_party/clip/src/clip_notify.c",
+      "sha256_lf": "be6c30a16dd43a5bae728feb19addbe9c8ee17cce1436e11d86b5a4218a7afdf"
+    },
+    {
+      "path": "third_party/clip/src/clip_types.h",
+      "sha256_lf": "3a6320695f3b7172f5800d6a9eda9c1e3c221de121791a43c38ffa6a90f59697"
+    },
+    {
+      "path": "third_party/clip/src/clip_utils_arg.c",
+      "sha256_lf": "8523e17e8d0f852f4e7d51a144efeacd7c6549b1ebabd62af8d06302fcbd0340"
+    },
+    {
+      "path": "third_party/clip/src/clip_utils_hex.c",
+      "sha256_lf": "5612a6ea99e7f26f901d044a6fdadacf5259498b59515a1458ec99d6bab67cf8"
+    },
+    {
+      "path": "third_party/clip/src/clip_utils_parse.c",
+      "sha256_lf": "dab5a5ee317dd4bcb2c5da89d6a7a061b424a888db7533ff20adfa2b26b14c4d"
+    },
+    {
+      "path": "third_party/lwrb/src/include/lwrb/lwrb.h",
+      "sha256_lf": "e5a24c06d0b7274d9e398f7726a0a8815b005f58516a25f7baa98fe8ccb3c86d"
+    },
+    {
+      "path": "third_party/lwrb/src/lwrb/lwrb.c",
+      "sha256_lf": "839717c69749e0dca6b1cdafe2b3571a940ffd0e0eeab8e6b133a02fba8df727"
+    }
+  ],
+  "normalization": "UTF-8 text,CRLF\u2192LF only; Git line endings do not change semantics",
+  "no_flash_or_device_api": true
+}

@@ -47,10 +47,31 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/board_console.c
     Core/Src/board_runtime.c
     Core/Src/board_can.c
+    Core/Src/board_can_tx.c
+    Core/Src/board_stop_input.c
     App/application/app_main.c
     App/application/console_commands.c
+    App/application/s3_console.c
     App/application/can_monitor.c
+    App/application/c620_standstill.c
     App/devices/c620_feedback.c
+    App/devices/motor_command.c
+    App/devices/gds_feedback.c
+    App/devices/gds_sdo_read.c
+    App/application/shoulder_read_diagnostic.c
+    App/application/shoulder_qualification.c
+    App/application/encoder_stream.c
+    App/application/shoulder_property_feedback.c
+    App/control/joint_state.c
+    App/control/safety_supervisor.c
+    App/application/output_gateway.c
+    App/application/output_can_transport.c
+    App/application/s3_bench.c
+    App/application/s3_site.c
+    App/application/s3_feedback.c
+    App/application/shoulder_standstill.c
+    App/application/s3_shoulder_service.c
+    App/application/s3_stop_input.c
     third_party/lwrb/src/lwrb/lwrb.c
     third_party/clip/src/clip_cmd_parse.c
     third_party/clip/src/clip_cmd_call.c
@@ -64,6 +85,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     App/application
     App/devices
+    App/control
     third_party/lwrb/src/include
     third_party/clip/src
 )

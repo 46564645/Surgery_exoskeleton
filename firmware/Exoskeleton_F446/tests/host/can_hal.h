@@ -9,6 +9,7 @@ typedef struct {
     uint32_t FilterFIFOAssignment, FilterBank, FilterMode, FilterScale, FilterActivation, SlaveStartFilterBank;
 } CAN_FilterTypeDef;
 typedef struct { uint32_t StdId, ExtId, IDE, RTR, DLC; } CAN_RxHeaderTypeDef;
+typedef struct { uint32_t StdId, ExtId, IDE, RTR, DLC, TransmitGlobalTime; } CAN_TxHeaderTypeDef;
 #define CAN_BTR_BRP 0x3FFU
 #define CAN_BTR_TS1 0xF0000U
 #define CAN_BTR_TS2 0x700000U
@@ -26,6 +27,10 @@ typedef struct { uint32_t StdId, ExtId, IDE, RTR, DLC; } CAN_RxHeaderTypeDef;
 #define CAN_FILTERMODE_IDMASK 0U
 #define CAN_FILTERSCALE_32BIT 1U
 #define ENABLE 1U
+#define DISABLE 0U
+#define CAN_TX_MAILBOX0 1U
+#define CAN_TX_MAILBOX1 2U
+#define CAN_TX_MAILBOX2 4U
 #define CAN_IT_RX_FIFO0_MSG_PENDING (1U << 1)
 #define CAN_IT_RX_FIFO0_OVERRUN (1U << 3)
 #define CAN_IT_RX_FIFO1_MSG_PENDING (1U << 4)
@@ -51,6 +56,10 @@ HAL_StatusTypeDef HAL_CAN_ResetError(CAN_HandleTypeDef *);
 uint32_t HAL_CAN_GetRxFifoFillLevel(const CAN_HandleTypeDef *, uint32_t);
 HAL_StatusTypeDef HAL_CAN_GetRxMessage(CAN_HandleTypeDef *, uint32_t, CAN_RxHeaderTypeDef *, uint8_t *);
 uint32_t HAL_RCC_GetPCLK1Freq(void);
+uint32_t HAL_CAN_IsTxMessagePending(const CAN_HandleTypeDef *, uint32_t);
+uint32_t HAL_CAN_GetTxMailboxesFreeLevel(const CAN_HandleTypeDef *);
+HAL_StatusTypeDef HAL_CAN_AbortTxRequest(CAN_HandleTypeDef *, uint32_t);
+HAL_StatusTypeDef HAL_CAN_AddTxMessage(CAN_HandleTypeDef *, const CAN_TxHeaderTypeDef *, const uint8_t [], uint32_t *);
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *);
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *);
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *);

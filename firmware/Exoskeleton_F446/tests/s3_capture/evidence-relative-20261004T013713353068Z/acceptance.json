@@ -1,0 +1,21 @@
+{
+  "status": "PASS_CURRENT_APPROVED_S2_SHOULDER_SCOPE",
+  "scope": "可信连续肩侧转子编码器反馈及一次真实变化；不扩展为标定关节位移、速度方向或S3全部验收",
+  "continuous_evidence": "2026-10-03 HSE30s:600firmware pairs/300 distinct saved pairs,age7..14ms,recorded CAN/UART errors0",
+  "variation_evidence": "16fresh distinct pairs; output-allowed queriesseq11..15 show4positive intervals(+0.0006320476531982422rev/80ms). Independently,seq12..15 acquired after pulse acceptance and before stop show3positive intervals(+0.0006222724914550781rev/60ms,3.79times priorstatic range).9post-stop pairs retain +0.0003077983856201172..+0.0005412101745605469rev from origin.",
+  "judgement": "Position trend, retained offset, temporal association and raw provenance together support a real rotor-encoder change beyond observed static fluctuation. Nonzero range, command acceptance or velocity alone are not the acceptance basis.",
+  "limits": [
+    "Static baseline is a different boot, absolute position, and read cadence (20Hz MCU/10Hz host versus50Hz MCU). Its observed range is an empirical reference, not a guaranteed noise bound.",
+    "Velocity lies largely within the prior static fluctuation range; its pulse-window sign does not consistently track the position trend.",
+    "The peak sample was acquired5ms before the recorded stop request although queried after output withdrawal; do not treat it as post-stop movement.",
+    "No physical visual threshold was defined or added; raw rotor estimates do not establish calibrated joint displacement, torque reached, or anatomical direction.",
+    "out=1 belongs to query time. seq11 was queried after pulse acceptance but its acquisition may predate acceptance; do not assign the fullseq11..15 interval to commanded torque. seq12..15 independently supplies3positive in-window intervals."
+  ],
+  "dropout_recovery": "CANCELLED_NOT_EXECUTED",
+  "S3_once_prepare_enable_pulse_stop": "PASS",
+  "S3_all_complete": false,
+  "github_pushed": false,
+  "hardware_actions_this_review": 0,
+  "original_trial": "D:\\codex_tasks\\2026-10-01\\task\\s3-relative-trial-candidate\\trial-20261004T013713353068Z",
+  "analysis": "D:\\codex_tasks\\2026-10-01\\task\\s2-variation-review-20261004\\analysis.json"
+}

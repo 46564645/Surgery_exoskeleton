@@ -1,6 +1,6 @@
 # 个人项目开发 Schedule
 
-更新时间：2026-10-02。状态：S2两路驱动反馈进行中；S1开发板与最小工程按个人台架原型目标基本完成，可进入S2；Windows构建、烧录校验、IRQ读回和串口通信已实测，用户目视LD2约每秒闪一次。物理USB重插后曾出现SWD USB通信错误，列为已知问题，不作为S1推进阻塞；根因未确认。以下工期为工作量估计，具体结果见开发日志。
+更新时间：2026-10-04。状态：S2按用户当前批准范围（可信连续肩反馈及一次真实变化）验收通过；实物掉线/恢复取消、未执行。肩侧一次受监督100ms微动和停止已通过，S3方向、零位及其他范围不因此整体完成。现场证据来自已刷HSE台架镜像，主仓默认禁用的HSI配置不冒充同一实测镜像。本轮按用户要求归档并提交到原GitHub仓库，远端结果以对应Git提交记录为准。
 
 本排期对应单右臂、SHOULDER_SIDE（GIM6010-8/GDS68）和ELBOW（裸M3508/C620）。采用个人项目的轻量推进方式，不设审批、百分比验收或完整故障测试矩阵。必要验收的统一执行规则见[AGENTS.md第4.4节](<../../AGENTS.md#44-控制启动与验证>)。机械设计不在排期范围内；涉及运动的步骤以现有台架能够固定、承托并提供已知活动范围为前提。
 
@@ -11,8 +11,8 @@
 | 阶段 | 预计工作单元 | 开发内容 | 本阶段看到的结果 | 依赖 | 状态 |
 |---|---:|---|---|---|---|
 | S1 开发板与最小工程 | 2–3 | 先查明是否已有可用固件工程，确定唯一工程入口；构建、烧录、串口状态、静态调度和小型状态机；预留统一输出函数 | 稳定启动；复位后未使能；电脑能读取状态并发送命令 | 无 | 基本完成，可进入S2：Windows构建、烧录校验、IRQ读回和串口测试通过，LD2目视频率定性相符；SWD重插异常列为已知问题，不声称已修复 |
-| S2 两路驱动反馈 | 2–4 | 先GDS68后C620；读取版本、ID、反馈；分别解析位置/速度/有效性/时间戳；配置CAN终端；建立通信超时标记 | 两路数据可解释，断连能显示离线；此阶段不请求主动运动 | S1；逻辑供电与动力输入核对 | 进行中：原始双CAN基础已板测；2026-10-01离线Debug与25项主机基线复核通过；GDS68 USB驱动已正确绑定，实读硬件3.11.1/固件0.6.5、CAN 500kbps/ID1/SIMPLE；肩侧0x10根因、解析及必要真实反馈验收待完成；C620肘侧只读解析/超时恢复已实现，33项主机回归和Debug构建通过，已烧录校验，USB及肘侧必要静态收帧/离线/恢复通过；按用户批准继续排查GDS68肩侧0x10；S2双路验收未完成 |
-| S3 分别受控运动 | 3–5 | 从小输出、小范围开始；核对方向和零位；建立输出限幅、活动范围限制、平滑变化、命令停止和断连处理 | 各自能按预期运动与停止；重启不恢复旧动作；实际停止表现有简单记录 | S2；电源极性、基本保护和可用停止方式落实 | 待开始 |
+| S2 两路驱动反馈 | 2–4 | 先GDS68后C620；读取版本、ID、反馈；解析位置/速度/有效性/时间戳，保留通信超时标记 | 当前批准范围为可信连续肩反馈及一次真实变化；本次以明确授权的受监督微动取得变化证据；实物掉线/恢复取消、未执行 | S1；逻辑供电与动力输入核对 | 当前批准范围验收通过：HSE静止30秒/300组新鲜观测，加2026-10-04单次微动16组新鲜观测、动作期位置趋势及停止后保留偏移。速度不作为方向证明；旧CAN/UART异常根因仍保留。本轮归档提交GitHub，远端结果以Git记录为准。 |
+| S3 分别受控运动 | 3–5 | 从小输出、小范围开始；核对方向和零位；建立输出限幅、活动范围限制、平滑变化、命令停止和断连处理 | 各自能按预期运动与停止；重启不恢复旧动作；实际停止表现有简单记录 | S2；电源极性、基本保护和可用停止方式落实 | 部分通过：2026-10-04肩侧prepare/闭环使能/单次100ms、20mNm请求及TTL撤权、IDLE和250ms停稳观察通过；相对原点仅锁存一次并退休。方向/零位/精确动态、肘部运动及其余S3现场项目未验收，不记S3整体完成。 |
 | S4 肩侧FOLLOW | 3–5 | 肘部保持已知姿态；建立姿态相关重力补偿；手推重定位；比较相同姿态有/无补偿的保持努力 | 几个姿态下明显更省力，可重定位，无明显持续自行运动或振荡 | S3肩侧完成 | 待开始 |
 | S5 肘部及双关节FOLLOW | 3–5 | 单独调肘部补偿，再联合运行；不照搬肩侧驱动参数；任一关键执行链掉线时撤销两路许可 | 双关节基本支撑与跟随，达到整臂P0展示；记录仍不稳定的姿态 | S4、S3肘部完成；已有可解释关节反馈 | 待开始 |
 | S6 Lock | 2–3 | 进入时记录角度；实现保持控制与重力前馈；取消、新动作替换和故障退出 | 可保持当前位置，取消后回到有许可的FOLLOW，不恢复失效的旧使能 | S5 | 待开始 |
@@ -405,3 +405,302 @@
 - 证据：本机D:/codex_tasks/2026-10-01/task/gds-tool-preparation/gds-interface2-correct-binding/内actual-binding.json、pnputil-install.log、installation-request.json、motorwizard-after-binding.png、motor-parameters.png及extraction-failed-path-log.txt；CAT证书指纹E4E059011EE2772D588B1F4B5E7202A37A28E81B。驱动绑定和配置结果已先反馈，再做本条整理。
 - 当前边界与下一步：用户出门前主对话要求关闭24V、保留USB和电脑在线；本轮整理不读取串口或设备，不新增现场测试，工具未独立测量关机后的电压。离线先核对0.6.5协议适用性及现有0x029/STM32 HAL 0x10证据，缩小肩侧根因；根因明确后再实现肩侧解析，并将必要真实反馈、有效性/时间戳、离线恢复及双路验收尽量合并为一次有人现场的窗口，复用肘侧已过证据。100ms精确边界等未测项如实保留；任务PRD明确要求的独立反馈对应仍需满足，不能以USB界面或静态零值代替。
 - S3定义保持既有“分别受控运动”：小输出/小范围核对方向零位、限幅/活动范围、平滑变化、停止和断连处理，重启不恢复旧动作。参考审查、方案、代码/模拟/编译可离线准备；开发板烧录/状态验证需USB且可24V关闭；实际运动与停止验收需24V、人在场、S2及基本保护/停止方式到位。本轮不开始S3控制实现或验收。
+
+### 2026-10-02｜已批准S2→S3方案：先推送快照，再完成离线软件核心
+
+- 用户明确“先去github推送一下新的文件夹，然后开始自己实现计划这个方案”，并在外出期间要求继续离线；本轮无USB/串口/SWD/电源/工具客户端/电机操作。先按60个项目文件精确白名单提交并推送main，远端读回b325f3c98401338fc0243693cd74c01b2b58f7e9匹配。根.vscode本机绝对路径设置保留未提交；本轮后续代码留在本地，未再次提交/推送，不部署或合并。
+- 先审阅ExoKit实际关节/范围/急停/启动/动作替换源码，再查对应表第5/7/8/9/11/25–28行、原S2的BetaRobot/Rhino/UICRM特定缓存和厂家手册。用户已批准的静态适配方案落实为L2 motor_command、L3 joint_state/safety_supervisor、L4 output_gateway/s3_bench及可选output_can_transport，另有独立L1 board_can_tx适配器，分层、来源、单位、接口与限制见[实现说明](<../../firmware/Exoskeleton_F446/docs/s3_output_preparation.md>)；参考目录不改。未复制参考硬件倍率、PID、MIT控制、动态动作或模式切换后自动恢复输出。
+- 软件行为：两路关键反馈均须有效/新鲜/在范围内；配置确认缺一即不许Arm。单槽静态请求支持同关节替换、取消、寿命失效、毫秒回绕、输出限值与斜率、服务超限撤销、故障锁存和独立停止确认后重新人工Arm。任一关键链异常撤销两路；先撤许可/请求，再清旧正常待发帧，再经唯一出口请求GDS IDLE/C620零电流。运输清理/忙/提交/停止失败保留FAULT与结果，不自动清除或恢复旧动作。停止帧被接受不等于实物已经停下。
+- 当前应用配置全未确认、实际发送transport为空、无Arm/运动命令；只新增outputstatus读出SAFE_OFF/configured=0/transport_bound=0/output_allowed=0。仍为stage=S2_CAN_RX。未假定未知肘传动比/圈数、方向零位、运行限值/停止行为；GDS rev2.2 SIMPLE编码与实物0.6.5兼容性未确认。实际CAN发送适配器已补齐并通过真实门控→实际L1→模拟HAL集成，生产未绑定；无等待、无软件队列，每路一次abort后确认空闲，异步abort未完成返回false/锁FAULT，停止仍尝试两路，不假称停止成功。模式与闭环准备帧纯编码已实现；实际驱动准备流程、ArmCLI和现场停止行为待实物协议/状态及保护参数明确后接入，不能把这份离线核心称为S3已完成。
+- 最小验证：tests/run_host_tests.py最终40/40通过（既有33项复用+7组新核心/实际L1模拟集成行为场景；应用命令接入变更后跑一次相关回归），MSVC /W3 /WX，无新增工程编译警告；Windows未运行ASan/UBSan。首次回归因新命令s3status含数字、已有语法仅接受字母而失败，保留host-01.log，源码定位后一次改名outputstatus，host-02.log39项通过；补齐发送适配器后host-03.log40项通过，不扩充命令语法。tests/check_generated.py通过。WindowsDebug编译/链接零警告，FLASH52508 B、RAM9200 B；缓存目录二次CMake配置提示toolchain变量未使用1项，属于重配置提示，未写成全部流程零警告。ELF SHA256 2856c7844b6155587f1ad6554f4d77956fc3c969941aa947af3a24b89844e462，仅构建未烧录，板上仍为此前S2镜像。
+- 通用机械检查未全绿：ARCH81项/HW1项与C620轮完全相同，新增/移除均0，SPEC通过。现有生成main调用数、忽略的build工具头和有意同优先级通信IRQ见历史说明；未为这些告警改无关文件。新增自有模块未引入厂商头/裸寄存器/动态内存/阻塞或ISR处理。所有源文件、.ioc、HAL和参考树的无关内容保持，尤其肩侧board_can.c和CAN时序未改。
+- 本轮证据位于D:/codex_tasks/2026-10-01/task/s3-offline：before/stage与manifest保护修改前字节；validation保存失败与通过日志、构建镜像/hash、mechanical-delta；reference-files记录实际读取缓存hash；最终final-audit列出完整改动和原接收链未变证据。S2仍阻塞于肩Form错误根因、肩解析/独立反馈对应/有效时间戳/离线恢复及双路必要验收；不重测已过C620静态链路。下一步有人现场按现有边界合并肩侧必要观察；S2与基本保护/停止方式落实后再接实际输出并开展用户批准的S3小范围运动。
+
+
+### 2026-10-02：S2 CAN 时钟 A/B 离线准备完成（未烧录，根因未确认）
+
+保留活动工程 HSI 与全部未提交 S3成果，在隔离证据目录冻结同一S3应用的 A/B镜像：A=HSI16MHz/PLLM16，B=ST-LINK MCO8MHz HSE bypass/PLLM8；两者SYSCLK84MHz、APB1 42MHz、CAN1 500kbps/CAN2 1Mbps、BS1=11/BS2=2/SJW1及应用逻辑相同。426个输入仅IOC和main.c的生成时钟段不同，CubeMX6.18.1重新生成一致、USER CODE保留；两份配置/编译0警告、FLASH52508B/RAM9200B，生成检查通过，现有主机40/40通过。首次受限MSVC环境失败与首次HSE模式探测失败均留档，不作为通过结果。
+
+证据与镜像：`D:\codex_tasks\2026-10-01\task\clock-ab`；细节见固件 `docs/can_clock_comparison.md`。正面照片只能确认MB1136 rev C，C04据用户报告，背标和SB16/SB50/SB54/SB55、R35/R37实物状态仍待现场确认。启动缺HSE按现有Error_Handler停在App/UART/CAN之前，无静默HSI回退；运行时缺钟未验证，未启用CSS。USART2/VCP和tick名义频率不变，硬件表现未实测。
+
+本次只准备验证HSI精度假设，没有确认或修复CAN Form Error根因；未进行串口/USB/SWD、烧录、供电/执行器操作或提交推送。A/B均为新S3镜像，不能用板上旧S2镜像与B直接构成单变量比较。后续仅按已记录条件做一次静态接收短比较；S2继续保持未完成。
+
+### 2026-10-02｜S3准备流程、人工命令与新同源镜像；USB默认拒绝实测通过
+
+- 衔接：沿用户批准方案继续独立软件准备，未将S2完成置真。先按AGENTS/索引7/8/9/11/27及相关安全条目重读ExoKit关节模式/torque、动作替换/取消、初始关闭源码和Rhino/Beta/UIC已缓存适配；优先读GDS rev2.2 Word并回查原PDF。复用语义、改为静态单槽/有界流程，舍弃自动恢复torque、自动校准、MIT倍率；源码hash与实际参考见s3-next/reference-contract.json。参考树未改，未从零扩展框架。
+- 实现：扩展唯一OutputGateway的Prepare→零目标新读回→模式新读回→健康闭环新心跳→READY→人工Arm，准备/READY/空ARM等待均有已确认时间限制；发送成功不等于驱动就绪。接入prepare/arm/cancel/ackfault、带本次启动递增令牌的shoulderpulse rotor_mNm和elbowpulse current_mA/ttl_ms；拒绝旧令牌/非法参数/不健康链，故障撤销两路，不自动恢复旧请求。实际CAN/UART/服务间隔健康参与门控。生产s3_site所有安全确认false/0、ReadSample返回false，可信连续关节/停止/零目标/模式/校准等提供者仍未绑定。GDS ≥0.5.13档案实验解码独立、默认不选profile、未接生产接收，不冒称0.6.5兼容/真实关节有效或Form修复。
+- 必要模拟：原40项加prepare/gds/cli三组，累计43个不同场景PASS。首次整体42项通过而CLI失败，保留原日志与诊断；根因为测试TX夹具在App_Init前把HAL设成LISTENING，真实启动需READY，一次调整测试初始化顺序，仅重跑失败CLI通过，未改生产CAN RX。复用未受影响42项，不称一次43/43全绿。MSVC W3/WX，Windows ASan/UBSan未运行。活动及两份镜像生成检查通过；机械ARCH81/HW1保持、新增/移除0，SPEC通过，未为凑全绿改无关代码。
+- 同源镜像：重新冻结最新应用433输入，A HSI/B HSE仅IOC/main时钟段不同；既有CubeMX6.18.1两时钟文件字节一致证据复用，没有重复运行生成器。两份WindowsDebug配置/编译0警告，FLASH59724B/RAM9264B。A ELF ac5ea60571f18b754114a82ac303912bc5cc09babce3dd64593ba698d0ef6fc4，B ELF38f2dd1f6b1138c55c8ac90686cabea5628b07d1cacdcc32cb07af128a4a5ecc；交付manifest在s3-next/clock-ab/deliverables，旧clock-ab镜像保留历史、不可混用。
+- 新授权及实际板测：用户补充“usb一直接着但没有接电源，你要测试随时”，据此进行USB-only，24V断开是用户报告、未独立测量。固定ST-LINK066EFF555748874987182240、STM32F446/0x421/RevA/512KB、3.21–3.22V和COM10已核对；先完整备份原Flash512KB、查询旧固件，再于06:35:36–38 UTC烧录新HSI ELF，Download verified successfully并复位。06:35:59 UTC七条查询通过：ping/status/canstatus/outputstatus/prepare/arm/outputstatus，两路CAN启动500k/1M无启动错，configured=0/transport_bound=0/output_allowed=0，prepare/arm均ERR blocked，前后门控一致、端口关闭。未烧录HSE、未接通24V、未向实物发送pulse/校准/驱动模式命令；不是运动/真实停止验收。
+- 修改与保护：19个代码/测试/构建文件及现有固件README、两份技术说明和本唯一日志更新；完整路径/hash见s3-next/manifest.json和final-audit.json，before保存原字节。原CAN RX、IOC/时钟、HAL、GPIO、IRQ及个人配置保持；无新增commit/push，HEAD仍b325f3c。证据在D:/codex_tasks/2026-10-01/task/s3-next，失败记录保留。
+- 未完成与下一步：S2肩Form根因、实物反馈语义/时间戳/离线恢复/双路必要验收仍待完成，不重复已过C620静态链路。先确认MCO实际通路，必要时按既定同源A/B短静态比较收敛肩侧；随后明确机构方向/零位/圈数、限值/保护/停止及驱动状态读回，完成真实s3_site提供者绑定，再安排S3单关节小输出、停止/超时。S2/S3都不宣告完成，不进入FOLLOW/Lock/Amplify/HX711。
+
+
+### 2026-10-02｜每轴门控与真实观测接入；裸C620扇区合同
+
+- 按用户继续实做软件的指示，落实排期已有“肩侧S3完成可进入S4，S5再汇合”路径。冷启动固定enabled_axes=0/1/2/3，0默认拒绝；以每轴反馈/协议/映射/限值确认取代整机S2布尔门槛。停用轴不参与轴配置/健康门控、不向其总线TX或调用HAL；公共保护/停止、UART和服务健康保留，任一启用关键链故障撤销全部启用轴许可。CLI不能改集合或确认标记，没有据此宣告S2完成。
+- 新s3_feedback生产模块从CanMonitor真实快照提供独立位置/心跳时间戳、观测位和driver[2]，GDS归档实验解码逐帧接入，增加只读shoulderfeedback并固定verified=0。FW0.6.5兼容性及Form错误仍未证实；没有改CAN RX平台时序、ISR、过滤器、HAL或IOC。未知校准、零目标、模式和实际停止不填true；默认enabled=0、所有确认false/0、transport未绑定。
+- 按C620官方V1.01原PDF31–33页及对应文本复核：反馈不含目标电流echo、轴状态或校准状态。肘侧准备改为零电流提交后更新的真实反馈，并要求现场operational和独立已停证据；新反馈/发送接受不是零电流已执行或实物已停证明。裸轴显式BENCH_ROTOR可用单圈编码器扇区，方向已确认、映射1:1/编码器零0、范围反算严格落在(0,2π)且单独bench_sector确认；不补造圈数或装配关节连续参考。收尾核对补ID匹配检查，真实提供者测试覆盖配置ID2不能把实际ID1观测标为可信坐标。
+- 新增s3_axes/s3_observations/s3_shoulder_console三组，host-04受影响35项一次全PASS、MSVC W3/WX无警告；11项未受影响UART/DMA复用前轮final-full-host单次43/43。不称本轮一次46/46；Windows ASan/UBSan未运行。最初host-01因旧测试仍引用移除字段编译失败，保留记录并定位后一次适配；host-02/03/04的实际通过记录分别保留，未盲改CAN根因。
+- 最终同源HSI/HSE WindowsDebug编译/链接均0警告，FLASH64488B/RAM9312B；初次配置零警告，缓存重配置各有1条未使用CMAKE_TOOLCHAIN_FILE提示，不隐去。435冻结输入仅IOC/main时钟段不同，两份生成检查通过；复用字节相同的既有CubeMX6.18.1生成证据，没有重新运行CubeMX。静态ARCH81/HW1历史告警未变、新增/移除0、SPEC通过，未宣称全绿。代码、备份、失败日志、最终镜像hash和保护核验见D:/codex_tasks/2026-10-01/task/s3-axis/final-audit.json及clock-ab/deliverables/manifest.json。
+- 参数/接线变化无，现场确认没有置真。本轮没有USB/串口/SWD、24V或执行器操作，没有重新烧录，最近本任务核验板上仍为旧ac5ea605 HSI。最新代码与板上该镜像不同。用户既有改动保留，没有commit/push，HEAD仍b325f3c；参考/机械目录、原接收平台、时钟、IRQ、GPIO、HAL及个人配置未改。
+- 未完成：肩Form根因/实物协议与必要反馈读回；真实公共停止来源与保护/运行参数；GDS校准、零目标和模式读回（不能猜FW Endpoint）；装配时连续参考与机构映射；实际每轴小输出、停止/超时、断连及重启验收。现场按轴取得必要证据再绑定输出，复用已过肘侧静态链路，S2/S3仍不宣布完成。
+
+
+### 2026-10-02｜现场返回后的照片核对与USB-only更新尝试（SWD阻塞，未写入）
+
+- 用户确认拔整个电源插头可随手操作且不靠近转轴/裸线；另于10:48:38 UTC确认当前24V关闭，主线程已通知保持关闭、等通知再上电。实际运动必须先通知用户，本轮未获具体轴/参数/时长的执行放行；未发送使能、校准、模式切换、pulse或电流/力矩命令。停止可操作的口头确认不替代固件真实停止来源或停止效果验收。
+- 用户照片通过Library授权引用在当前Windows工作区落地，原生Windows助手因缺少os.setxattr失败，保留原日志；改在现有Ubuntu-22.04运行同一未修改官方助手成功，元数据按助手流程写入核验。实际查看1280×1707 JPEG（406246B，SHA256 f1d32bcfeb3aabda6f69cd8eaaa9c7181c51d7ab2f1e1e06577b402d374438c6）：是Nucleo背面，标记MB1136 rev C；SB16/SB50/SB54可见0欧元件，SB55空焊盘。不能证实精确C04、R35/R37、电气连通/实际MCO，也不是电机台架固定或插头位置照片；未把该图当作运动准备完成。
+- 最新A-HSI ELF 7ca3f2ac1713d5255ffcc3fb5ad5e01a20ade7e47c4a274be2892e86093db104及生产默认全禁用已离线核对，真实s3_site/s3_feedback编入、无测试提供者。旧USB脚本指向s3-next镜像并含prepare/arm，已另写本轮脚本，仅使用查询白名单。固定ST-LINK 066EFF555748874987182240、当前COM10及其父设备序列号一致，接口状态正常。
+- 10:55:31–46 UTC以Hot Plug/4000kHz读取目标身份，CLI见3.21V及正确ST-LINK，但报Unable to get core ID/No STM32 target found。10:57:01 UTC三个串口查询ping/status/outputstatus通过，应用在运行，configured=0/transport_bound=0/output_allowed=0，UART/调度计数无错误；没有prepare/arm等控制指令。为区分连接模式，10:58:15–20 UTC保持速率只改Normal读取身份，报DEV_USB_COMM_ERR。根因未确认，没有据此改代码、驱动、时钟、接线或升级工具，也不盲目反复尝试。
+- 由于芯片身份读取失败，**没有执行新Flash备份、烧录或复位**，不写成新版板测成功。前轮Flash备份保留，不能代替本次写入前的新备份。证据在D:/codex_tasks/2026-10-01/task/s3-axis/usb-only-20261002/session-result.json；照片结果在photo-review/result.json。代码、旧软件测试、编译镜像未改，Git没有提交或推送。
+- 下一步先恢复固定板的SWD访问，再在24V关闭下重新核对身份、完整备份、烧录/校验最新HSI并做七条只读核验；不切HSE。随后经主线程通知才安排只读24V上电窗口，以默认输出禁用的canstatus/原始与解析反馈观察实际语义/新鲜度/Form增量。实际运动仍需分轴现场参数、固定/活动范围及真实停止和驱动读回来源到位，并先告知具体轴/输出/时长/停止条件。
+
+- 后续11:04用户确认已按RESET、继续24V关闭。11:05 Hot Plug只读重试报DEV_USB_COMM_ERR；只读排查定位ST-LINK服务PID28820及VS Code PID9756的本机7184活动连接。按本机CubeProgrammer2.23官方帮助的shared/tcpport尝试共享只读身份读取，11:10报DEV_CONNECT_ERR。普通恢复仅重启该ST-LINK服务（保留-d 5 -a、隐藏运行，不关闭Code/改驱动），11:12共享读取仍失败；服务实际日志进一步记录debug接口USB批量传输超时、0/16字节及STlink cmd send on USB failed。根因仍未确认，已停止继续重试，没有Flash备份/写入、解保护、安全选项或HSE变更。11:13:25三条新鲜只读查询再次通过，应用运行、配置/绑定/输出0。证据见同目录reset-recovery-result.json。下一项最小现场操作是24V保持关，将开发板USB拔下约2秒后插回原口以完整重启板载ST-LINK，再由主线程确认重连完成；此前RESET仅重启目标应用，不等同板载调试器断电重启。代码及既有镜像未改。
+
+- 后续用户11:27确认USB拔插/调整位置后可继续，11:28明确CAN/电源/电机接线未改并已固定电机。先只读核对重插后新端口，固定ST-LINK父序列号/COM10健康一致；11:29:58–11:30:13 Hot Plug已能读正确ST-LINK固件V2J28M18和3.22V，但目标仍报Unable to get core ID/No STM32 target found，不能称SWD完全恢复。11:32:18新的ping/status/outputstatus三查询通过，应用运行、配置/绑定/输出0。无新备份/写入/复位/控制指令，当前24V未新增独立确认或测量。参考已归档UM1724的CN2表，两跳帽ON才是板上编程通路；此前背面照片不显示该区域，下一步先只看/拍正面CN2两只跳帽，不改接线，再决定后续普通连接诊断。证据在同目录replug-result.json；原失败及恢复记录保留，代码/镜像未改。运动仍等通信、输出条件与具体方案满足后主线程先通知用户。
+
+- 后续用户11:37指出详细hardwarelist并提供新正面JPEG。已深入核对registry/C04 JSON摘录/UM1724表4–5及此前成功日志，新图通过当前Library官方助手在现有Ubuntu保留元数据落到Windows、实看原像素，CN2两跳帽均可见、CN4为裸排针无外接母头；初看疑似外接线的是CN12附近黑色件，图不支持CN4争用，不要求用户拆线。接口登记已补照片外观证据，不能当电气导通。历史成功与当前失败CLI/模式/频率/SN/FW相同；C04原PDF未本地归档，未假称查过原图。源代码主循环无低功耗/关闭SWD调用，原Core未改。为区分运行态与调试通路，11:46依据本机官方帮助请求UR/HWrst只读身份，仍报DEV_USB_COMM_ERR，硬件复位效果未验证；11:48单条outputstatus确认应用运行、配置/绑定/输出0。仍未备份或写Flash，不再继续换参数。下一项现场检查是USB和24V均断开后由用户将CN2两帽原位重新插紧再接USB；此为接触检查，非已确认根因，未经用户操作工具不改跳帽/接线。完整证据见s3-axis/cn2-review/result.json，代码/镜像和安全选项未改。
+
+
+### 2026-10-02 13:27 UTC：最新 HSI 烧录与 USB 验收
+
+- ST-LINK/V2-1 固件已由官方工具从 V2J28M18 更新至 V2J48M35，随后 4000 kHz HOTPLUG 芯片 ID 读取恢复；固定 SN 为 066EFF555748874987182240。
+- 烧录前重核 434 个冻结输入、当前生产源码及指定 ELF。当前工作区仅有允许的说明文档差异；HSI 与默认 enabled_axes=0、生产确认全零配置未变。沿用已有成功构建和主机测试证据，本阶段没有重跑或扩大其通过范围。
+- 已保留 524,288 字节目标 Flash 备份，SHA256：027ad024485bb49d03fa60fceae437b0b2120e5948277beda42d1c432f34794d。
+- 经当前执行会话直接用户批准后，13:27:28–13:27:30 UTC 烧录 A-HSI-S3-axes.elf，ELF SHA256：7ca3f2ac1713d5255ffcc3fb5ad5e01a20ade7e47c4a274be2892e86093db104。官方写入、-v 校验及复位退出码 0，日志包含 Download verified successfully。先前两次自动审批拒绝记录保留，未通过其他工具绕过。
+- 另行读回 64,488 字节，SHA256：ab4f52a31e71cdecfb46e7846d4f7ba32cb69a12cf3109d6b6568138bd1f3112，与交付 HSI BIN 完全一致。
+- 13:30:35 UTC，按固定 SN 新枚举 COM10；7 条只读 USB 查询通过。CAN1 配置为 500000、CAN2 为 1000000，均 started=1、start_error=0；output_allowed=0、configured=0、transport_bound=0、prep_state=0、arm_token=0。UART 错误/溢出/超时及调度超限为 0。
+- 当前 24V 关闭：肘部 seen/valid/online=0，肩部 profile=v22、verified=0、est/hb/wire_valid=0。这不构成真实电机 CAN 反馈通过证据，肩部 Form 与 0.6.5 协议兼容问题仍未解决；S2/S3 整体验收不据此标为完成。
+- 下一步仅可在主线程重新确认用户就在设备旁、可立即关闭 24V 后，安排上电被动 CAN 接收观察。未执行上电、使能、校准、运动或 HSE 硬件测试。
+- 完整本轮证据：D:/codex_tasks/2026-10-01/task/s3-axis/usb-only-20261002/target-flash-result.json。
+
+### 2026-10-02｜带电只读结果与最小停止软件补齐
+
+- 实物证据：13:46:46–13:46:56 UTC，固定探针/COM10执行17次只读查询；肩RX增加1119、肘RX增加10275，两路错误/丢帧/溢出/bus-off均0；肩心跳/估计刷新但位置速度全零，C620 ID1角度3437tick、0rpm、28°C。前后configured/transport_bound/output_allowed均0；没有prepare/arm/pulse/CAN发送、复位或烧录。原始记录为`s3-axis/powered-can-20261002/observation.json`。此窗口不证明Form根因解决或肩完整语义对应。
+- 软件变化：明确受监督裸C620单轴策略；真实逐帧250ms静止窗口及50ms新鲜度、2tick总漂移；准备/撤权后按接收戳重新积累，旧队列帧不能复用；ACTIVE拒绝续期；停止投递失败本次启动不能清故障。人工拔24V是备用手段，不制造可读GPIO、电源状态或永久人工确认。默认enabled_axes=0，未写入未确认现场参数。
+- 必要验证：只执行3组新增关键停止场景及既有外部路径CLI回归，4/4通过；WindowsDebug编译成功。首次主机启动器遇到本机PATH/Path重影导致找不到cl，修正本地启动器的查找后完成上述测试；未改编译器/测试行为。未重跑未受影响全套和既存静态检查，不宣称其全绿，ASan/UBSan及新增硬件验收未执行。最终证据为`s3-stop/host-final.json`、`s3-stop/build.json`。
+- 当前版本：板上仍为13:27已校验的7ca3f2ac HSI快照；停止新代码只离线实现，未烧录。已纠正阶段表、README和当前实现说明中的旧板上版本说法，保留历史日志。
+- 下一步：先完成S2肩侧非零量值/符号对照及离线恢复，再按用户最新要求提交GitHub；本次未提交或推送。运动另待主线程确认硬件窗口；首试候选及停止边界见固件`s3_output_preparation.md`，不宣布S2/S3完成。
+
+### 2026-10-02｜S2肩侧USB与CAN来源差异只读定位
+
+- 现场事实：主线程转述用户14:30已开启24V，14:38–14:39报告已手动转过结构活动范围、结束后无异响或碰撞；当时没有同步动态采集，不能补写成动态验收通过。14:34和14:41 GUI小表盘分别显示−127.5°和−131.9°，CAN原始0x029均全零；表盘具体字段/符号尚未厂家证实。
+- 最小具名对照：14:56:23 UTC，MotorWizard参数浏览页显示axis0.encoder.pos_estimate=2.9320929050445557；14:56:53 COM10只读查询显示0x029/DLC8/0000000000000000、age4ms、state1/error0/fault0、wire_valid1/verified0，输出许可/配置/绑定均0。14:57:31 encoder.is_ready=1，先前encoder.error=0；14:58:37 vel_estimate=0.01335144229233265。按手册位置为转子rev、速度rev/s；这些为静止时段顺序观察，位置截图与CAN相隔约30秒，不是同步采样，也不以微小速度值证明运动。肩CAN err仍14/last0B、未新增drop/invalid/fov/bus_off；未将计数不增长当作根因修复。
+- 结论：USB具名估计非零、ready=1，不能将CAN零帧解释为编码器始终未就绪；原始八字节已零，STM32解码/单位换算不是非零载荷被转换为零的原因。证据支持反馈取值路径差异，尚未确认厂家内部实现。上游ODrive fw-v0.5.6的CAN使用controller输入源、闭环入口同时连接输入源并arm，只作为假设来源，不能等同厂家0.6.5，更不能为初始化反馈而进入闭环。
+- 离线资料：厂家rev2.2第35页说明load_encoder_axis仅BETA必要、量产无效；第45–46页提供RxSdo opcode0具名属性读取，第48页将0x009映射到encoder估计。公开旧版0.5.13/0.5.14端点JSON可取得，候选0.6.5同路径返回HTML而非端点表；未找到本版实现/发布说明，不能套用旧端点号。下一步优先取得与实机匹配的端点表，再安排一次IDLE下CAN具名属性/USB/0x029对照；现阶段不重复上电、不改解析、不重新校准。
+- 变化与边界：本轮仅参数页面浏览、串口查询和离线资料核实；无使能、模式/参数写入、保存、复位、烧录或对外联系。已通知用户可关闭24V休息，断电动作未由工具确认。未改固件源代码，未重跑编译/测试；仅更新本日志和接口登记。S2继续未完成、GitHub未提交/推送。原始截图/日志及诊断索引在D:/codex_tasks/2026-10-01/task/s2-final-acceptance/usb-can-source-diagnosis.json，厂家询问草稿同目录manufacturer-question-draft.txt，仅草稿未发送。
+
+### 2026-10-02 15:33–15:54 UTC｜实机端点确认与限定CAN只读诊断
+
+- 实机只读：用户15:31:57确认开电并直接进行后，正常退出MotorWizard，15:33:03.704541–15:33:04.237157 UTC通过Native USB导出36965字节endpoint0 schema，共622次读请求；HW3.11.1/FW0.6.5/node1/axis0 state1身份校验成功。schema SHA256为cfd83580745d91c18d87c6832daa34677685e32e9d051e7f2b4bb562a90c9bc1，pos_estimate=2.9287331104278564rev、vel_estimate=0.005722047761082649rev/s、is_ready=true、encoder.error=0；未写属性、调用函数、发送CAN、复位或刷写。原始证据在s2-final-acceptance/usb-introspection/captures/20261002T153303.704211Z/，schema及限定帧recipe另归档到固件docs/reference。
+- 实现与参考：按厂家rev2.2 pp45–46和实际schema，仅固定节点1的只读float端点372/378，CAN1标准ID024/opcode0/DLC8；复用已有L1 SubmitAxes(mask1)，不建立任意发送/写入接口。逐帧匹配ID025、端点、opcode/reserved、长度、LE有限float与时间窗口，匹配结果独立于周期帧。每端点每次启动一次，主循环250ms等待；超时/TX未接受隔离，无重试。限定CLI shoulderreadpos/shoulderreadvel/shoulderreadstatus及来源/原生单位/接收戳，新鲜IDLE心跳和默认配置/绑定/输出0为发送条件。S3许可及CAN物理层未改。
+- 必要软件验证：新增codec/lifecycle/interlocks三组通过；首次CLI测试发现host HAL模拟没有自动TX完成，补测试中的邮箱完成步骤后，CLI、commands、既有shoulderfeedback及S3 CLI四组通过，共7组相关场景。未重复已通过的前三组、未跑未受影响整套。WindowsDebug构建退出0，MSVC /W3 /WX未报告警告；独立审查限定实现未见阻断问题。Windows ASan/UBSan、全套静态扫描及现场新增验收未运行，不写为通过。
+- 版本边界：新HSI-derived PLL ELF SHA256=28d34ed44e430982b92930cef2ed657747fc743d77a9591ff099d84b4ca3c045；BIN为69272字节、SHA256=db8a2823d227047e051295bc6fd5c3978059b55d3d0dde27de770b3d86510dc5。真实S3Site提供者编入，无TestS3符号；默认确认仍全0。本轮未刷入，板上仍为13:27校验的7ca3f2ac镜像；新停止策略与读诊断都在待更新镜像中。构建与测试证据在s2-sdo-read/build.json、host.json、host-final.json、image-manifest.json。
+- 未知与下一步：SDO无线上事务token，要求隔离唯一CAN主机；seq仅本机日志。encoder_sdo是编码器估计、不是原始计数；周期029的controller来源仍是假设，未伪装已确认。主线程要求编程期间关闭24V、USB保留，但新断电答复及具体烧录窗口未收到，本轮不操作硬件。下一项仅在新窗口明确后备份/刷写/独立读回HSI，再两次固定属性读取与USB/029短时对照；据实际应答补连续反馈并验收必要变化及断电恢复。S2仍进行中，GitHub未提交/推送。
+
+### 2026-10-02 16:08–16:11 UTC｜限定SDO HSI刷写与默认禁用确认
+
+- 授权/条件：主线程传递用户16:04:19“可以刷入”，16:05:23“确定”确认24V关闭、USB保留。仅按已说明的新HSI固件备份/烧录/校验/复位及最小USB状态范围执行；无独立24V电压测量，不扩大为上电/运动授权。
+- 刷写前核对：191个冻结固件输入与当前仓库一致，ELF SHA256=28d34ed44e430982b92930cef2ed657747fc743d77a9591ff099d84b4ca3c045，BIN69272字节/SHA256=db8a2823d227047e051295bc6fd5c3978059b55d3d0dde27de770b3d86510dc5；默认现场确认和enabled_axes仍0。固定SN066EFF555748874987182240、F446 ID421/512KB、ST-LINK V2J48M35只读确认成功。
+- 实际结果：16:08:38–42保存完整524288字节Flash备份，SHA256=2da86482bac29a106ae40ee6090b91b27575e107804fa6e03f15d77d1e038154；16:08:59–16:09:02官方-w/-v/-rst退出0，Download verified successfully及软件复位成功。16:09:18独立读回69272字节，SHA与指定BIN完全匹配。包含前轮停止源码改动和限定endpoint372/378读取；不再以13:27旧镜像代表当前板上版本。
+- 16:10:58重新枚举固定SN父节点COM10健康一致。16:11:37六条query通过：ping/status/canstatus/outputstatus/shoulderreadstatus/stopstatus；两CAN started1、start_error0、500kbps/1Mbps，configured/transport_bound/output_allowed/request_valid/arm_token0；UART/调度计数0，SDO phaseidle/seq0/accepted0/value=na。属性读取次数未用，stopstatus为无反馈/无停止投递，与24V关闭条件相符，不是实际停止验收。
+- 变化与下一步：本轮仅授权目标Flash操作及状态查询，没有CAN属性请求、使能/模式/属性写/校准/电机输出、HSE、接线或驱动固件变更。先等待主线程用户上电窗口，再一次pos和一次vel与USB/029短时对照，据实际结果推进连续反馈/肩侧变化与掉线恢复。S2仍未完成，GitHub未提交/推送；原始命令/备份/读回/六条应答在s2-sdo-read/usb-flash-20261002T160753Z/。
+
+### 2026-10-02 16:21 UTC｜肩侧CAN属性/USB紧邻只读对照
+
+- 用户16:16:08在主线程静止/不使能计划下确认24V“已开”。固定SN父节点COM10与实机HW3.11.1/FW0.6.5/node1/state1/serial197332430435634再次只读核对；schema仍cfd83580，encoder.ready=true/error0，默认配置/绑定/输出0、SDO初始idle/seq0。MotorWizard未运行。
+- CAN1仅两帧：372位置请求与378速度请求各一次、opcode0，无重试/复位/其他CAN控制。16:21:37两次均phase=received/accepted1/rejected0，ID025/DLC8，位置raw00740100FC993740、速度raw007A010000007ABB。MCU sent/rx分别同tick753932、754036，0ms时差是合法亚毫秒往返，不伪造额外精度。
+- 原始float复算：CAN位置2.8687734603881836rev，USB同名值2.868832588195801rev，差−0.0000591278076171875rev，USB完成到CAN状态收到约96.541ms；CAN速度−0.003814697265625rev/s，USB0.0019073487492278218rev/s，差−0.005722046014852822rev/s，相隔约197.141ms。两者顺序采样、非同步；静止微小速度波动不能当作运动/方向验收。准确时间由原始USB ISO记录重算，避免PowerShell把JSON时间转DateTime后字符串丢失小数秒造成的差值偏差。
+- 同窗口周期029/DLC8仍0000000000000000，前后age5ms，heartbeat state1/error0/fault0/wire_valid1，但未确认连续量值。肩RX37297→37389、肘340113→340939，两路err/drop/invalid/fov/bus_off均0且无增量；这是本次新固件短窗口计数，不说明历史Form根因已修复。末尾配置/绑定/输出仍0。已证实CAN属性能读非零encoder估计而周期029仍零，厂家内部controller来源仍未证实。
+- 当前边界：两端点本次启动读取机会已用，不重发或复位绕过；无enable/calibrate/mode/属性写/电机输出/Flash/HSE操作。单次SDO不是连续反馈提供者，S2仍进行中、GitHub未提交/推送。下一项由主线程先通知用户整机24V关一次、USB保留，超过100ms观察心跳/估计戳冻结及wire_valid0，再开一次观察新戳/状态恢复；不拔带电CAN线、不重复SDO。之后仍需确定可信连续肩反馈并验证必要变化。原始日志在s2-sdo-read/can-usb-20261002T162124633Z/record.json，准确复算在analysis.json；USB原始capture位于s2-final-acceptance/usb-introspection/captures/20261002T162136.617552Z/。
+
+### 2026-10-02 今晚｜S2有界连续编码器观察准备与验收调整
+
+- 本次完成：在已由16:21实机证明的固定只读端点372/378上增加有界连续观察；`encstart/encstop/encfeedback`无参数，CAN1/node1按位置后速度配对；与一次性SDO互斥、每次启动仅一个会话，无自动启动/重启/重试。Windows采集工具保留设备绑定、原始串口应答、时间戳/计数、量值范围及速度关系；READY_FOR_MOVEMENT后才由主线程通知一次小幅手动变化，物理变化结论仍须人工核对。
+- 参数/接线变化：观察周期50ms（最多20Hz配对）、时长30秒、最多1200请求、应答50ms、配对新鲜度100ms；厂家默认100ms心跳另给250ms观察预算，不放宽S3许可。CAN物理层/接线、HSI-derived PLL、enabled_axes=0及S3确认项未改；连续观察不接入S3许可。SDO无线上事务token，唯一CAN主机及有序应答为前提，配对计数不是设备事务编号。
+- 实际软件结果：7组目标主机场景通过；心跳预算改为250ms后只重跑受影响的lifecycle/faults两组，均通过。WindowsDebug构建退出0，未报warning；未重复未受影响全套、不声称ASan/UBSan或全静态检查通过。ELF SHA256=e8466a15caad32216d94a927cb14f336c5ab17b6f7601e211dbd695379ad381e；BIN72604字节/SHA256=993161f700860e0c4178e7eb767698eb863714763a01a88c89302cd360613e6d。manifest确认真实S3Site、无测试提供者、默认禁用。证据在D:/codex_tasks/2026-10-01/task/s2-encoder-stream/的host.json、host-final.json、build.json、image-manifest.json；采集工具先前仅离线验证，带电capture仍未运行；下条被动USB结果不算物理动态验收。
+- 今晚硬件结果：用户已确认24V关闭、USB保留并授权更新；未独立测量电压。固定SN066EFF555748874987182240/F446身份及143个固件输入核对成功；烧录前524288B完整Flash备份SHA256=763f12813ea46466bb1d6b3803f7989de2e03aa4b7fe8cff687d18e9a0ea571e，其前69272B与原16:09镜像匹配。17:00:56.785536–17:00:59.484836 UTC官方烧录/-v/-rst退出0，包含校验成功；17:01:17.690341完成72604B独立读回，SHA256=993161f700860e0c4178e7eb767698eb863714763a01a88c89302cd360613e6d，与BIN相同。当前板上为e8466a15连续观察HSI镜像。17:02:02.590084被动USB prepare通过，配置/绑定/输出0、stream active/pairs/tx0、两CAN rx0、运行错误0；仅11次被动查询，无encstart/encstop、一次性属性读取、使能/校准/模式或电机命令。证据在s2-encoder-stream/usb-flash-20261002T165957Z/result.json及usb-prepare/；未执行连续反馈或手动变化现场验收。
+- 验收调整与下一步：用户已取消本轮S2实物掉线/恢复试验，状态为取消、未执行，不写通过；历史计划保留为历史记录，不再是当前待办。S2只剩可信连续肩反馈及一次小幅手动变化，明早由主线程确认有人现场后在一次采集窗口完成；不因静止噪声、COMPLETE或旧029零帧自动判通过。S3小输出、停止和断连处理要求保持，当前S2/S3未完成，GitHub未提交/推送。
+
+### 2026-10-03｜首次连续窗口中止、只读定位与可见提示修复
+
+- 实际现场结果：用户确认24V已开后仅执行一次固定只读capture。00:34:29.844开始、00:34:30.021 READY；00:34:34.871 ABORT，固件在4952ms因肩CAN err从0到1、last_err=0x40（Bit recessive）停止，reason5/valid0。完成99对、提交199次请求，主机保存50组有效观测；tx不是线上成功次数。肘错误无增量、已记录输出状态均0，无使能/运动命令。用户未收到动作指令，主线程00:35:04收到就绪消息时已经中止；这是提示链缺口，不能归责用户，也不能把微小噪声当动态通过。原始228事件及summary在固件tests/encoder_capture/evidence-20261003T0034063657053Z/。
+- Astra ultra只读诊断：固定封装与既有成功SDO共用，单请求/全空邮箱/唯一应用发送路径，无丢帧、FIFO溢出或调度超限证据；估计CAN1总占用4.15–5.05%，未支持带宽饱和解释。0x40来自硬件LEC；物理原因未明，名义500kbps/85.714%采样点正确不等于实测时钟正确，未盲调频率/采样点/周期或关闭保护。报告D:/codex_tasks/2026-10-01/task/s2-br-diagnostic/read_only_diagnosis.json含原始hash、源码行号及下一项最小观察。
+- 已修复主机提示链：新增visible_capture.ps1/py与visible_state.py，默认灰色等待且不访问设备；未来明确Live窗口仍由用户点击一次开始。只有本次owned子进程READY与两组新鲜有效观测一致才变绿；无效/ABORT/结束/进程退出、200ms停更或迟到/时钟跳变撤下绿色并锁定，25ms界面检查。停止提示按钮仅撤下动作提示，原有只读子进程完成最多30秒及encstop清理；没有伪称即时CAN停止。原capture.py/ps1与固件均未改。
+- 实际离线验证：11项重点状态测试通过，涵盖真实228事件回放到reason5红色、50有效观测、预热、迟到积压READY、停更、错会话/配对、结束/时钟跳变不可恢复；首次预热合成夹具顺序错误被守卫拒绝，修正夹具后通过，未放宽生产校验。Windows默认WAIT窗口实际显示，IsWindowVisible=true、Popen0、未导入serial，自身窗口截图已保存；随后只改可见文案。证据在D:/codex_tasks/2026-10-01/task/s2-visible-capture/offline-validation.json与wait-window-proof.json；未启动Live或进行新现场测试。
+- 下一步最小需求：主线程已要求关24V保留USB，本轮未收到新的断电答复、未访问设备。先授权保留RAM/邮箱的被动观察，不复位：shoulderreadstatus原始025与接收戳，必要同批HOTPLUG只读CAN1邮箱/IER/TSR/ESR/BTR/RCC。显示field/ep可能是一次性模式默认值，必须从raw解析端点；邮箱标志也不直接等于第199次结果。再依据这些证据选择一项物理区分手段。当前会话已用，S2连续及变化均未通过，掉线恢复取消未执行，GitHub仍未提交/推送。新可见提示与实时采集结合尚未现场验证。
+
+### 2026-10-03 00:50–00:55 UTC｜断电保留USB后的缓存与CAN发送邮箱只读快照
+
+- 条件与方法：用户00:48:38确认24V关闭、USB保留并继续；未独立测量24V。固定SN066EFF555748874987182240重新绑定健康COM10，仅发shoulderreadstatus/encfeedback/shoulder/outputstatus/status五条缓存查询，无新CAN请求。随后以ST官方2.23.0文档确认的HOTPLUG（不暂停、不复位）单次连接，普通r32读取CAN1 TSR、三个TX邮箱、MCR/IER/ESR/BTR及RCC时钟配置；地址/非读清语义由官方CMSIS、SVD和HAL交叉核对。没有reset/halt/寄存器写/CAN命令、重试或NORMAL回退；CLI退出0且设备身份一致。工具打印的“Reset mode: Software reset”为所选复位方式，不是发生复位的记录。
+- 缓存发现：最后应答ID025/DLC8/raw007A010000000000、rx_ms27192024，解码为端点378速度0，仍是第99对速度；不能误用stream_owned下显示的默认field=pos/ep=372。encfeedback仍reason5、pairs99/tx199/valid0，未有后续位置应答。肩RX已从中止时12963增加到47205，后续约5分11秒被动接收而错误仍1/0x40；这支持后续被动接收可继续，不证明主动请求错误的物理原因。configured/transport_bound/output_allowed/request_valid/arm_token均0，UART/调度错误0。
+- 邮箱发现：TSR=0x1C000005，邮箱0 RQCP=1、ALST=1、TXOK=0、TERR=0，三个邮箱均空；TX0保存标准DATA ID024/DLC8/raw0074010000000000端点372、TXRQ=0，与第100对位置请求相符。MCR=0x00010018确认NART=1（不自动重发），IER=0x00008F0A确认TMEIE=0；仲裁丢失锁存与独立LEC路径报告的BR不是同一个错误定义，不能直接相互等同或据此盲开重发。TX1/2空闲残留值不证明曾发非法帧；邮箱锁存尚不能代替故障时刻线上记录。
+- 时钟与限制：BTR=0x001A0005、RCC CR/PLLCFGR/CFGR=0x03007B83/0x22015410/0x0000100A，实读确认配置为HSI-derived PLL84MHz、APB1名义42MHz、CAN1名义500kbps/85.714%采样点；并非实际频率/抖动测量。ESR当前0不能抹去应用已保留的历史BR，故障后正常接收可使计数回落。根因仍未定位，不修改固件、接线、采样点或重试保护。
+- 证据与验收状态：原始serial.json、register-cli.log、registers.json及官方读取方法证据在D:/codex_tasks/2026-10-01/task/s2-br-diagnostic/passive-read/snapshot-20261003T005036Z/；CLI原始SHA256=9054152220746b3c39ee6b18240660b24a1172fad7996c41f8870f67570d2766，独立解码为同目录上两级register_snapshot_decoded.json。包装器最初因误以为寄存器值带0x前缀退出1，已从原始日志离线纠正解析，未重读硬件。此次只有只读观察和文档更新，没有固件改动，未重复编译/软件测试/连续采集。S2可信连续反馈与手动变化仍未通过；掉线恢复取消、未执行；GitHub未提交/推送。
+
+### 2026-10-03 01:12 UTC｜GDS68终端电阻软件配置单次只读确认
+
+- 授权与条件：用户在主线程两次回复“已开”，确认24V已开启、原USB/CAN连接保留、电机静止；未独立测量24V。只执行已准备的NativeUSB终端读取，不开启连续采样或运动。工具与复用代码hash匹配，MotorWizard进程检查通过，唯一VID1209/PID0D32/interface2/alt0/bulk83/03按原路径读取。
+- 实际结果：01:12:01.839395–01:12:02.050211 UTC，9项精确身份与状态校验均匹配：HW3.11.1/FW0.6.5/node1/axis0.current_state1(IDLE)/板SN197332430435634；随后ep72/bool读can.config.enable_r120=true，ep71/uint16读can.config.r120_gpio_num=5。总计11次空输入属性读取，固定schema SHA256=cfd83580745d91c18d87c6832daa34677685e32e9d051e7f2b4bb562a90c9bc1/CRC63447，没有重导schema、重试、参数写、保存/复位、CAN请求、encstart或电机命令；显式释放interface2成功，CLI退出0。
+- 影响与边界：补齐此前未知的软件终端状态并同步硬件接口表；true只证明软件开关值，不证明物理120Ω实际导通；GPIO编号5不直接映射未核实物理脚。不能仅据此排除终端/接触问题或确认HSI、仲裁、收发器为根因。不改参数/接线，不重复capture，不据该查询推进S2验收。S2可信连续反馈及手动变化仍未通过，掉线恢复取消未执行，GitHub未提交/推送。
+- 证据与下一步：原始USB请求/回复、精确身份、配置值及释放状态在D:/codex_tasks/2026-10-01/task/s2-final-acceptance/usb-introspection/termination-captures/20261003T011201.838861Z/capture.json，SHA256=9fae35726b049f06ebe4b0001c6b1f1ce7b48aa7b90a64c334174996fd6ad3f8。下一项由主线程据“软件端接已开启、实际导通仍未知”选择最小物理或时钟区分手段；本次不自动复位、切HSE或重试采集。固件未变，未重复编译或离线测试。
+
+
+### 2026-10-03 01:19–01:24 UTC｜当前stream同源时钟候选与照片核对，仅离线
+
+- 实际准备：固定活动工程462个输入，144个固件构建输入匹配板上已验证72604B stream；A为HSI16/M16，B为HSE bypass8/M8，其余PLL/总线/CAN时序、NART、stream周期/配对/故障即停及默认配置/绑定/输出0相同。仅IOC和main.c时钟段不同，28个USER CODE块一致；复用此前CubeMX6.18.1生成证明，没有猜改应用、CAN参数或保护。活动固件与个人设置未写，原工作区状态在文档更新前字节相同。
+- 必要验证：两版WindowsDebug配置/编译/BIN与HEX转换均退出0、无编译warning，FLASH72604B/RAM9640B；两版generated检查通过，独立462文件差异审查通过；生产EncoderStream/S3Site符号在位，无TestS3。新A BIN SHA256=993161f700860e0c4178e7eb767698eb863714763a01a88c89302cd360613e6d，与当前板上已验证BIN完全相同；B BIN SHA256=acd3910c4cab2a8b959cfedd710cc327c1f95ea9203b9970301a79fbd290a82b。原e8466a15 ELF及HSI BIN已归档回退。候选和证据在D:/codex_tasks/2026-10-01/task/s2-stream-clock-ab/deliverables/manifest.json；应用逻辑未变，未重复主机功能测试，ASan/UBSan与全静态扫描未运行。
+- 照片/硬件清单：当前Library两图已实际查看；背面图为已知照片重复，SB16/SB50/SB54有0Ω、SB55空。新正面图按丝印四行R34/R36/R35/R37与官方C04第3页交叉定位，确认R35/R37及X3外观未装，X1晶体在位标8.000；与UM1724 Rev17第7.9.1节的ST-LINK MCO装配条件相符。接口登记同步该外观证据，未推定导通、实际MCO或C04背贴。photos/result及独立review在同目录photo-review；照片不能确认当前24V关闭和USB拔除。
+- 未执行与下一步：本轮未访问设备、烧录、复位、HSE启动/时钟测量或现场A/B；启动缺钟仍在CAN/App前HAL100ms超时进入fatal，CSS未开，运行缺钟恢复未验证。只有明确断电/烧录窗口后才能做下一项现场区分；新错误/ABORT即停、不自动重试，按授权断电恢复步骤还原归档HSI。当前BR物理根因未定，S2可信连续反馈及一次手动变化仍未通过，掉线恢复取消未执行，GitHub未提交/推送。
+
+
+### 2026-10-03 01:31–01:33 UTC｜USB-only HSE stream单次刷入、读回与启动通过
+
+- 授权/前置：用户在主线程明确24V关闭、Nucleo USB接回请求后回复“可以刷入”；仅一次HSE候选更新与默认禁用核查，不开24V、不采样、不运动。固定SN066EFF555748874987182240/F446 ID421/512KB/V2J48M35、144固件输入/462候选输入以及指定ELF/BIN哈希复核成功。保存524288B刷前Flash，SHA256=a21d2623f6a4f5d4ed0df6dfd1255447a617b2e7892e34b65531afc3873a68e2，前72604B匹配原已验证HSI993161f7；未独立测量24V。
+- 实际刷入：01:32:46.315438–01:32:49.029262官方-w/-v/-rst退出0，校验成功及软件复位记录存在；01:32:56.874049独立读回72604B SHA256=acd3910c4cab2a8b959cfedd710cc327c1f95ea9203b9970301a79fbd290a82b，匹配HSE BIN。当前板上ELF=a6513e2eb4ffe0a6d0101f5382651c9f67c76a400e3f2b8ce3831358634b3238，活动源码仍HSI；原HSI回退及完整备份保留，无第二次刷写/自动回退。
+- 实际启动：01:33:04 HOTPLUG读取RCC CR/PLLCFGR/CFGR=03077B83/22415408/0000100A，HSEON/HSERDY/HSEBYP、PLLON/PLLRDY均1，PLLSRC_HSE1，M8/N336/P4/Q2/R2，SWS2，APB1÷2/APB2不分频。外部旁路时钟实际启动并选中；84/42/84MHz为名义输入计算，未测实际频率/波形。01:33:24固定SN父节点COM10健康，01:33:34六条缓存查询通过：两CAN启动0错误，configured/transport_bound/output_allowed/request_valid/arm_token0，运行计数错误0，SDO idle/seq0，stream active0/reason0/pairs0/tx0；无encstart或CAN属性/使能/运动命令。
+- 验收边界/下一步：本次仅USB-only启动通过，BR物理根因未定，可信连续肩反馈和手动变化仍未通过，掉线恢复取消未执行。主线程报告当前visible capture异常JSON事件有未捕获异常，现场动作指导暂缓，先在另一对话修复验证UI，再授权有人现场的一次有界HSE采集；没有把该修复混入时钟单变量候选。保持24V关闭，不自动重试采集/复位；GitHub未提交/推送。原始证据与结果在D:/codex_tasks/2026-10-01/task/s2-stream-clock-ab/usb-only-20261003T013012Z/result.json，当前板上记录同步至s2-stream-clock-ab/current-board.json及s2-encoder-stream/current-board.json。
+
+
+### 2026-10-03 01:54 UTC｜HSE上电静止30秒连续反馈窗口通过，未做人工变化
+
+- 条件/边界：用户在主线程开24V且保持机构不动请求后回复“打开了”，仅一次静止只读capture；未独立测量24V。原非UI采集器及固定设备绑定沿用，READY旧事件只留日志，未提示动作；无驱动/使能、固件或保护改动、复位、重试。不等待另一对话是本次静止授权，不表示修复visible UI异常事件缺陷。
+- 实际终态：正常有界结束active0/reason2/elapsed30000ms，固件600对、提交1200请求、rejected0，主机保存300对不同有效观测；约10Hz主机观察会跳过约20Hz固件部分配对，600不是保存样本数，tx不是线上成功计数。新鲜有效配对及时间戳推进检查通过，末尾valid0是正常结束。encstop收尾确认成功，所有已记录输出许可0。
+- 总线证据：肩RX56401→60916（+4515），肘516780→547227（+30447）；两CAN err/drop/invalid/fov增量全0、last_err00000000、bus_off0。本次没有新BR或其他已记录CAN错误。位置2.955029–2.955193rev/范围0.000164rev只作静止波动；用户没有做人工变化，不能据数值变化判通过。原始1172事件/summary在固件tests/encoder_capture/evidence-static-hse-20261003T0153385075330Z/，结果和独立复核在D:/codex_tasks/2026-10-01/task/s2-stream-clock-ab/static-window-20261003T0153384983536Z/static-result.json。
+- 判断/下一步：本次HSE静止连续窗口通过，相较HSI4952ms BR中止支持时钟假设，但不确认物理根因或长期稳定性。S2人工变化及总验收仍未通过，掉线恢复取消未执行，GitHub未提交/推送。stream机会已用，完成即停，不自动复位重试；后续人工变化需要新明确窗口及可靠动作指引。板上版本保持HSE，活动工程源码仍HSI，两处current-board记录已同步。
+
+
+### 2026-10-03 02:27 UTC｜S3肩属性接收provider离线接入，输出保持禁用
+
+- 根因与范围：IDLE-only的S2 encoder_stream不能用于运动反馈；S3此前只取周期029，未消费已验证的372/378编码器属性。依据既定S3准备流程、ExoKit/Rhino参考与实机endpoint0 schema，新增7项只读属性codec、请求关联/完整快照provider和S3显式来源选择；保留旧029观察及原诊断API。没有并入此前独立审查中的encoder_stream/output_gateway修复。
+- 真实证据边界：新provider用请求时间关联零目标/模式证明，拒绝错配、超时、重复、时间回退与陈旧快照。生产site、方向/零点/限位、停止确认保持原值0；未增加自动TX或运动命令，未以IDLE/速度0伪造独立停止。新增5个属性的CAN实际读回/padding及实时负载仍未验证。
+- 实际验证：12个针对性主机场景通过；独立审查发现请求时间回退可能抬新模式证明，已先复现失败再修正，并复验受影响的关联/consumer两项通过。MSVC /WX、WindowsDebug最终构建无警告，FLASH74492B/RAM9840B；生成配置静态检查、git diff --check通过（Git有既有行尾提示）。原生产site、HSI源时钟、output_gateway、encoder_stream和CAN发送层hash未变；已刷HSE镜像与A/B证据保留。本次未访问设备、复位、烧录或驱动。
+- 未完软件：SDO与输出gateway的统一发送协调、诊断互斥、持续状态刷新及真实停止输入绑定；不能让每周期purge与SDO独立发送竞争。这些是后续软件实现，不转嫁成用户重复手动测试。最小现场未知是肩映射/允许区间、固定承托与选定停止来源。
+- 验收状态：用户取消手动操作，控制台已关闭且未采样；未来可研究一次有限驱动覆盖变化，但本次没有执行，S2变化仍未验收，S3运动/停止未验收，未上传GitHub。详情见固件docs/s3_output_preparation.md新增节；改动清单、复现及验证记录在D:/codex_tasks/2026-10-01/task/s3-shoulder-provider/。
+
+### 2026-10-03 02:47 UTC｜S3肩发送协调、连续刷新与停止输入软件链完成，仅离线
+
+- 接续02:27 provider工作：显式prepare取得唯一读会话，7属性完整快照后进入既有零目标/模式/闭环准备，运行持续刷新；读会话与旧诊断互斥，异常/取消/窗口到期关闭且不自动恢复。L1分开管理只读与输出邮箱，正常purge保留读、停止同时取消读并尝试输出停止；处理HAL完成/复用竞争，无法确认取消即锁故障。真实HAL GPIO→停止provider→S3反馈与门控已接通，默认两路NONE、不启时钟/改引脚、不以B1或IDLE代替独立停机。
+- 最少验证：20个针对性主机场景PASS；审查发现等待初始快照取消失败未锁FAULT，先运行反例实际失败，再修复并复验。最后仅受影响5组于02:43:25 UTC全PASS，WindowsDebug02:43:21 UTC配置/编译0且无warning，FLASH78868B/RAM9872B。模型完整流程读取35次/输出23次/IDLE1次、模拟20ms请求到期停止无重启，不是实物数据。生成配置检查与git diff --check通过，发送协调及停止输入独立审查通过；未扩大测试或重复未受影响组。
+- 保护与事实：33代码/测试文件及2文档增量保留用户已有内容。output_gateway、encoder_stream、生产site、main时钟与IOC哈希未变，未混入旧独立问题；已刷HSE与A/B证据保留，本轮HSI编译未烧录。沿用已有电机固定、接线未改及总电源插头可达确认，不重复询问。实际两路停止信号的引脚/电平/偏置/极性及独立停机物理含义无记录，肩映射/范围和当前承托边界仍未知，不能伪造确认或补成true；现场参数保持0，默认禁用。
+- 验收边界：软件链路完成不代表设备ready。新5项属性实物读回/padding、真实S3运动和停止未验证；S2已有HSE静止连续窗口通过，但一次变化仍未验收，掉线恢复取消未执行。本轮无设备访问/复位/刷写/驱动/校准/参数修改，无commit/push，ASan/UBSan及全套静态扫描未运行。详细说明见固件docs/s3_output_preparation.md末节；本轮patch、35文件清单、通过与失败原文、审查及completion保存在D:/codex_tasks/2026-10-01/task/s3-shoulder-chain/。
+
+### 2026-10-03 03:10 UTC｜肩受监督单次动作软件、停止后观察与限定USB工具完成，HSE候选未刷入
+
+- 接续前轮并纠正GPIO边界：新增仅肩的受监督台架策略，支持明确映射的现有有支撑装配；无需购买传感器或加接线，不把人工拔AC伪装成MCU可读断电。第一次有效pulse消耗本次启动机会，不能续期/再Prepare/Arm/ack。停止后保留在途只读关联，在事件之后的新鲜IDLE与位置/速度四时间戳成立时才积累静止；旧快照和重复轮询不能凑窗口。观察成功/超时后关闭读取，历史observed不授予许可；通信/输出/服务故障立即隔离，停止失败锁存。
+- 最小修正/验证：旧gateway Arm/首次Replace期限含回绕4反例先失败后通过；独立审查发现首次发送/服务故障被成功停止投递掩盖、继续观察的两反例，已先失败复现再修正。21个不同关键host场景分批覆盖，末次9项PASS，无MSVC /WX warning；初次MSVC PATH/Path重复仅在本地执行包装器解决，期限age21夹具误先Step20已纠正，原失败日志保留。模拟链56读/23输出/1次IDLE、29ms后观察成立是测试数据，不是实物验收。
+- 工具与候选：原生USB固定20个只读标量（9身份+7属性+3限制+末IDLE），8秒/500ms/20秒期限、异常停止无重试，四离线场景及独立审查通过，未capture。沿用验证HSE的main/IOC生成默认禁用候选，WindowsDebug/生成检查/BIN/HEX通过、无warning，FLASH82780B/RAM9960B；生产符号无测试提供者。活动源码HSI、生产site0与旧encoder_stream保留，旧已刷HSE/A-B未动。
+- 新用户事实已复用：默认ExoKit机械限位未加插件、有支撑允许转动，既有固定/插头可达不重问。已核原手册PDF7页图b及默认代码：肩侧后伸20°至前屈115°、名义135°；8:1有实读与手册依据。原tare基准和图示零位不同，当前转子读数不能推到机械两端；仍需一个实装机械姿态的编码器锚点及方向/输出连接比例。24V最新回复未明确关闭，不能自动刷写/动作。
+- 下一步/边界：现场窗口由主线程明确通知后，先一次USB只读与机械映射定位，按实际值填写集中限值/停止观察参数，再准备一次动作候选及确认断电的刷写窗口。当前候选依然默认禁用。S2变化、S3运动/停止未验收；掉线恢复取消。本轮未访问设备、刷写、复位、驱动或修改设备设置，未commit/push。全部增量/原始失败与通过/HSE哈希及执行方案在D:/codex_tasks/2026-10-01/task/s3-shoulder-supervised/，固件docs/s3_output_preparation.md末节记录具体合同。
+
+
+### 2026-10-03：S3缓存观测与只读七属性资格检查软件收尾（离线）
+
+- 衔接上一条日志：本轮前03:24:10 UTC已在单独授权窗口完成NativeUSB20/20只读，首末IDLE、校准/ready=true、目标0、模式3/3；无重试/写参数/CAN请求/复位。证据为 `s3-shoulder-supervised/usb/captures/20261003T032410.058186Z/capture.json`，设备45A/30rev/s仅为原配置，未作为试验限值；不据该历史窗口推断现在电源或现场状态。
+
+- 接续肩持续属性服务，新增 `s3feedback/s3properties/s3reader` 缓存查询及 `s3limits/s3timing/s3stopcfg` 实际配置查询。序号/请求时刻/接收时刻保持来源，查询不发CAN、不将旧数据刷新为有效。
+- 新增一次启动最多一轮七属性 `qualify`：只在输出禁止、未配置绑定及健康 IDLE 下启动，250ms单项/2000ms总窗、首错停止、无重试，最后一项之后须有新 IDLE 心跳。复用既有只读发送与永久本次启动所有权，和诊断/连续流/prepare互斥；没有模式或输出命令。原始帧及失败原因可通过缓存命令取回。
+- 新PC入口在 `firmware/Exoskeleton_F446/tests/s3_capture/`，串口初始化/日志复用 encoder_capture；默认离线。后续实物 trial 需具体已确认计划及真实资格记录，核对实际固件配置后串起准备、零目标/模式读回、READY、token、单次请求、TTL锁存及停止后新反馈记录。资格与trial用不同冷启动，工具不自动复位、重试或提升参数。
+- 必要C场景12/12 PASS，MSVC /WX无warning，包含首次开发过程中测试夹具错误的修正；原失败编译记录保留，未将其当作已执行测试。PC离线结果、独立审查和最终应用检查详见本轮 `completion.json`。默认禁用HSE候选编译通过，FLASH89576B、RAM10560B；活动HSI时钟、现场全零配置、原连续流与既有输出gateway未改。本轮没有硬件访问、刷写、复位、运动、设备参数修改、commit或push。
+- 对应开源索引8/27/28/30行，复核CLIP、既有GDS只读编解码/所有权、ExoKit请求撤销及旧PC记录代码。接口和限制说明同步追加 `firmware/Exoskeleton_F446/docs/s3_output_preparation.md`，保留所有历史日志。
+- 软件证据：`D:/codex_tasks/2026-10-01/task/s3-qualification-telemetry/` 中的 `host-02.json`、PC测试记录、`review.json`、`hse-result.json`、`changed-files.json` 和 `completion.json`。当前板上仍为前轮HSE连续读取镜像；本轮候选未刷入。
+- 阶段事实未提升：已有肩静止30秒连续可信窗口；S2一次真实变化、S3真实运动/停止尚未验收。五项新增属性真实CAN及持续七读负载未验证；掉线恢复已取消。前轮0.020Nm/100ms/0.20Nm/s仅为审阅候选，未充当现场批准值。下一步先完成实物姿态/编码器与方向限位映射及只读资格窗口，再按已确认现场参数执行一轮必要验收；当前24V状态未知，不使用旧通电报告推断。
+
+
+### 2026-10-03 06:10–06:16 UTC：USB-only 单次刷入七属性资格候选，缓存核查恢复通过
+
+- 用户当前明确24V已关闭、USB保留后，仅一次刷入默认禁用HSE候选 `S3-qualification-HSE-disabled.elf`（SHA256 b37d0394e38de117b7cda060b099317ada97d0829176ee8271fcb25d58dc0359）。固定ST-LINK/F446身份及512KB备份通过，06:10:28–31官方verify/reset成功；独立89576B读回SHA256 960a51141a9a0240de37c57510507a2498d422be01d4655fa69fc4e517de2193与候选一致，RCC为03077B83/22415408/0000100A，HSE bypass/PLL M8 N336 P4正确。未重新编译或重复刷写。
+- 原缓存前检在打开串口前因Windows Win32_SerialPort/WMI枚举5秒超时停止；后续明确授权诊断后，该枚举仍超时，Winmgmt服务运行、活动设备映射存在COM10。改用本机SDK cfgmgr32活跃节点/健康/父节点完整固定SN的双次只读查询，0.000814秒成功；串口唯一一次独占打开成功，无占用。06:16:16的ping/status/outputstatus/qualstatus四条缓存查询全部通过，UART/调度错误0，configured/transport/output/request/token/prepare均0，qualification state/attempted/completed/claimed/pending均0。
+- 记录工具仅替换主机身份前检：native helper默认/导入不读设备，显式--probe且subprocess总限5秒；采用不可优化删除的显式检查。独立静态审查通过，复验仅一个既有guards离线场景，git diff --check通过；未重跑C或PC整套测试，固件源码/镜像未改。
+- 本恢复窗口没有复位、烧录、CAN请求、资格启动或电机动作。用户已确认两侧有活动余量，不再要求照片；该定性事实未变成角度、零位或方向参数。当前保持24V关闭，下一步由主线程通知后仅通电做一次有界只读资格检查。真实变化/运动/停止仍未验收，掉线恢复已取消，GitHub未提交或推送。
+- 全部刷写、读回、时钟及原超时证据在 `D:/codex_tasks/2026-10-01/task/s3-qualification-telemetry/usb-only-20261003T061024893484Z/`；成功缓存读取在 `cached-read-20261003T061616065379Z/`，恢复源码/校验与最新板上状态见 `binding-recovery.json`、`current-board.json`。旧失败记录保留，未重写成通过。
+
+
+### 2026-10-03 15:24:30–31 UTC：单次七属性真实CAN只读资格通过
+
+- 用户当前确认24V已开，仅执行本轮七属性只读资格窗口。固定ST-LINK/COM10现读身份、健康IDLE、默认未配置/未绑定/输出禁止、qualification未用及连续MCU uptime前检全部通过；沿用06:10刷入并独立读回的HSE默认禁用候选ELF b37d0394e38de117b7cda060b099317ada97d0829176ee8271fcb25d58dc0359，本轮无刷写或复位。
+- qualify仅一次，七项真实CAN请求/回复全部有效（ID025/DLC8、类型与padding一致），终态COMPLETE/state2/reason0，attempted7/completed7/mask127，首末健康IDLE、pending0/out0。实读位置2.8727259635925293转子rev、速度0.0019073487492278218转子rev/s、calibrated/encoder ready均true、input_torque=0转子Nm、control/input模式3/3（位置/位置滤波）；未改变设备模式或参数。
+- 七读周期6ms、整个资格窗口54ms，末IDLE比第七回复新47ms。每项请求/回复落在同一1ms tick，不能解释为物理零延迟。CAN接收54994→55034（含心跳/估计/回复），drop/invalid/fov/err均0→0；UART错误、溢出、发送超时及调度超限均0→0。原始22条UART命令中仅一次qualify，没有使能、prepare、arm、pulse或输出命令，串口已关闭。独立只读证据审查通过，未重复任何测试或设备操作。
+- 当前MCU启动的资格所有权已消耗（claimed1保持；cancelled1表示所属只读发送取消已确认，不表示失败），不能在此启动进行运动准备。后续实际变化仍需单独启动及具体冻结的姿态/方向/范围与动作/停止参数；既有定性活动余量及动作授权继续沿用，不重问照片或许可。本轮仅证明一次七读兼容性与时序，不证明持续负载或真实运动。S2真实变化/S3运动停止尚未验收；掉线恢复已取消，GitHub未提交/推送。
+- 原始证据：D:/codex_tasks/2026-10-01/task/s3-qualification-telemetry/qualification-20261003T152430610504Z/summary.json、events.jsonl及binding.json；summary SHA256 508b77beced4e7010b07cf78b5534e62fa5894e252f509dd96e37f28ed07e5ed，events SHA256 002e69e65b167c1a597a22a0d40e486b2fa90712186b8efe56b3252f88fd275b。三处current-board.json已同步COMPLETE/claimed1，旧记录备份至该会话metadata-before；此前失败/通过记录均保留。
+
+
+### 2026-10-03：一次局部相对转子微动方案审查，尚未生成可动作镜像
+
+用户已确认24V关闭、USB保留（Sentinel_d6ec3c7159f4819197f371ec510142ae），既有固定、承托、两侧余量、断电插头可达及动作授权继续沿用。离线源码审查确认现有固定mapping不能仅改常量取得当次相对原点；不得把此前资格位置写作当前零点。最小修改为显式相对原生编码器模式，在prepare之后的新鲜完整七属性、健康IDLE、校准/ready且目标0时只锁存一次原点，保持整次启动不变，并记录原点/序号/时刻。静态策略就绪与运行期原点有效分开，PC冻结计划同样需适配；无需取得绝对ExoKit零点或解剖方向。
+
+可审阅方案为正原生转矩0.020Nm、TTL100ms、斜率0.20Nm/s；相对位置±0.01转子rev、速度0.1转子rev/s作为软件撤权阈值。支撑及定性余量不能被写成已确认数值物理限位或停止距离，具体软件包络尚待主线程落实批准，不假置limits_confirmed。service5ms下首包不超过0.001Nm，提交峰值不超过0.020Nm；1ms理想调度末包约0.0198Nm仅是示例，因为首次斜率积分可能包含pulse前时间。100ms到期先撤权，健康服务间隔不超过5ms时于age100..104ms提交IDLE；现停止只写requested_state=1，不宣称input_torque寄存器被清零。Kt约0.097对应峰值目标电流约0.206A，不是实测电流；既有45A/30rev/s不作试验限值。
+
+候选时序为period20/reply20/feedback150/service5/prepare1500/maxrequest100/reader2500ms；停止观察span0.001rev、speed0.02rev/s、dwell250/fresh40/window1000ms。结合本次七读实测6ms，软件fresh预算31ms、reader预算1711ms、stop预算431ms；这些是预算，不代替持续负载或实物停止验证。完整review-only/disabled方案在D:/codex_tasks/2026-10-01/task/s3-relative-trial-candidate/plan-proposal.json。为避免无边界改动，本轮未改固件或生成可动作镜像、未重复测试、未访问设备、刷写或运动；下一步由主线程明确此具体软件包络后，才做最小相对模式实现、相关门控验证与构建。S2实际变化仍未验收，GitHub未提交/推送。
+
+
+### 2026-10-03 UTC：当次相对肩微动软件及单次HSE候选完成，未刷写
+
+- 用户Sentinel_cf5158fc3be481919ba4701d4a6b19e2已确认已告知的一次100ms/0.020转子Nm方案，并确认有支撑、当前位置两侧各约至少2°无碰撞空间；这是现场估计，不作测量或停止距离保证。24V最新确认关闭、USB保留。本轮仅离线实现、验证和构建，没有访问设备或动作。
+- 新增显式S3_BENCH_RELATIVE_ROTOR及独立relative_native_envelope/software_envelope_approved。旧绝对坐标仍须原limits_confirmed/reference；新模式要求二者false，仅肩、原生方向+1/ratio1/静态zero0，不把数值约定当解剖映射。显式prepare成功启动读取后，首个完整且新鲜的七属性周期、健康IDLE、calibrated/ready及target0才能锁存原点；全部请求/回复须严格在本次prepare之后。位置减去冻结原点，速度不归零；取消、停止或故障退休且保留证据，本次启动不能重新归零或再试。
+- 新被动s3anchor查询报告scope、phase、origin float bits、seq/q/r/begin/now及输出状态；不发CAN、不锁存、不刷新。PC在prepare前、READY/Arm前及停止后核对UNSET→ACTIVE→RETIRED和同一原点身份；历史原点与当前反馈新鲜度分开，不在Arm和单次pulse之间插入查询。默认禁用模板保留，单次试验计划另以用户具体授权及实际资格证据冻结。
+- 必要验证：4个C场景全部PASS（固定原点、旧/同刻/陈旧/不健康快照拒绝、查询被动、配置边界），6个PC fake-serial场景PASS（相对成功/错误/重置/变更及既有trial/guards）；均无硬件。首次C夹具错误认为预先灌入SDO后仍可Prepare，实际旧所有权规则正确拒绝；只修夹具并冷初始化分场景，未放宽生产规则。首次失败的已解码工具输出另存并注明非原始字节，最终结果独立保存。未跑全套或重复资格检查。
+- 隔离HSE候选WindowsDebug、生成一致性检查、BIN/HEX转换均退出0且无warning，FLASH91148B/RAM10600B，独立源码/配置/PC审查PASS。主仓site全零和HSI时钟保持原样，候选仅另外使用此前验证的HSE main/IOC及单次现场配置。候选已配置肩通道，但启动仍SAFE_OFF、anchor UNSET、reader IDLE，无自动prepare/arm/输出；固件配置不是当前板上状态。
+- 实际候选：转矩上限0.020Nm/斜率0.20Nm/s/请求100ms，相对±0.01转子rev（8:1输出轴换算约±0.45°）及速度0.1转子rev/s撤权。period20/reply20/feedback150/service5/prepare1500/reader2500ms；停止span0.001rev、speed0.02rev/s、dwell250/fresh40/window1000ms。6ms实读周期对应31/1711/431ms预算，不是持续最坏耗时证明。首包最多0.001Nm，峰值最多0.020Nm；健康≤5ms服务下到期于age100..104ms提交IDLE。提交、驱动IDLE和机械停稳分别观察；不宣称零转矩寄存器、独立断电或硬停止距离。空间/速度换算不代替实物停止验证，不自动增大力度、延时或重试。
+- 本轮证据目录D:/codex_tasks/2026-10-01/task/s3-relative-trial-candidate/：host-relative.json、w/pc-relative-result.json、review.json、hse-result.json、trial-plan.json及trial-plan-validation.json。ELF SHA256 762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54；冻结plan SHA256 f39520e106855c7d1d871f1b5370f923456d688f04eda379f7ee6492721fa89d。修改文件和增量见changed-files.json/review.patch/completion.json。板上仍为前轮资格镜像，本次启动资格所有权已消耗；后续由主线程安排USB-only刷写及运动前通知，本轮没有刷写、复位或驱动。S2真实变化、S3实物停止尚未验收，掉线恢复取消，GitHub未提交/推送。
+
+
+### 2026-10-03：相对候选已刷入，动作前UART缺字中止；离线根因未定
+
+- 补记已执行现场窗口：15:50:36–39 UTC仅USB供电下刷入相对候选一次，官方verify/reset退出0；独立读回91148B SHA256 7f844000b67d9880106a54b2f3fcd3f4487e10666ad2756036fbbdfc0bff6740与候选一致。9项缓存检查通过，SAFE_OFF/output0、reader IDLE/requests0、anchor UNSET；未重复RCC测量。此前“候选未刷入”是历史事实，当前板上ELF为762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54。
+- 用户确认24V开启后的唯一trial于15:54:12 UTC在第6条shoulderfeedback前检中止：原始字节以4B（K）开头而非4F4B（OK），以完整CRLF结束。工具正确拒绝；只发送ping/status/canstatus/shoulder/outputstatus/shoulderfeedback及收尾cancel，未发送prepare、arm、pulse或使能。cancel实回OK cancelled output_allowed=0，串口关闭，无自动重试。已要求关闭24V，但尚未收到关闭确认，不沿用刷写时断电状态。
+- 本轮离线核查：raw_hex在解析前已缺O；Python rstrip只处理行尾，实际pyserial read_until逐字节保留非空数据，无中途显式drain/purge或第二reader。固件固定OK前缀、同步队列复制和独立DMA缓冲未发现能证明丢首字节的路径；HAL/环形缓冲mock不能代替线路证据。query在发命令后重复设置timeout会调用Win32 SetCommState，可与回复抵达重叠，但没有证据证明它造成此次丢字。根因仍在尚未区分的MCU发送/串口链路/ST-LINK/Windows驱动范围，未据猜测改通信代码或放宽完整性检查。
+- 两项必要离线验证PASS：原始7回复通过实际Link/session及pyserial read_until回放，仍拒绝第6条且prepare/arm/pulse均0、只cancel1次，raw日志完全一致；完整合成回复在整块、首O后混合分片及逐字节输入中均保留首字节。合成补O只用于测试，未修改原始现场记录或接受残缺报文；这些结果是软件路径排除证据，不是实机通信恢复或缺字根因已修复。
+- 原始现场证据保留在D:/codex_tasks/2026-10-01/task/s3-relative-trial-candidate/usb-only-20261003T155032493272Z/与trial-20261003T155411933025Z/；本轮排查、源文件hash及最小离线回归见D:/codex_tasks/2026-10-01/task/s3-uart-reply-integrity/。四处current-board已同步失败及最新电源未知状态。本轮未接设备、复位、烧录或动作，未扩大编译/全套测试；S2真实变化及S3运动/停止仍未验收，掉线恢复取消，未commit/push。下一步只针对接收完整性补充必要的底层证据，不直接重跑动作或提高参数。
+
+
+### 2026-10-03 16:07 UTC：一次只读UART底层诊断，缺字未复现、根因未解决
+
+父线程授权的一次有界只读窗口已执行，固定ping/status/canstatus/shoulder/outputstatus/shoulderfeedback/status共7条、串口只开1次并关闭；无CAN请求、cancel、prepare、arm、pulse、复位或烧录。7条回复完整，890次ReadFile完成字节与原始日志逐字节一致，890次ClearCommError flags均0，84次异步pending均正常完成。每条命令写前、写后各有一次相同350ms/DCB串口重配置；只有open发生PurgeComm，未发现跨命令清缓冲或第二reader。缺O没有复现，不能标记已修复或恢复运动；追踪增加了Python计时开销。源码与Win32单次记录仍不足以区分偶发的MCU/ST-LINK/USB/Windows接收损失。
+
+原始全程trace_complete=false如实保留：唯一缺失记录是全部查询完成后的close/call2709，SetCommTimeouts收到结构体实例而非指针，辅助记录器类型处理错误，native调用及返回不受影响。已在D工作区对这一明确原因先做失败反例，再最小修复并离线通过；没有为记录器修复重跑现场。该修复不是UART缺字修复，生产代码/固件未变。
+
+当前缓存输出仍禁止；肩缓存age_ms=698928、CAN err=1/last_err=00000008、wire_valid=0、error=00000040/fault=9，属于读到的陈旧缓存，不判为本窗口新增错误，也不据此推断24V开关。串口完整不表示肩就绪。S2变化及S3运动停止仍未验收，GitHub未提交/推送。用户直接缩减指令为“减少不必要的步骤”，没有停止指令。
+
+证据位于D:/codex_tasks/2026-10-01/task/s3-uart-reply-integrity/：cached-probe-20261003T160712110326Z、trace-analysis.json、close-structure-before.json和close-structure-after.json。下一层最小诊断已准备但未执行：使用本机已有UCX的Rundown+HeadersBusTrace，仅记录USB传输头/长度/时序，不记录USB数据包；配合同样7条缓存读及修正记录器，15秒进程上限，finally停止ETW，无驱动安装或复位。计划与可执行入口见next-diagnostic-plan.json及next-usb-headers/run_header_probe.py；默认离线检查通过。现有一次现场授权已用，新的USB事件范围交父线程决定；不自动重试动作。
+
+
+### 2026-10-03 16:17 UTC：USB采集范围不符未执行，两项确定的PC通信合同已离线修正
+
+父线程要求仅指定ST-LINK设备、仅传输头/时序、总15秒；准备的logman UCX0x8040实际按provider采集所有设备的传输头，只有事后SN过滤，不满足采集隔离。另有child15秒加start/stop各5秒，不能宣称整个ETW窗口15秒。该方案未执行，live入口现已在任何ETW/串口操作之前明确拒绝，默认方案也标记blocked；只验证了这个立即拒绝路径。没有新增设备探测、串口打开、复位、烧录或动作；不扩大到其他设备采集，不安装驱动或修改系统持久设置。
+
+既有缺O原始证据及16:07完整7查询不能确定原始丢字原因，本轮不再增加硬件诊断。依据实际pyserial源码/已观测的每查询重复相同重配置，以及独立离线反例，最小修正tests/s3_capture/capture.py两处：只有timeout/write_timeout值改变才调用setter；仍保持原写前/写后remaining重算和min(.35,remaining)，未前移读取预算、扩大deadline或重试。原始回复先记录，原parse抛CaptureError后将usable置false，阻止后续普通查询；原单次有界cancel/qualcancel收尾例外保持。没有补O、接受残缺报文、自动重连或修改固件。
+
+新增test_link_integrity.py的三项fake-serial离线回归：相同超时不重配置；临近deadline仍按写前/写后剩余时间裁剪且过期不发送；真实缺O字串原样记录、拒绝后禁止普通查询并只允许一次cancel。修复前前述两项反例实际失败、期限项通过；修复后三项均PASS，原失败和最终结果分别保留。独立补丁审查通过，无放宽解析/帧长/时限。README补充运行入口和事实边界。仅修改PC代码、测试及文档，未重跑固件构建或无关整套测试。
+
+当前capture.py SHA256=ccc5369a4593ef35fa2bdaec10ef2af2f51fbfdf5b8328f86e67287ac7de8bce；改动及证据在D:/codex_tasks/2026-10-01/task/s3-uart-reply-integrity/link-integrity.patch、link-integrity-before.log、link-integrity-after.json。它们证明两项PC合同问题已修正，不证明15:54原始缺O原因或实机通信已修复；本轮没有修正后的实机验证。16:07肩陈旧/错误缓存及禁止输出事实仍保留，不能作为电机就绪。S2真实变化/S3实物运动停止仍未验收，掉线恢复取消，GitHub未提交/推送。后续不反复探测至成功；若继续真实验收，需先重新界定可用的本设备通信证据及当前反馈健康状态。
+
+
+### 2026-10-03 16:21 UTC：修改后最后一次只读串口窗口通过，未提升S2验收状态
+
+父线程已通知用户本次只读不会动作后，唯一一次7条缓存查询ping/status/canstatus/shoulder/outputstatus/shoulderfeedback/qualstatus于16:21:31 UTC正常完成，整个进程约0.235秒且受15秒上限约束。固定身份仅开串口1次，7条原始回复均完整OK/CRLF，串口已关闭；没有cancel、prepare、arm、pulse、CAN请求、USB trace、复位或刷写。实际运行已修capture.py SHA256 ccc5369a4593ef35fa2bdaec10ef2af2f51fbfdf5b8328f86e67287ac7de8bce。output_allowed/request_valid/prep_state/arm_token均0；qualstatus state/attempted/completed/claimed/pending均0，直接证明该qualification未启动/未占用。reader=3/STOPPED，只记录当前准备字段为0，不据此宣称所有reader ownership可重新使用。肩缓存age_ms=1558098、CAN err1/last_err00000008、wire_valid0/error00000040/fault9，仍陈旧带错；不根据缓存推断24V状态或电机就绪。
+
+本次仅验证修改代码能在真实串口正常取得这7条完整回复；一次成功不能确定15:54缺O的原因或证明其已解决。S2真实变化、S3实物运动停止未验收，掉线恢复取消，GitHub未提交/推送。按本轮要求停止后续探测。原始事件/binding/summary位于D:/codex_tasks/2026-10-01/task/s3-uart-reply-integrity/postfix-cache-20261003T162131239030Z/；四处current-board和latest-status已据实际缓存结果同步，先前失败及未修复事实保留。
+
+
+### 2026-10-04 01:15 UTC：上电后仅3条缓存核对，reader仍STOPPED，需USB-only复位
+
+用户本轮确认24V已开后，仅读status/outputstatus/qualstatus共3条，约0.203秒完成且串口关闭；原始回复完整。当前SAFE_OFF/reasonCANCEL、output/request/token/prep/feedback_pending0，readerSTOPPED3，qualification state/attempted/completed/claimed/pending均0。未发prepare、模式写、arm/pulse、cancel、复位或刷写，不用昨晚陈旧肩缓存证明本轮健康。
+
+离线核对实际已刷ELF762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54的对应源码：Cancel即使未prepare也使IDLE reader进入STOPPED，Start仅接受IDLE，因此本boot无法重新prepare；anchor仍UNSET和qualification未占用不足以解除这一阻断。最小后续为用户关24V、USB保留后一次MCU复位，无需刷写；新boot恢复IDLE/UNSET/计数初始化后，通电必须取得真实新鲜无错IDLE心跳，才进入原记录工具prepare。复位不表示电机故障已清，不重复静止或七属性资格检查，不绕过锁存。本次复位尚未执行。证据在D:/codex_tasks/2026-10-01/task/s3-recovery-20261004/cached-20261004T011539606629Z/，四处current-board已同步实际缓存与本轮用户通电事实。S2真实变化/S3运动停止未验收，未commit/push。
+
+### 2026-10-04 01:37 UTC｜单次肩微动与停止通过，完成当前批准的S2范围
+
+- 实际操作：用户确认24V关闭后，01:18:41仅一次USB-only MCU软件复位，未刷写；三条缓存确认SAFE_OFF/output0、reader IDLE、prepare/token/request0和anchor UNSET。用户随后确认“已开”且获运动前通知，01:37:13–14执行冻结plan的一次prepare、arm、shoulderpulse 1 20 100；零目标/模式读回和新鲜闭环心跳通过，pulse获接受。没有重复资格/静止试验、cancel、自动重试或增大参数。58条原始回复完整，串口关闭。此前“从未使能/未pulse”只适用于旧失败窗口，不是当前结论。
+- 变化证据：独立复算原始float，16个新鲜不同序号的位置/速度对，年龄分别7–25/6–24ms、配对相差1ms。原点2.8690910339rev，pulse前基线只差−0.0000088215rev。输出许可有效时查询到的seq11→15在80ms内四段连续递增，共+0.0006320477rev，为此前30秒静止位置极差0.000164rev的3.85倍；全窗口极差0.0012202263rev为7.44倍。out是查询时许可，seq11可能采于pulse受理前；单独取明确采于pulse受理后、stop前的seq12→15，60ms内三段仍连续增加0.0006222725rev，为静止极差3.79倍。停止后的9组新样本持续保留相对原点+0.0003077984至+0.0005412102rev，不能仅靠单个峰或非零值判定。全极差按8:1换算约0.05491°输出轴，仅为换算，不是已标定关节角度。
+- 速度与停止：动作内前三段位置增长而采样速度均值为负，速度幅值与原静止波动相近，故不据此确认方向、精确轨迹或实际达到目标转矩。seq16峰采于stop前5ms，不能算停机后变化。stop=1112495ms、完成观察=1112777ms；stopstatus stationary/observed/stop_accepted/purge_ok均1、dwell250ms、stop_delivery_failed0。终态FAULT/EXPIRED、output/request/token0、reader COMPLETE，原点相同且RETIRED；这是本次有界动作/停止通过，不是S3全部通过。
+- 完整性与错误：本次58条原始OK/CRLF、匹配command/reply、无ABORT；启动前两CAN启动正常、肩CAN及UART/调度计数0。reader运行至COMPLETE的健康门控持续检查肩CAN累计err/drop/invalid/fov为0、bus-off及console fault/心跳健康；这是间接运行证据。试验末尾未另采两CAN和UART/调度计数，不能写“末端所有计数已读回为0”；肘部末端计数也未采。历史HSI BR与UART缺O根因未解决，本次成功不冒充根因修复。
+- 验收判断：依当前个人台架“基本达到、可重复”的范围，已有30秒可信连续窗口，加本次超过已观察静止波动的连续位置趋势和停止后保留偏移，足以接受一次肩侧转子编码器真实变化。未增加肉眼可见、精确方向或同条件噪声统计等新门槛；速度动态解释、关节标定及后续S3项目仍有边界。S2当前批准范围通过；掉线/恢复取消、未执行。旧历史记录全部保留。
+- 证据与变更：本次原始summary/events/binding和离线analysis/acceptance已归档到firmware/Exoskeleton_F446/tests/s3_capture/evidence-relative-20261004T013713353068Z/；静止原始证据仍在tests/encoder_capture/evidence-static-hse-20261003T0153385075330Z/。唯一开发日志、S2/S3技术说明与四份本机current-board同步实际动作/停止事实；复核只读文件，无新增硬件动作或无关测试。已刷ELF SHA256 762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54，plan SHA256 f39520e106855c7d1d871f1b5370f923456d688f04eda379f7ee6492721fa89d。主仓默认HSI/禁用site与该台架镜像有差异，提交必须明确两者。待提交清单在D:/codex_tasks/2026-10-01/task/s2-variation-review-20261004/submission-manifest.json；本轮不commit/push。试验后已通知可关闭24V，未收到新的关闭确认，不假定已断电。
+
+### 2026-10-04｜S2验收范围归档与GitHub提交
+
+- 本次提交内容：当前批准S2范围的实现、必要主机/采集工具、技术说明与静止/微动原始证据；不扩大S3完成结论，掉线恢复仍为取消未执行，速度方向仍未验收。历史故障与未验证边界保留。
+- 可复现性：docs/bench/relative-hse-20261004/归档三个实测台架覆盖文件、逐项源码校验manifest及只生成独立目录的materialize.py；主仓默认HSI/禁用site保留。发布前重建仅核对BIN与已验收镜像一致，不接设备、不重复功能/硬件试验；结果记录在该归档reproduction-result.json。
+- 发布范围：精准暂存项目文件；不包含无关.vscode/settings.json、个人CMakeUserPresets、build/tool目录、Flash备份或临时现场runner。提交结果及远端CI以Git/GitHub实际记录为准，不把无CI写为通过。

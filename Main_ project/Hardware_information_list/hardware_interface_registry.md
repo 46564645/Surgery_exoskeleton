@@ -86,7 +86,12 @@
 
 `CN4` 用于板载 ST-LINK 调试另一块目标板。UM1724 要求此时移除 CN2 两只跳线；若使用 CN4 第5针 NRST 复位外部目标，还必须断开 SB12，隔离板载 MCU 的复位路径。当前不把 CN4 与板载目标调试路径同时使用。CN2 仅控制 SWDIO/SWCLK 两条路径；板载 PB3 的 SWO 另经 SB15 接到 ST-LINK/CN4 的 SWO 网络，不能由 CN2 跳线状态推断其连接。
 
+2026-10-02用户新正面照片已实际查看（Library `libfile_6ef3ceb5dd8c8191b7ad470143ac49a4`，本机证据 `D:/codex_tasks/2026-10-01/task/s3-axis/cn2-photo-review/`）：CN2两只跳帽外观均可见；CN4六针为裸露排针，未见套接母头或外接线，CN12黑色跳帽不能混作CN4接线。此为照片外观确认，不证明接触导通；不据此假设CN4争用或要求拆线。当时的历史成功与该窗口失败使用相同CLI2.23/HOTPLUG/4000kHz、固定ST-LINK及FW V2J28M18；该窗口目标芯片身份无法读取。后续同日探针升级至V2J48M35后已读到目标身份，13:27 HSI烧录及独立读回通过；不将先前失败描述为当前仍阻塞，历史根因仍未证实。
+
 默认 USART2 VCP 路径按 UM1724 表10要求 SB13/SB14 ON、SB61/SB62/SB63 OFF；这是资料配置条件，当前实物焊桥状态仍未逐项核查。
+
+2026-10-03当前Library实物时钟照片核对：背面`libfile_7d63857c82448191a0d42dbeb6f811d7`与此前背面图字节相同，可见SB16/SB50/SB54装0Ω、SB55空；新正面`libfile_0cab2b9c712c8191917206e69e46874b`中U5左侧C29下四行丝印对应R34/R36/R35/R37，上两行0Ω在位，下两行R35/R37无器件，X3晶体位空，ST-LINK X1在位标8.000。已按Hardware List、MB1136-DEFAULT-C04原理图第3页与UM1724 Rev17第7.9.1节交叉核对，外观符合经PH0输入ST-LINK MCO的装配条件；这不是导通/实际8MHz测量，也未拍到精确C04子版本背贴。没有修改焊桥/接线，不能由照片判断当前24V或USB状态。原图hash与独立证据在`D:/codex_tasks/2026-10-01/task/s2-stream-clock-ab/photo-review/result.json`；该01:19离线准备之后，01:32已在用户24V关闭/USB-only窗口单次刷入同源HSE stream候选并独立读回匹配；01:33 RCC实读HSERDY/HSEBYP/PLLSRC_HSE=1、M8/N336/P4及默认输出0通过。活动源码仍HSI，板上为HSE候选；未测实际8MHz、未启动连续采样。证据在同一工作目录usb-only-20261003T013012Z/result.json。
+
 
 #### 4.1.2 CN4 信号
 
@@ -190,9 +195,16 @@ GDS68 手册明确说明驱动板没有电源反接保护。本表把它记录�
 | 显示运行状态 | 空闲、0 RPM、母线23.2 V | 连接主界面快照，不代替外部仪表测量或全部启动行为验收 |
 | USB Interface 2 | USB\VID_1209&PID_0D32&MI_02 | 在线Code0；oem249.inf / libusb0 / libusb-win32 1.4.0.0 |
 | USB Interface 0 | COM5 / usbser.inf / usbser | 仍为原Microsoft串口驱动，未改绑 |
-| 120Ω/启动参数 | 尚未可靠读取/未验证 | 不从USB连接、界面颜色或历史120Ω测量推定软件终端状态 |
+| 120Ω/启动参数 | 2026-10-03 01:12 UTC只读：can.config.enable_r120=true（ep72/bool）、r120_gpio_num=5（ep71/uint16）；启动参数未验证 | HW3.11.1/FW0.6.5/node1/IDLE及板SN197332430435634匹配；仅软件配置，不证明电阻导通或CAN根因，不把逻辑GPIO编号5映射为未核实的物理脚位 |
 
 实物版本3.11.1不属于手册“硬件≤3.7时USB/CAN互斥”条件，当前CAN配置下USB实际可连接；未发Disable_Can、保存或重启命令。协议字段仍须核对0.6.5适用资料，不把旧手册全部行为自动套用。现有HAL 0x10是STM32帧格式错误，USB驱动修复不证明CAN错误已消除。S2肩侧解析、必要真实反馈/离线恢复及双路验收尚未完成；本记录不作为运动或人体安全验收。
+
+
+2026-10-02 14:56–14:58 UTC补充只读证据：同一静止时段，厂家参数浏览器显示`axis0.encoder.pos_estimate=2.9320929050445557`、`encoder.is_ready=1`、`encoder.error=0`；约30秒后的CAN查询仍为`0x029/DLC8/0000000000000000`，心跳`state=1/error=0/fault=0`，输出许可为0。并非同步采样，未据此确认动态角度/速度或关节映射。原始帧已零，不通过改STM32换算掩盖；USB与CAN来源差异待厂家FW0.6.5实现核实。rev2.2第35页注明`load_encoder_axis`仅BETA必要、量产无效；不能据上游ODrive版本建议修改该项或使能初始化。第45–46页RxSdo只读方案须先取得匹配0.6.5的端点表；公开0.5.13/0.5.14表不能代用，候选0.6.5地址实际返回HTML。证据索引：`D:/codex_tasks/2026-10-01/task/s2-final-acceptance/usb-can-source-diagnosis.json`。本轮未改接线/参数/驱动固件，S2仍未完成。
+
+2026-10-02 15:33 UTC实机Native USB追加确认：HW3.11.1/FW0.6.5/node1/axis0 IDLE，36965字节原始endpoint0 schema SHA256为`cfd83580745d91c18d87c6832daa34677685e32e9d051e7f2b4bb562a90c9bc1`。只读float `axis0.encoder.pos_estimate`端点372、`vel_estimate`端点378；当次USB分别2.9287331104278564rev和0.005722047761082649rev/s，ready=true/error0。此前公开地址返回HTML的阻碍已由设备导出解决，未套用旧版端点。固件新增只读opcode0、固定节点/端点的250ms有界诊断，匹配025回应与周期029独立标记；16:09已随新HSI刷入并独立读回，16:11默认禁用/SDO idle通过，尚未发送CAN属性读取；USB CRC16=63447不能用于CAN属性帧。端点绑定与最小后续边界见[限定SDO诊断](../../firmware/Exoskeleton_F446/docs/s2_encoder_sdo_diagnostic.md)。S2真实CAN语义、变化和离线恢复仍待验收；参数、接线及驱动固件未改。
+
+16:21 UTC限定CAN实测：372/378各一次read得到ID025/DLC8/正确端点，位置`00740100FC993740`=2.8687734603881836rev、速度`007A010000007ABB`=−0.003814697265625rev/s；紧邻USB位置2.868832588195801rev，相隔约96.541ms。周期029仍全零、心跳IDLE/error0/fault0；两路本窗口CAN错误/丢帧/溢出/bus-off均0，无新增。属性估计与周期009分别标记，不确认厂家内部controller来源，不以非同步微小速度值确认运动方向。读取机会已用，可信连续肩反馈及实物超时/恢复仍待验收；无写参数/使能/校准或运动。证据为s2-sdo-read/can-usb-20261002T162124633Z/analysis.json。
 
 本机证据目录：D:/codex_tasks/2026-10-01/task/gds-tool-preparation/gds-interface2-correct-binding/；actual-binding.json、pnputil-install.log、motorwizard-after-binding.png、motor-parameters.png。本次只安装授权的Interface2驱动包及其对应证书；Logitech原驱动未变，未启动、校准或同步保存设备参数。
 
@@ -486,7 +498,7 @@ flowchart TD
 
 ### 10.4 后续验证与配置边界
 
-GDS68硬件/固件及当前CAN接口/波特率/ID/协议已于2026-10-02只读核实，见第4.2.3节；电源输入档位和实物丝印、GDS68软件终端状态、CAN模块排针及电阻、HX711 PCB一致性仍按各自记录核对。终端配置、GDS68协议/波特率/ID、C620 ID、限流与控制周期在通信/动力调试前落实；手册通信方法存在不代表当前设备已经配置。初次测试前还需完成动力保护、急停和回生设计；不得用本表宣称系统已经可以直接上电或穿戴。C620控制模式固定CAN，不同时连接PWM。
+GDS68硬件/固件及当前CAN接口/波特率/ID/协议已于2026-10-02只读核实，见第4.2.3节；软件终端enable_r120=true/r120_gpio_num=5已于2026-10-03只读确认，实物导通未证实。电源输入档位和实物丝印、CAN模块排针及电阻、HX711 PCB一致性仍按各自记录核对。终端配置、GDS68协议/波特率/ID、C620 ID、限流与控制周期在通信/动力调试前落实；手册通信方法存在不代表当前设备已经配置。初次测试前还需完成动力保护、急停和回生设计；不得用本表宣称系统已经可以直接上电或穿戴。C620控制模式固定CAN，不同时连接PWM。
 
 2026-10-02当前板上状态更新：按用户明确确认24V关闭、仅USB连接，已将上述C620只读源码对应Debug ELF烧录并校验成功，ST-LINK/STM32F446身份匹配；USB-only新elbowfeedback可查询ID1，seen/valid/online均0、数据和时间为na，两路CAN收帧/错误计数0、output_allowed=0。此前2026-10-01“尚未烧录/当前板不能查询”的记录是当时状态，现已被本次实测更新。24V未由本机独立测量；没有进行带电反馈、超时恢复或运动验收，不能由无样本记为S2完成。GDS动力隔离及其他现场条件仍由主对话协调下一步，不重测已确认肘侧60Ω。
 

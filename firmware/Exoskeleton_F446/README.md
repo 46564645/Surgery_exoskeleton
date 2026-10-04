@@ -126,8 +126,8 @@ COM10 只是此前实测端口，不能假定永久不变。串口参数为 1152
 
 - NUCLEO-F446RE / STM32F446RET6；ioc记录 CubeMX 6.18.1、STM32CubeF4 V1.28.3。
 - 当前 Windows 工具版本见上方工具准备；此前 Mac 使用 GCC 14.3.1+st.2 的记录作为历史结果保留。
-- S1已基本完成；S2原始双CAN接收基础已接入并完成USB板测，状态S2_CAN_RX。2026-10-01按用户批准先实现C620肘侧只读解析；GDS68解析、HX711、StateSmith与电机控制尚未接入。新解析软件与当前板上已烧录镜像分别验证，不将离线构建当作已烧录。
-- App/application包含调度和命令；Core中的board_console/board_runtime提供平台接口，应用层不持有HAL句柄。App/devices含C620接收解析，App/control仍预留；不改变CAN物理层配置。
+- S1已基本完成，S2/S3硬件验收仍未完成，阶段S2_CAN_RX。当前源码逐帧接入C620反馈和未验证的GDS rev2.2档案观测，并实现每轴门控；生产enabled_axes=0、现场确认false/0、S3输出发送未绑定；新增固定端点CAN只读诊断直接复用L1 CAN1发送，在默认门控关闭且新鲜IDLE心跳下各端点每次启动一次。HX711、StateSmith、FOLLOW/Lock/Amplify未接入。当前板上为2026-10-02 17:00 UTC已烧录、官方校验/复位并独立读回匹配的HSI连续观察镜像 `e8466a15caad32216d94a927cb14f336c5ab17b6f7601e211dbd695379ad381e`（BIN72604B），包含原停止策略、限定属性读取和有界连续观察。16:11六条USB状态查询确认默认禁用；16:21限定两次CAN属性读取已完成，位置与紧邻USB近似，周期029仍全零，尚无物理动态证据。17:02被动USB prepare通过，配置/绑定/输出0，stream active/pairs/tx0；未启动连续CAN读取，明早现场连续反馈及一次小幅手动变化仍待验收。
+- App/application包含调度和命令；Core中的board_console/board_runtime提供平台接口，应用层不持有HAL句柄。App/devices含C620接收解析和纯命令编码，App/control含坐标转换/安全检查，App/application含默认关闭的输出门控；不改变CAN物理层配置。
 - Drivers不手改；Core中的接入代码放USER CODE区。自有源文件加入顶层CMakeLists.txt；不手改生成的cmake/stm32cubemx清单。
 - 顶层AGENTS.md及硬件接口登记仍为工作依据。根目录到这里的路径为 firmware/Exoskeleton_F446。
 - 电机与 CAN 模块的详细连接见[图纸文字说明](<../../Main_ project/Hardware_information_list/motor_can_diagrams_text.md>)；板卡引脚和接口的结构化资料见[C04 JSON](<../../Main_ project/Hardware_information_list/nucleo_f446re_mb1136_c04_ai.json>)，仅为项目接口摘录。
@@ -143,11 +143,13 @@ COM10 只是此前实测端口，不能假定永久不变。串口参数为 1152
 
 ## 通信行为（沿用 S1，当前状态为 S2）
 
-- USB VCP使用USART2 PA2/PA3，115200、8N1、无流控；支持无参数的`ping`、`status`、`help`、`?`、`canstatus`、`shoulder`、`elbow`、`elbowfeedback`，区分大小写，以LF或CRLF结束。新命令需要包含C620解析的新固件，当前未安排烧录。
-- `status`固定报告`stage=S2_CAN_RX output_allowed=0`；无电机控制命令。正常LD2每500 ms翻转；启动核验失败或通信故障每100 ms翻转，复位恢复。
+- USB VCP使用USART2 PA2/PA3，115200、8N1、无流控，区分大小写，以LF或CRLF结束。当前源码只读查询包括`ping/status/help/?/canstatus/shoulder/elbow/elbowfeedback/shoulderfeedback/shoulderreadstatus/outputstatus/stopstatus`；另有门控后的人工prepare/arm/cancel/ackfault及pulse语法，见下节。shoulderfeedback和每轴门控已随13:27镜像烧录；stopstatus、停止策略和限定shoulderreadpos/shoulderreadvel已随16:09镜像上板；16:21已各读一次。新增encstart/encstop/encfeedback已随17:00镜像上板，用于有界连续只读观察，尚未启动；详见下方连续观察说明。
+- 当前默认`status`报告`stage=S2_CAN_RX output_allowed=0`；启用许可取决于S3唯一门控，不能通过CLI改变现场确认。正常LD2每500 ms翻转；启动核验失败或通信故障每100 ms翻转，复位恢复。
 - DMA1 Stream5/Channel4循环RX、Stream6/Channel4普通TX；与USART2同抢占优先级5。BSP按键初始化后由`BoardRuntime_FinalizeInterrupts`将EXTI最终设为10并读回核验；SysTick为0，GROUP4。
 - 参数集中在`Core/Inc/s1_config.h`。RX DMA为512字节，LwRB RX/TX存储1024/2048字节（各保留1字节区分满空），TX暂存256字节。中断服务延迟须小于半个DMA数组接收时间（115200下约22 ms）；位置差不能识别完全未服务的一整圈。
 - 通信每1 ms处理最多128字节及一条完整命令；行最多96字节，非法/超长行整行丢弃。UART/DMA错误、RX溢出或TX超过100 ms锁存故障，停止命令处理。
+
+当前停止源码另见[受监督台架策略](docs/s3_output_preparation.md)：保留默认禁用，接收静止观察与软件停止投递分开报告；停止投递失败不允许仅凭静止反馈清故障。13:46带电窗口两路持续收帧且错误为0，肩侧可信连续反馈及一次小幅手动变化仍待验收；用户已取消本轮S2实物掉线/恢复试验，未执行、不写通过。前轮4组关键停止测试及WindowsDebug编译通过；16:09新镜像已刷入并确认默认禁用，实际停止仍未验收。
 
 ## S2原始CAN观察（2026-09-25）
 
@@ -199,3 +201,32 @@ python3 tests/check_generated.py
 Release 使用 `./build.sh Release`。VS Code 同样可选择共享 `Debug/Release` 或自己的个人预设，使用原生构建任务；本轮未在 Mac 上重新验证。
 
 Mac 串口通常使用 `/dev/cu.*`，Linux 通常使用 `/dev/ttyACM*`；均按当次枚举结果选择。当前 S2 的跨平台脚本及使用条件见前文，将端口参数替换成对应设备路径即可。旧 `tests/bench_serial.py` 依赖 POSIX `termios`，保留为历史 S1 脚本，不作为当前 Windows/S2 操作入口。
+
+## S3每轴源码准备与既有USB验证（实际输出关闭）
+
+当前源码默认 `enabled_axes=0`，SAFE_OFF、configured=0、transport_bound=0、output_allowed=0。位0肩、位1肘：1仅肩、2仅肘、3双轴；集合只在冷启动初始化时复制，CLI不能修改。逐轴反馈/协议、映射与限值取代整机S2布尔门槛；只检查启用轴，停用总线不TX或调用HAL。公共保护/停止、UART和服务时序仍参与门控，任一启用关键链异常撤销全部启用轴许可。人工prepare/arm/cancel/ackfault和带令牌、明确单位/寿命的单轴pulse沿唯一出口执行；当前确认项false/0，默认Prepare/Arm被拒绝。详见[实现说明](docs/s3_output_preparation.md)。
+
+`s3_feedback`从CanMonitor取得逐帧GDS档案观测与C620真实反馈，并分别保留时间戳和driver[2]。新只读`shoulderfeedback`固定标记`verified=0`，显示mrad/mrad_s、位置/心跳两个时间戳及心跳状态、错误；WireValid不授予许可，也不证明肩侧HAL Form根因已修复。受监督裸C620台架已增加独立命名的反馈静止观察，不能代表断电或硬件急停；外部停止输入及GDS校准/零目标/模式读回仍未提供。
+
+GDS启用肩侧仍需IDLE/校准及新的零目标、模式、闭环读回。C620官方反馈没有目标电流echo、轴状态或校准状态；启用肘侧准备为零电流提交后取得更新的真实反馈，并要求现场 `operational_confirmed[1]` 和Prepare/Arm前真实 `independently_stopped`，不填零目标echo或GDS状态。发送接受和新反馈不能证明零电流已经执行。
+
+裸C620可显式使用 `S3_BENCH_ROTOR` 的真实单圈编码器扇区：映射1:1、编码器零位0、方向已确认，范围按方向反算后严格在 `(0, 2π)`，且 `bench_sector_confirmed`、逐轴确认及 `trusted_feedback_axes` 满足，C620 ID须与实际接收配置一致。它不称连续转子量或关节角，不设置 `rotor_reference_confirmed` 或补造圈数；超时/越界锁故障，新帧不恢复旧Arm。装配关节模式仍缺可信连续参考。当前生产上述确认均未落实。
+
+2026-10-02本轮 `host-04` 一次执行受影响35项全部PASS：32项既有场景加 `s3_axes`、`s3_observations`、`s3_shoulder_console` 三组。补入裸C620坐标ID匹配检查及反例后仍35/35 PASS、无编译警告；host-03和前版镜像证据保留，当前最终结果以host-04为准。11项未受影响UART场景复用前轮最终一次43/43整体验证的结果，不称一次46项全绿。首次编译发现旧测试整机字段尚未适配，定位后一次修正；随后按新合同完成验证。Windows ASan/UBSan未运行；本轮最终同源HSI/HSE WindowsDebug编译/链接0警告，FLASH64488B/RAM9312B；复用缓存再配置各有1条 `CMAKE_TOOLCHAIN_FILE` 未使用提示。source-manifest.json登记434个项目输入；加上本机CMakeUserPresets.json，冻结比较共435项，A/B仅IOC/main时钟段不同，两份生成检查通过，静态ARCH81/HW1历史告警未变、新增/移除0、SPEC通过。本轮证据位于 `D:/codex_tasks/2026-10-01/task/s3-axis/`，交付hash以本轮最终审计为准，不以旧镜像记录代表当前源码。
+
+2026-10-02前轮43场景记录保留：原40项加prepare/gds/cli三组；首次整体42项通过而CLI夹具失败，定位HAL启动状态后一次修正测试初始化顺序，先重跑CLI通过；随后于2026-10-02 06:44 UTC最终完整执行一次43/43 PASS，退出0、无warning，证据为 `D:/codex_tasks/2026-10-01/task/s3-next/final-full-host/run.json`。前轮生成检查通过，同源HSI/HSE WindowsDebug配置/编译0警告，FLASH59724B/RAM9264B；ARCH81/HW1历史告警未变、SPEC通过，Windows ASan/UBSan未运行。
+
+前轮用户授权USB-only并报告24V断开后，原Flash512KB已备份，HSI镜像 `ac5ea60571f18b754114a82ac303912bc5cc09babce3dd64593ba698d0ef6fc4` 烧录校验及COM10七条默认拒绝检查通过；HSE未烧录，没有实物pulse/校准/模式命令。证据在 `D:/codex_tasks/2026-10-01/task/s3-next/`，时钟包见[比较说明](docs/can_clock_comparison.md)。此段为早期镜像记录，之后13:27和16:09 HSI均已更新；停止策略已随16:09上板，实物停止效果未验收。按用户最新要求，完成S2实物验收后再提交/推送GitHub；唯一进度日志仍为[开发排期](<../../Main_ project/docs/development_schedule.md>)。
+
+
+后续现场返回的USB-only更新尝试（2026-10-02 10:55–10:58 UTC）：24V关闭已由用户明确确认，最新A-HSI hash与默认禁用配置已核对；固定ST-LINK/COM10对应正确，但SWD Hot Plug身份读取失败、Normal诊断报DEV_USB_COMM_ERR。因此没有执行新Flash备份或烧录。三条ping/status/outputstatus查询通过，应用运行且输出禁用；未发送prepare/arm或其他控制命令。最新源码仍未上板，结果见s3-axis/usb-only-20261002/session-result.json；代码与前述软件验证未改。
+
+## 肩侧限定属性读取（16:09已烧录校验，属性应答待验收）
+
+实机HW3.11.1/FW0.6.5的USB schema已确认只读float端点372/378。新增`shoulderreadpos/shoulderreadvel`各端点每次启动仅一次，`shoulderreadstatus`保存匹配025应答；要求默认门控关闭及新鲜IDLE心跳，无自动重试或任意参数。原生encoder估计与周期029分别标记，不改变S3许可。协议、来源、超时和最小后续窗口见[限定SDO诊断](docs/s2_encoder_sdo_diagnostic.md)。16:21已完成限定CAN属性/USB紧邻对照；当前S2只剩可信连续肩反馈及一次小幅手动变化。用户已取消实物掉线/恢复试验，状态为取消、未执行；不是通过。S3运动/停止/断连处理要求仍保留；GitHub在S2验收后上传。
+
+## S2 有界连续编码器观察（待现场验收）
+
+`encstart/encstop/encfeedback`无参数，固定CAN1/node1/端点372与378，按位置后速度顺序发布完整同周期样本。每次启动最多一个30秒会话、20Hz配对、1200次请求；应答50ms、配对新鲜度100ms，IDLE心跳另用250ms。与一次性诊断互斥，不自动启动/重启/重试；SDO无线上事务token，要求隔离唯一CAN主机及有序应答。默认enabled_axes=0，连续观察不授予S3许可。
+
+来源依据、限制及明早最小步骤见[连续观察说明](docs/s2_encoder_stream.md)和[Windows采集工具](tests/encoder_capture/README.txt)。采集进程给出`READY_FOR_MOVEMENT`后，主线程才通知用户做一次小幅手动变化；`COMPLETE`和非零小波动都不能自动判为物理变化通过。今晚17:00更新、校验/复位及独立读回通过，17:02仅被动查询、未启动流；明早仍需现场窗口，本轮不安排实物掉线/恢复。

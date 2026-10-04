@@ -1,0 +1,40 @@
+{
+  "schema_sha256": "cfd83580745d91c18d87c6832daa34677685e32e9d051e7f2b4bb562a90c9bc1",
+  "purpose": "Reviewable offline recipe only; no CAN or USB is sent",
+  "control_commands": false,
+  "frames": [
+    {
+      "name": "axis0.encoder.pos_estimate",
+      "endpoint_id": 372,
+      "bus": "shoulder_CAN1",
+      "node_id": 1,
+      "bitrate": 500000,
+      "id_hex": "024",
+      "extended": false,
+      "remote": false,
+      "dlc": 8,
+      "data_hex": "0074010000000000",
+      "response_candidate_id_hex": "025",
+      "response_requirements": "Require matching endpoint ID, valid documented read response, DLC8 and timestamp after request. Capture by ID before periodic 029 can overwrite it. Response behavior on FW0.6.5 still requires verification.",
+      "native_usb_crc_included": false
+    },
+    {
+      "name": "axis0.encoder.vel_estimate",
+      "endpoint_id": 378,
+      "bus": "shoulder_CAN1",
+      "node_id": 1,
+      "bitrate": 500000,
+      "id_hex": "024",
+      "extended": false,
+      "remote": false,
+      "dlc": 8,
+      "data_hex": "007A010000000000",
+      "response_candidate_id_hex": "025",
+      "response_requirements": "Require matching endpoint ID, valid documented read response, DLC8 and timestamp after request. Capture by ID before periodic 029 can overwrite it. Response behavior on FW0.6.5 still requires verification.",
+      "native_usb_crc_included": false
+    }
+  ],
+  "not_implemented_here": "Physical transport, production diagnostics command, matching response capture, and hardware verification",
+  "execution_preconditions": "A fresh onsite power window; unique target and fresh IDLE/output-disabled checks; exact-schema read mapping reviewed; bounded one-shot diagnostic transport with matching-response capture. No prepare/arm or raw arbitrary send interface.",
+  "side_effect_boundary": "No state or target write is encoded. A read request may refresh a device communication watchdog; exact manufacturer behavior is not publicly established."
+}

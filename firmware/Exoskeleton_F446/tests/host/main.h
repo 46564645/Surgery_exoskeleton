@@ -25,4 +25,5 @@ HAL_StatusTypeDef HAL_UART_Abort_IT(UART_HandleTypeDef *);
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *, uint16_t);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *);
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *);
+#include "stop_input_hal.h"
 #endif

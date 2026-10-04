@@ -1,0 +1,425 @@
+{
+  "analysis_kind": "offline_existing_raw_evidence_only",
+  "inputs": [
+    {
+      "path": "D:\\codex_tasks\\2026-10-01\\task\\s3-relative-trial-candidate\\trial-20261004T013713353068Z\\events.jsonl",
+      "sha256": "4c8bb5c64189b2671802b8f1125a9cb2a425df3fa335d2875d4cae667b00a790"
+    },
+    {
+      "path": "D:\\codex_tasks\\2026-10-01\\task\\s3-relative-trial-candidate\\trial-20261004T013713353068Z\\summary.json",
+      "sha256": "c4f6dac679b042edba6020aa6f105ad2f63125cc7651c426fbbd5734b7d20e32"
+    },
+    {
+      "path": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\tests\\encoder_capture\\evidence-static-hse-20261003T0153385075330Z\\events.jsonl",
+      "sha256": "a85bc7331b2e9ce482ee9d98927f36f00862d2504c2db4ecb1c6825d6d7ff33d"
+    },
+    {
+      "path": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\tests\\encoder_capture\\evidence-static-hse-20261003T0153385075330Z\\summary.json",
+      "sha256": "b3df86575773060c4272e9fee3ffb3c2e834b1a3617a361a8ee7b547df965805"
+    }
+  ],
+  "serial_integrity": {
+    "commands": 58,
+    "complete_matching_OK_CRLF_replies": 58,
+    "aborts": 0
+  },
+  "static": {
+    "position_rev": {
+      "count": 300,
+      "minimum": 2.955029,
+      "maximum": 2.955193,
+      "range": 0.00016399999999983095,
+      "mean": 2.9551171,
+      "median": 2.955127,
+      "population_sd": 3.0710855843938066e-05
+    },
+    "velocity_rev_s": {
+      "count": 300,
+      "minimum": -0.015258,
+      "maximum": 0.017166,
+      "range": 0.032424,
+      "mean": 0.00038142,
+      "median": 0.0,
+      "population_sd": 0.006059353234210177
+    },
+    "age_ms": {
+      "count": 300,
+      "minimum": 7,
+      "maximum": 14,
+      "range": 7,
+      "mean": 8.41,
+      "median": 8.0,
+      "population_sd": 0.7361385739111896
+    },
+    "first_can": {
+      "shoulder": {
+        "bus": "shoulder",
+        "started": "1",
+        "start_error": "0",
+        "rx": 56401,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "029",
+        "dlc": "8",
+        "data": "0000000000000000",
+        "age_ms": "9"
+      },
+      "elbow": {
+        "bus": "elbow",
+        "started": "1",
+        "start_error": "0",
+        "rx": 516780,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "201",
+        "dlc": "8",
+        "data": "0D71000000391D00",
+        "age_ms": "1"
+      }
+    },
+    "last_can": {
+      "shoulder": {
+        "bus": "shoulder",
+        "started": "1",
+        "start_error": "0",
+        "rx": 60916,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "029",
+        "dlc": "8",
+        "data": "0000000000000000",
+        "age_ms": "9"
+      },
+      "elbow": {
+        "bus": "elbow",
+        "started": "1",
+        "start_error": "0",
+        "rx": 547227,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "201",
+        "dlc": "8",
+        "data": "0D710000FFFF1D00",
+        "age_ms": "1"
+      }
+    }
+  },
+  "trial": {
+    "position_rev": {
+      "count": 16,
+      "minimum": 2.8689520359039307,
+      "maximum": 2.8701722621917725,
+      "range": 0.0012202262878417969,
+      "mean": 2.8694212585687637,
+      "median": 2.86944580078125,
+      "population_sd": 0.0002844988883156017
+    },
+    "velocity_rev_s": {
+      "count": 16,
+      "minimum": -0.013351441361010075,
+      "maximum": 0.01907348819077015,
+      "range": 0.032424929551780224,
+      "mean": -0.00023841846268624067,
+      "median": -0.0019073487492278218,
+      "population_sd": 0.009316647139563195
+    },
+    "position_age_ms": {
+      "count": 16,
+      "minimum": 7,
+      "maximum": 25,
+      "range": 18,
+      "mean": 14.1875,
+      "median": 14.0,
+      "population_sd": 5.364451859230353
+    },
+    "velocity_age_ms": {
+      "count": 16,
+      "minimum": 6,
+      "maximum": 24,
+      "range": 18,
+      "mean": 13.1875,
+      "median": 13.0,
+      "population_sd": 5.364451859230353
+    },
+    "pair_separation_ms": {
+      "count": 16,
+      "minimum": 1,
+      "maximum": 1,
+      "range": 0,
+      "mean": 1,
+      "median": 1.0,
+      "population_sd": 0.0
+    },
+    "distinct_fresh_pairs": 16,
+    "feedback_reply_count": 20,
+    "terminal_historical_pairs": 1,
+    "pair_qr_equal": true,
+    "anchor_origin_rev": 2.869091033935547,
+    "baseline_position_minus_origin_rev": -8.821487426757812e-06,
+    "range_over_previous_static_range": 7.440404194164968,
+    "output1_samples": [
+      {
+        "seq": 11,
+        "pq": 1112390,
+        "position_rev": 2.8689520359039307,
+        "velocity_rev_s": -0.007629396393895149
+      },
+      {
+        "seq": 12,
+        "pq": 1112410,
+        "position_rev": 2.868961811065674,
+        "velocity_rev_s": -0.00762939453125
+      },
+      {
+        "seq": 13,
+        "pq": 1112430,
+        "position_rev": 2.8691961765289307,
+        "velocity_rev_s": -0.007629394996911287
+      },
+      {
+        "seq": 14,
+        "pq": 1112450,
+        "position_rev": 2.869335174560547,
+        "velocity_rev_s": -0.003814695868641138
+      },
+      {
+        "seq": 15,
+        "pq": 1112470,
+        "position_rev": 2.869584083557129,
+        "velocity_rev_s": 0.01716613955795765
+      }
+    ],
+    "output1_position_delta_rev": 0.0006320476531982422,
+    "output1_velocity_trapezoid_integral_rev": -0.0002861022762954235,
+    "output1_intervals": [
+      {
+        "from_seq": 11,
+        "to_seq": 12,
+        "dt_ms": 20,
+        "position_delta_rev": 9.775161743164062e-06,
+        "mean_velocity_rev_s": -0.007629395462572575,
+        "velocity_integral_estimate_rev": -0.00015258790925145148,
+        "same_sign": false
+      },
+      {
+        "from_seq": 12,
+        "to_seq": 13,
+        "dt_ms": 20,
+        "position_delta_rev": 0.00023436546325683594,
+        "mean_velocity_rev_s": -0.007629394764080644,
+        "velocity_integral_estimate_rev": -0.00015258789528161288,
+        "same_sign": false
+      },
+      {
+        "from_seq": 13,
+        "to_seq": 14,
+        "dt_ms": 20,
+        "position_delta_rev": 0.00013899803161621094,
+        "mean_velocity_rev_s": -0.005722045432776213,
+        "velocity_integral_estimate_rev": -0.00011444090865552426,
+        "same_sign": false
+      },
+      {
+        "from_seq": 14,
+        "to_seq": 15,
+        "dt_ms": 20,
+        "position_delta_rev": 0.00024890899658203125,
+        "mean_velocity_rev_s": 0.006675721844658256,
+        "velocity_integral_estimate_rev": 0.00013351443689316511,
+        "same_sign": true
+      }
+    ],
+    "stop_requested_ms": 1112495,
+    "post_stop_position_rev": {
+      "count": 9,
+      "minimum": 2.869398832321167,
+      "maximum": 2.8696322441101074,
+      "range": 0.0002334117889404297,
+      "mean": 2.869495153427124,
+      "median": 2.869462490081787,
+      "population_sd": 7.53398518342753e-05
+    },
+    "post_stop_delta_from_origin_rev": {
+      "minimum": 0.0003077983856201172,
+      "maximum": 0.0005412101745605469,
+      "median": 0.0003714561462402344
+    },
+    "post_stop_velocity_rev_s": {
+      "count": 9,
+      "minimum": -0.0133514404296875,
+      "maximum": 0.01907348819077015,
+      "range": 0.03242492862045765,
+      "mean": 0.002119276465641128,
+      "median": 0.0,
+      "population_sd": 0.008738000441022402
+    },
+    "first_post_stop_q_ms": 1112510,
+    "last_post_stop_q_ms": 1112750,
+    "stop_status": {
+      "policy": "2",
+      "source": "shoulder_sdo",
+      "seen": "1",
+      "fresh": "1",
+      "stationary": "1",
+      "dwell_ms": "250",
+      "age_ms": "36",
+      "observed": "1",
+      "reader": "7",
+      "stop_accepted": "1",
+      "purge_ok": "1",
+      "stop_delivery_failed": "0"
+    },
+    "reader_final": {
+      "state": "7",
+      "reason": "0",
+      "requests": "210",
+      "stop": "1112495",
+      "observed": "1",
+      "obs": "1112777",
+      "hb": "1",
+      "hms": "1112699",
+      "error": "00000000",
+      "fault": "0",
+      "win": "0",
+      "out": "0",
+      "now": "1112777",
+      "hvalid": "1"
+    },
+    "last_output": {
+      "stage": "S2_CAN_RX",
+      "s3_state": "3",
+      "reason": "4",
+      "configured": "1",
+      "transport_bound": "1",
+      "output_allowed": "0",
+      "request_valid": "0",
+      "stop_attempted": "1",
+      "prep_state": "0",
+      "arm_token": "0",
+      "feedback_pending": "0",
+      "reader": "7",
+      "reader_reason": "0"
+    },
+    "confirmed_after_pulse_position_trend": {
+      "from_seq": 12,
+      "to_seq": 15,
+      "duration_ms": 60,
+      "delta_rev": 0.0006222724914550781,
+      "ratio_to_previous_static_range": 3.794344460095851,
+      "proof": "First post-pulse feedback query reports MCU now2399; seq12..15 position requests2410..2470 and velocity2411..2471 occur later and before stop2495 (all times share1110000ms prefix). Therefore these3positive position intervals are within the accepted request window.",
+      "velocity_sign_limitation": "First2interval mean velocities negative despite positive position deltas; lastpositive."
+    }
+  },
+  "errors": {
+    "explicit_preflight": {
+      "status": {
+        "stage": "S2_CAN_RX",
+        "uptime_ms": "1112113",
+        "output_allowed": "0",
+        "uart_errors": "0",
+        "rx_overflows": "0",
+        "tx_timeouts": "0",
+        "scheduler_overruns": "0"
+      },
+      "output": {
+        "stage": "S2_CAN_RX",
+        "s3_state": "0",
+        "reason": "1",
+        "configured": "1",
+        "transport_bound": "1",
+        "output_allowed": "0",
+        "request_valid": "0",
+        "stop_attempted": "0",
+        "prep_state": "0",
+        "arm_token": "0",
+        "feedback_pending": "0",
+        "reader": "1",
+        "reader_reason": "0"
+      },
+      "heartbeat": {
+        "profile": "v22",
+        "verified": "0",
+        "est": "1",
+        "hb": "1",
+        "wire_valid": "1",
+        "pos_mrad": "0",
+        "vel_mrad_s": "0",
+        "est_ms": "1112089",
+        "hb_ms": "1111999",
+        "state": "1",
+        "error": "00000000",
+        "fault": "0",
+        "output_allowed": "0"
+      },
+      "can": {
+        "bus": "shoulder",
+        "started": "1",
+        "start_error": "0",
+        "rx": "15229",
+        "drop": "0",
+        "invalid": "0",
+        "fov": "0",
+        "err": "0",
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "029",
+        "dlc": "8",
+        "data": "0000000000000000",
+        "age_ms": "8"
+      },
+      "qualification_before": {
+        "state": "0",
+        "reason": "0",
+        "attempted": "0",
+        "completed": "0",
+        "mask": "0",
+        "claimed": "0",
+        "pending": "0",
+        "first": "0",
+        "last": "0",
+        "begin": "0",
+        "end": "0",
+        "hfirst": "0",
+        "hlast": "0",
+        "cancelled": "0",
+        "out": "0"
+      }
+    },
+    "explicit_terminal_can_uart_scheduler_counter_snapshot": false,
+    "reader_runtime_guard": "Flashed s3_shoulder_service healthy() checks cumulative shoulder CAN errors/drop/invalid/FIFO, busoff, start, console fault and heartbeat health until COMPLETE. This is indirect guard evidence, not a new terminal counter dump.",
+    "elbow_terminal_counters_recorded": false
+  },
+  "limits": [
+    "Static baseline is a different boot, absolute position, and read cadence (20Hz MCU/10Hz host versus50Hz MCU). Its observed range is an empirical reference, not a guaranteed noise bound.",
+    "Velocity lies largely within the prior static fluctuation range; its pulse-window sign does not consistently track the position trend.",
+    "The peak sample was acquired5ms before the recorded stop request although queried after output withdrawal; do not treat it as post-stop movement.",
+    "No physical visual threshold was defined or added; raw rotor estimates do not establish calibrated joint displacement, torque reached, or anatomical direction.",
+    "out=1 belongs to query time. seq11 was queried after pulse acceptance but its acquisition may predate acceptance; do not assign the fullseq11..15 interval to commanded torque. seq12..15 independently supplies3positive in-window intervals."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "utc": "2026-10-04T01:50:47.218336+00:00",
+  "input_files_verified": 168,
+  "runs": [
+    {
+      "name": "materialize",
+      "exit_code": 0,
+      "warnings": []
+    },
+    {
+      "name": "configure",
+      "exit_code": 0,
+      "warnings": []
+    },
+    {
+      "name": "build",
+      "exit_code": 0,
+      "warnings": []
+    },
+    {
+      "name": "binary",
+      "exit_code": 0,
+      "warnings": []
+    }
+  ],
+  "bin_bytes": 91148,
+  "bin_sha256": "7f844000b67d9880106a54b2f3fcd3f4487e10666ad2756036fbbdfc0bff6740",
+  "matches_actual_accepted_binary": true,
+  "RAM_bytes": 10600,
+  "no_device_access": true,
+  "no_firmware_or_functional_tests_repeated": true,
+  "interpretation": "Only publication-required reconstruction from archived profile; no flash,CAN,serial,reset ormotion. OriginalDebugELF hash is path-dependent.",
+  "default_HSI_and_disabled_site_preserved": true
+}
