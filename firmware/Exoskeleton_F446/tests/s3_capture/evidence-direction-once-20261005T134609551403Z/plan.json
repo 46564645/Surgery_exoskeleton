@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "mode": "trial",
+  "approved": true,
+  "enabled": true,
+  "authorization": {
+    "user": "current user explicit authorization on 2026-10-05",
+    "scope": "Exactly one +20 mNm native rotor torque request for 100 ms, then IDLE release; no position hold, retry, escalation, flash or reset",
+    "purpose": "Observe anatomical direction of positive torque; direction remains unknown until physical observation",
+    "reported_start_pose": "Lifted away from rear stop; support present; user reports room on both sides",
+    "reported_room_per_side_deg_estimate": 2,
+    "space_is_measurement": false,
+    "stopping_distance_guaranteed": false,
+    "execute_only_after_user_notice": true,
+    "powered_window": "Current session user confirmed 24V on, USB connected, MotorWizard closed"
+  },
+  "s3limits": {
+    "axes": "1",
+    "policy": "2",
+    "coords": "3",
+    "direction": "1",
+    "ratio": "3F800000",
+    "zero": "00000000",
+    "lo": "BD80ADFD",
+    "hi": "3D80ADFD",
+    "speed": "3F20D97C",
+    "limit": "3CA3D70A",
+    "slew": "3E4CCCCD"
+  },
+  "s3timing": {
+    "feedback": "150",
+    "service": "5",
+    "max_request": "100",
+    "prepare": "1500",
+    "reply": "20",
+    "period": "20",
+    "window": "2500"
+  },
+  "s3stopcfg": {
+    "span": "3A83126F",
+    "speed": "3CA3D70A",
+    "dwell": "250",
+    "fresh": "40",
+    "window": "1000"
+  },
+  "pulse": {
+    "signed_mNm": 20,
+    "ttl_ms": 100
+  },
+  "bounds": {
+    "total_seconds": 8,
+    "prepare_seconds": 1.5,
+    "stop_seconds": 1.2,
+    "max_queries": 256
+  },
+  "qualification": {
+    "summary": "D:\\codex_tasks\\2026-10-01\\task\\s3-qualification-telemetry\\qualification-20261003T152430610504Z\\summary.json",
+    "sha256": "508b77beced4e7010b07cf78b5534e62fa5894e252f509dd96e37f28ed07e5ed"
+  },
+  "firmware": {
+    "path": "D:\\codex_tasks\\2026-10-01\\task\\s3-relative-trial-candidate\\deliverables\\S3-relative-once-HSE-SAFE_OFF.elf",
+    "sha256": "762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54",
+    "bytes": 1745964
+  },
+  "origin_policy": "prepare-time first complete fresh healthy IDLE snapshot; native rotor coordinates only; freeze for boot",
+  "no_automatic_retry": true,
+  "source_plan_sha256": "f39520e106855c7d1d871f1b5370f923456d688f04eda379f7ee6492721fa89d",
+  "recorded_zero_rev_is_target": false
+}

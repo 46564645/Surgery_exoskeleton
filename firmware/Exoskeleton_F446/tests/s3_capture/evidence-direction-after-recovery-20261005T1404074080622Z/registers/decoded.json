@@ -1,0 +1,36 @@
+{
+  "rcc_words": [
+    "03077B83",
+    "22415408",
+    "0000100A"
+  ],
+  "can1_words": [
+    "00000000",
+    "001A0005"
+  ],
+  "HSE_ON": true,
+  "HSE_READY": true,
+  "HSE_BYPASS": true,
+  "PLL_SOURCE_HSE": true,
+  "PLL_M": 8,
+  "PLL_N": 336,
+  "PLL_P": 4,
+  "system_clock_source_status": 2,
+  "nominal_APB1_Hz": 42000000.0,
+  "CAN1_prescaler": 6,
+  "CAN1_BS1": 11,
+  "CAN1_BS2": 2,
+  "CAN1_SJW": 1,
+  "CAN1_loopback": false,
+  "CAN1_silent": false,
+  "nominal_CAN1_baud": 500000.0,
+  "CAN1_sample_point": 0.8571428571428571,
+  "CAN1_TEC_snapshot": 0,
+  "CAN1_REC_snapshot": 0,
+  "CAN1_LEC_snapshot": 0,
+  "CAN1_bus_off_snapshot": false,
+  "actual_frequency_measured": false,
+  "reference": "Same RCC tuple as archived 2026-10-03 HSE startup; nominal timing cannot prove signal quality or physical cause",
+  "reset_commands": 0,
+  "writes": 0
+}

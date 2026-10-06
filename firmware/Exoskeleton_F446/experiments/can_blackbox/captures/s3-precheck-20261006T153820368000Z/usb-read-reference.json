@@ -1,0 +1,31 @@
+{
+  "source": "D:\\codex_tasks\\2026-10-01\\task\\s3-shoulder-supervised\\usb\\captures\\20261006T153943.847110Z\\capture.json",
+  "sha256": "c72131abff34b500a5eedb02b15018958333d44b548e7ea9824e7d080a556eb4",
+  "identity": {
+    "serial_number": 197332430435634,
+    "hw_version_major": 3,
+    "hw_version_minor": 11,
+    "hw_version_variant": 1,
+    "fw_version_major": 0,
+    "fw_version_minor": 6,
+    "fw_version_revision": 5,
+    "axis0.config.can.node_id": 1,
+    "axis0.current_state": 1
+  },
+  "s3_properties": {
+    "axis0.motor.is_calibrated": true,
+    "axis0.encoder.is_ready": true,
+    "axis0.controller.input_torque": 0.0,
+    "axis0.controller.config.control_mode": 3,
+    "axis0.controller.config.input_mode": 3,
+    "axis0.encoder.pos_estimate": 2.8982579708099365,
+    "axis0.encoder.vel_estimate": 0.0038146981969475746
+  },
+  "pose": "User accepts current pose by visual judgment; reports no movement during acquisition; further angle measurement waived",
+  "zero_applied": false,
+  "usb_success": true,
+  "can_active_read_verified": false,
+  "angle_deg": null,
+  "measurement_method": "user visual judgment",
+  "angle_uncertainty_deg": null
+}

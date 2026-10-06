@@ -1,0 +1,22 @@
+[
+  {
+    "port": "COM10",
+    "serial": "066EFF555748874987182240"
+  },
+  {
+    "port": "COM3",
+    "serial": null
+  },
+  {
+    "port": "COM6",
+    "serial": null
+  },
+  {
+    "port": "COM4",
+    "serial": null
+  },
+  {
+    "port": "COM7",
+    "serial": null
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "mode": "trial",
+  "source": "live-vcp",
+  "success": false,
+  "pulse_attempted": false,
+  "pulse_acknowledged": false,
+  "cancel_attempted": true,
+  "error": "CaptureError: Unexpected err",
+  "cancel_reply": "OK cancelled output_allowed=0",
+  "binding": {
+    "ports": [
+      {
+        "DeviceID": "COM10",
+        "PNPDeviceID": "USB\\VID_0483&PID_374B&MI_02\\7&7b125cd&0&0002",
+        "Status": "OK",
+        "ConfigManagerErrorCode": 0,
+        "devnode_status": 25174026,
+        "native_device": "\\Device\\USBSER000"
+      }
+    ],
+    "parent": "USB\\VID_0483&PID_374B\\066EFF555748874987182240",
+    "serial_verified": true,
+    "read_only_enumeration": true,
+    "source": "registry_and_cfgmgr32_active_devnode",
+    "elapsed_seconds": 0.0006739000018569641
+  },
+  "plan_sha256": "59356cf277ec78b78fe39794ed471be35ef6f34343ff97ab04894d4876d0aaef",
+  "serial_closed": true,
+  "commands_attempted": 5,
+  "one_shots_attempted": [
+    "cancel"
+  ],
+  "finished_utc": "2026-10-05T13:46:29.796531+00:00"
+}

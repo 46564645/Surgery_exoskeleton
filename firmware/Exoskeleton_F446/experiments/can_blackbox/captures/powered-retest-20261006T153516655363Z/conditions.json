@@ -1,0 +1,31 @@
+{
+  "motor_usb": "connected per user",
+  "24V": "on per user",
+  "wiring": "User confirmed CANH/CANL replaced/twisted; motor USB connected",
+  "ports": [
+    {
+      "port": "COM5",
+      "serial": "BL72.CYBERBEAST.CN"
+    },
+    {
+      "port": "COM10",
+      "serial": "066EFF555748874987182240"
+    },
+    {
+      "port": "COM3",
+      "serial": null
+    },
+    {
+      "port": "COM6",
+      "serial": null
+    },
+    {
+      "port": "COM4",
+      "serial": null
+    },
+    {
+      "port": "COM7",
+      "serial": null
+    }
+  ]
+}

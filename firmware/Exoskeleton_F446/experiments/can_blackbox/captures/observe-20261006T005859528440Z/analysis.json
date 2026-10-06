@@ -1,0 +1,34 @@
+{
+  "first_error_ms": 78156,
+  "form_irq_observations": 5,
+  "error_window_ms": [
+    78156,
+    78157
+  ],
+  "first_success_rx_ms": 78157,
+  "tec_at_fault": 0,
+  "rec_at_fault": 1,
+  "tx_mailboxes_all_empty": true,
+  "tx_or_abort_events": 0,
+  "overwrite_count": 0,
+  "later_counters": [
+    {
+      "uptime_ms": 96444,
+      "errors": 74
+    },
+    {
+      "uptime_ms": 134256,
+      "errors": 79
+    },
+    {
+      "uptime_ms": 136320,
+      "errors": 79
+    }
+  ],
+  "conclusions": [
+    "First observed CAN1 IRQ was receive-side Form before any accepted RX or application TX event",
+    "Errors increased by 5 between later cache queries, not limited to first startup burst",
+    "No physical component or bit timing root cause established"
+  ],
+  "capture_sha256": "545b3ff4415006a1aadcea532c453ff3b3a82fc8f1a37aa0e0a7b119158ccb38"
+}

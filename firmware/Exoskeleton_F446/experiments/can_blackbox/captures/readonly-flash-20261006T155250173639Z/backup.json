@@ -1,0 +1,7 @@
+{
+  "bytes": 524288,
+  "sha256": "2163c651a69ce2bf5f67379dd171b452a114b1199b6e082dab73d47bbbcb70df",
+  "prefix94916_matches_previous_blackbox": true,
+  "log": "backup.log",
+  "host_note": "backup succeeded; terminal printing then failed on encoding, not device read"
+}

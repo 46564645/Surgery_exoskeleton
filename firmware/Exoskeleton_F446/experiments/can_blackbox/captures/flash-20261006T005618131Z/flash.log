@@ -1,0 +1,36 @@
+      -------------------------------------------------------------------
+                       STM32CubeProgrammer v2.23.0                  
+      -------------------------------------------------------------------
+
+ST-LINK SN  : 066EFF555748874987182240
+ST-LINK FW  : V2J48M35
+Board       : --
+Voltage     : 3.22V
+SWD freq    : 4000 KHz
+Connect mode: Hot Plug
+Reset mode  : Software reset
+Device ID   : 0x421
+Revision ID : Rev A
+Device name : STM32F446xx
+NVM size    : 512 KBytes
+Device type : MCU
+Device CPU  : Cortex-M4
+BL Version  : 0x90
+
+
+
+Opening and parsing file: Exoskeleton_F446.bin
+
+
+Memory Programming ...
+  File          : Exoskeleton_F446.bin
+  Size          : 92.69 KB 
+  Address       : 0x08000000
+
+
+Erasing memory corresponding to segment 0:
+Erasing internal memory sectors [0 4]
+Error: failed to erase memory
+
+
+Error: failed to erase memory

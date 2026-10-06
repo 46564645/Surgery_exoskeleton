@@ -1,0 +1,46 @@
+{
+  "before_prefix_sha256": "7f844000b67d9880106a54b2f3fcd3f4487e10666ad2756036fbbdfc0bff6740",
+  "after_vectors": "ffffffffffffffffffffffffffffffff",
+  "sectors": [
+    {
+      "sector": 0,
+      "changed": 16307,
+      "erased": true
+    },
+    {
+      "sector": 1,
+      "changed": 0,
+      "erased": false
+    },
+    {
+      "sector": 2,
+      "changed": 0,
+      "erased": false
+    },
+    {
+      "sector": 3,
+      "changed": 0,
+      "erased": false
+    },
+    {
+      "sector": 4,
+      "changed": 0,
+      "erased": false
+    },
+    {
+      "sector": 5,
+      "changed": 0,
+      "erased": true
+    },
+    {
+      "sector": 6,
+      "changed": 0,
+      "erased": true
+    },
+    {
+      "sector": 7,
+      "changed": 0,
+      "erased": true
+    }
+  ]
+}

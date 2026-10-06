@@ -40,6 +40,7 @@ Prepare在具备真实确认项时请求驱动准备，Arm授权输出；它们�
 - 请求按本次确认坐标的正方向表达**电机侧输出量**：肩为转子Nm，肘为发送电流A，按方向转换符号。没有关节Nm→电流转换，也不用未知力矩常数或效率拼扭矩模型。每次只选择一个启用轴，其他启用轴候选为零；停用轴不TX。换轴须先取消再重新人工Arm。
 - C620厂家V1.01手册第31–33页 CAN通信协议：标准DATA、DLC8，ID1–4用0x200，ID5–8用0x1FF，大端有符号16位；±16384对应发送电流±20A。反馈0x200+ID只含角度、RPM、实际电流、温度和Null，没有目标电流echo、轴状态或校准状态。编码量程不是S3运行限值，也不证明反馈 `current_raw` 的A/计数倍率；禁止默认用20A运行。
 - SteadyWin rev2.2 §3.1.5 ID0–63；§4.1.1 11位 `(node<<5)|cmd`、8字节、小端IEEE754；§4.1.2 Set_Input_Torque(0x00E)首4字节float32映射 `controller.input_torque`，剩余字节清零；Set_Axis_State(0x007)首uint32=1表示IDLE，剩余清零。按手册controller字段映射采用转子量；§3.1.7特指CAN MIT输出轴量，不能将MIT倍率套到SIMPLE。
+- 后续MIT研究入口：[GDS68 MIT适配依据与待验证项](reference/gds68_mit_adaptation_notes.md)（2026-10-06）。记录厂家SDK/Rhino报文、输出轴/转子单位边界、FW0.6.5量程端点335–339及编码类型问题；仅参考归档，不代表MIT已接入或CAN错误已修复。
 - **GDS编码仅是rev2.2手册档案格式**。实物HW3.11.1/FW0.6.5兼容性、真实反馈对应与停止效果未确认，肩侧 `protocol_confirmed=false`。没有复制通用ODrive广播约定或Rhino的MIT倍率。driver[0]已有真实档案观测，但GDS校准/零目标/模式读回仍false；driver[1]只在真实C620反馈与显式现场operational确认满足时有效，不伪造轴状态或echo。原始收帧或HAL发送接受均不能单独置驱动就绪。
 
 ## 生命周期与停止

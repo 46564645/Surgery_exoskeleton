@@ -1,0 +1,21 @@
+{
+  "variant": "existing disabled site + accepted HSE + existing blackbox",
+  "build_exit_code": 0,
+  "changed_source_vs_current_blackbox": [
+    "App/application/s3_site.c"
+  ],
+  "site_source": "App/application/s3_site.c (existing production disabled profile)",
+  "bin": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\can-blackbox-readonly-hse-source\\build\\ON\\Exoskeleton_F446.bin",
+  "bin_bytes": 94916,
+  "bin_sha256": "1e2067b1a8cfb99ff0aed06d0d330c5c6953667018801f70498299e7676b0f5d",
+  "site_address": "08016BE0",
+  "site_size": 164,
+  "site_nonzero_bytes": {
+    "152": 1,
+    "153": 1
+  },
+  "flashed": true,
+  "hardware_verified": "flash independent readback and USB-only cached guards; powered CAN read not yet tested",
+  "input_manifest": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\can-blackbox-readonly-hse-source\\experiment-inputs.json",
+  "flash_evidence": "captures/readonly-flash-20261006T155250173639Z"
+}

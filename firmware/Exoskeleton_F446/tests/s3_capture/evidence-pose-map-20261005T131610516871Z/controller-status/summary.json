@@ -1,0 +1,24 @@
+{
+  "success": true,
+  "source": "live-vcp-cache-only",
+  "commands": [
+    "outputstatus",
+    "shoulderfeedback",
+    "status"
+  ],
+  "can_queries": 0,
+  "motion_commands": 0,
+  "source_sha256": "ccc5369a4593ef35fa2bdaec10ef2af2f51fbfdf5b8328f86e67287ac7de8bce",
+  "replies": {
+    "outputstatus": "OK stage=S2_CAN_RX s3_state=0 reason=1 configured=1 transport_bound=1 output_allowed=0 request_valid=0 stop_attempted=0 prep_state=0 arm_token=0 feedback_pending=0 reader=1 reader_reason=0",
+    "shoulderfeedback": "OK shoulder profile=v22 verified=0 est=1 hb=1 wire_valid=1 pos_mrad=0 vel_mrad_s=0 est_ms=294439 hb_ms=294349 state=1 error=00000000 fault=0 output_allowed=0",
+    "status": "OK stage=S2_CAN_RX uptime_ms=294463 output_allowed=0 uart_errors=0 rx_overflows=0 tx_timeouts=0 scheduler_overruns=0"
+  },
+  "heartbeat_age_ms": 114,
+  "output_disabled": true,
+  "fresh_idle_heartbeat": true,
+  "serial_closed": true,
+  "queries_attempted": 3,
+  "noncache_once_commands": [],
+  "finished_utc": "2026-10-05T13:15:42.274778+00:00"
+}

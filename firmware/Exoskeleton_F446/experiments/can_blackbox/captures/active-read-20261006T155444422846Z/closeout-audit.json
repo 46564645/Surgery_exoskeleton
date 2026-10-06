@@ -1,0 +1,33 @@
+{
+  "scope": "user-adjusted shoulder S3 closeout: current-wiring active CAN read retest",
+  "passed": true,
+  "requests": 1200,
+  "mcu_pairs": 600,
+  "host_distinct_valid_pairs": 300,
+  "duration_ms": 30000,
+  "commands": [
+    "canstatus",
+    "elbow",
+    "encfeedback",
+    "encstart",
+    "encstop",
+    "outputstatus",
+    "ping",
+    "shoulder",
+    "shoulderfeedback",
+    "status"
+  ],
+  "no_motion_commands": true,
+  "can_error_delta": 0,
+  "physical_variation": "not tested; user waived further motion/angle verification",
+  "not_proven": [
+    "root cause isolated",
+    "long term CAN reliability",
+    "joint mapping or powered S4 acceptance"
+  ],
+  "sha256": {
+    "events.jsonl": "9272824c3dd96509c2ca8a8d1fe5febab641b81bc9a7d1fc3406d4e78aaf5c88",
+    "summary.json": "fd3a2f18d946bb5dee93f7498f06c16b2ef752f1897929f9ec89548fe1a920c2",
+    "binding.json": "a8a466fc7b79819e42848c2443345b3e2fbd351e4b967c258e6cf1144f3b55f7"
+  }
+}

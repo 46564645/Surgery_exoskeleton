@@ -1,0 +1,16 @@
+{
+  "command": [
+    "C:/Users/asus/AppData/Local/stm32cube/bundles/programmer/2.23.0/bin/STM32_Programmer_CLI.exe",
+    "-c",
+    "port=SWD",
+    "sn=066EFF555748874987182240",
+    "freq=4000",
+    "mode=NORMAL",
+    "-w",
+    "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\can-blackbox-readonly-hse-source\\build\\ON\\Exoskeleton_F446.bin",
+    "0x08000000",
+    "-v",
+    "-rst"
+  ],
+  "exit": 0
+}

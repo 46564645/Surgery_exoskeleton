@@ -1,0 +1,29 @@
+{
+  "status": "BLOCKED_BEFORE_PREPARE_CAN_ERROR_HISTORY",
+  "commands": [
+    "ping",
+    "status",
+    "canstatus",
+    "shoulder",
+    "cancel"
+  ],
+  "complete_replies": 5,
+  "prepare_commands": 0,
+  "arm_commands": 0,
+  "pulse_commands": 0,
+  "cancel_commands": 1,
+  "motion_sent": false,
+  "serial_closed": true,
+  "cancel_output_disabled": true,
+  "shoulder_observation": "OK bus=shoulder started=1 start_error=0 rx=235496 drop=0 invalid=0 fov=0 err=80 last_err=00000010 bus_off=0 queued=0 seen=1 id=029 dlc=8 data=0000000000000000 age_ms=2",
+  "error_semantics": "err is a cumulative saturated callback counter; last_err is only the most recent recorded HAL code. 0x10 is HAL_CAN_ERROR_FOR; cannot bind 80 callbacks to the latest frame or assign all the same error type.",
+  "firmware_or_driver_parameters_changed": false,
+  "reset_or_flash_performed": false,
+  "anatomical_direction": "NOT_CONFIRMED_NO_MOTION",
+  "current_power": "24V OFF requested, confirmation pending",
+  "history_review": {
+    "20261003": "HSE static 30s passed without new CAN errors; physical cause remained unresolved",
+    "20261004": "User confirmed 24V OFF with USB retained; one MCU reset without flash restored SAFE_OFF / IDLE / UNSET; later powered once trial passed",
+    "next": "Reuse one power-off reset for startup/reader recovery; verify fresh CAN health after separate power-on. Reset is not a physical CAN repair."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "plan": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\s3-shoulder-closeout\\direction-once-20261005T134609551403Z\\plan.json",
+  "sha256": "59356cf277ec78b78fe39794ed471be35ef6f34343ff97ab04894d4876d0aaef",
+  "evidence": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\tests\\s3_capture\\evidence-direction-once-20261005T134609551403Z",
+  "validation": "PASS",
+  "hardware_access": false,
+  "timing": {
+    "cycle_ms": 6,
+    "freshness_required_ms": 31,
+    "reader_required_ms": 1711,
+    "stop_required_ms": 431
+  },
+  "capture_sha256": "ccc5369a4593ef35fa2bdaec10ef2af2f51fbfdf5b8328f86e67287ac7de8bce"
+}

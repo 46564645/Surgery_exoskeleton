@@ -104,3 +104,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+# Temporary diagnostics: deleting this experiment directory is supported.
+include(experiments/can_blackbox/experiment.cmake OPTIONAL)

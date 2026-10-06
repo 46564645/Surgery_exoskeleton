@@ -1,0 +1,2 @@
+{"file": "spec/architecture/index.md", "reason": "仅集中site候选配置"}
+{"file": "refs/control-safety-limits.md", "reason": "工作区间和停止余量，不复制通用阈值"}

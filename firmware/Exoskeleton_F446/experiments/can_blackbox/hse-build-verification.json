@@ -1,0 +1,22 @@
+{
+  "baseline_matches_accepted": true,
+  "archive_inputs_verified": 168,
+  "no_device_access": true,
+  "source_manifest": "../../build/can-blackbox-hse-source/experiment-inputs.json",
+  "builds": [
+    {
+      "bin_bytes": 91148,
+      "bin_sha256": "7f844000b67d9880106a54b2f3fcd3f4487e10666ad2756036fbbdfc0bff6740",
+      "elf_sha256": "4d3f38071ccf8a90df805626d46b06e0fb0d0a4c28d1ba63be74b827b8059455",
+      "mode": "OFF"
+    },
+    {
+      "bin_bytes": 94916,
+      "bin_sha256": "97bcd52898191c1bafb8f246de88a66881cc47b1d38b480566ead287a1769416",
+      "elf_sha256": "3890fc9b12c748a0e3cbb054d0f4793fe7729e666a9e5b44c9fdf3abf7bbe13b",
+      "mode": "ON"
+    }
+  ],
+  "note": "Software reproduction only; neither image flashed in this task",
+  "clock": "Archived HSE_BYPASS 8MHz nominal; M8 N336 P4"
+}

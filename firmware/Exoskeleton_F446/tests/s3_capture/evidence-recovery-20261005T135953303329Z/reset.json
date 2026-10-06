@@ -1,0 +1,22 @@
+{
+  "started_utc": "2026-10-05T13:59:53.303692+00:00",
+  "power_basis": "User said done in direct reply to 24V OFF / STM32 USB retained request",
+  "command": [
+    "C:\\Users\\asus\\AppData\\Local\\stm32cube\\bundles\\programmer\\2.23.0\\bin\\STM32_Programmer_CLI.exe",
+    "-c",
+    "port=SWD",
+    "mode=HOTPLUG",
+    "freq=4000",
+    "sn=066EFF555748874987182240",
+    "-rst"
+  ],
+  "reset_attempts": 1,
+  "flash_commands": 0,
+  "timed_out": false,
+  "success": true,
+  "evidence": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\tests\\s3_capture\\evidence-recovery-20261005T135953303329Z",
+  "returncode": 0,
+  "fixed_identity_present": true,
+  "raw_sha256": "21f1fb8e1c46f6f3d0bbf265d927c287a4e0255ead6019c860f061b6a91e90ea",
+  "finished_utc": "2026-10-05T13:59:53.445394+00:00"
+}

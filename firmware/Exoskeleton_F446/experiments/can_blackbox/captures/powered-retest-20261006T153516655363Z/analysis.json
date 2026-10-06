@@ -1,0 +1,41 @@
+{
+  "duration_mcu_ms": 30183,
+  "rx_start": 3982,
+  "rx_end": 7302,
+  "rx_delta": 3320,
+  "errors": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "bb_final": {
+    "v": "1",
+    "bus": "1",
+    "count": "112",
+    "frozen": "0",
+    "triggered": "0",
+    "trigger_seq": "0",
+    "post": "0",
+    "overwritten": "14498",
+    "suppressed": "0",
+    "cursor": "0"
+  },
+  "config": {
+    "config": "1",
+    "source": "first_irq",
+    "mcr": "00010018",
+    "btr": "001A0005",
+    "ier": "00008F0A",
+    "cr": "03077B83",
+    "pll": "22415408",
+    "cfgr": "0000100A",
+    "systick_load": "83999"
+  },
+  "limits": [
+    "Static periodic 0x029 traffic only; no SDO requests or motion",
+    "No evidence yet establishes root cause or long-term reliability",
+    "Blackbox left recording; not frozen/exported to preserve first-error capture"
+  ],
+  "user_confirmation": "CANH/CANL replaced/twisted and motor USB connected; both differ from earlier USB-disconnected capture, so causal attribution is not isolated"
+}

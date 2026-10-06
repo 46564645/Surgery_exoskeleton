@@ -1,0 +1,17 @@
+{
+  "ports": [
+    {
+      "DeviceID": "COM10",
+      "PNPDeviceID": "USB\\VID_0483&PID_374B&MI_02\\7&7b125cd&0&0002",
+      "Status": "OK",
+      "ConfigManagerErrorCode": 0,
+      "devnode_status": 25174026,
+      "native_device": "\\Device\\USBSER000"
+    }
+  ],
+  "parent": "USB\\VID_0483&PID_374B\\066EFF555748874987182240",
+  "serial_verified": true,
+  "read_only_enumeration": true,
+  "source": "registry_and_cfgmgr32_active_devnode",
+  "elapsed_seconds": 0.00949860000400804
+}

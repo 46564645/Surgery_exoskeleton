@@ -1,0 +1,70 @@
+{
+  "status": "RECURRENCE_AFTER_ONE_RESET_NO_ACTUATION",
+  "commands": [
+    "ping",
+    "status",
+    "canstatus",
+    "shoulder",
+    "cancel"
+  ],
+  "complete_replies": 5,
+  "prepare_commands": 0,
+  "arm_commands": 0,
+  "pulse_commands": 0,
+  "cancel_commands": 1,
+  "motion_sent": false,
+  "serial_closed": true,
+  "observed_uptime_ms": 254320,
+  "CAN_err": 29,
+  "last_err": "00000010",
+  "CAN_rx": 19033,
+  "reset_clearance_does_not_fix_CAN": true,
+  "registers": {
+    "rcc_words": [
+      "03077B83",
+      "22415408",
+      "0000100A"
+    ],
+    "can1_words": [
+      "00000000",
+      "001A0005"
+    ],
+    "HSE_ON": true,
+    "HSE_READY": true,
+    "HSE_BYPASS": true,
+    "PLL_SOURCE_HSE": true,
+    "PLL_M": 8,
+    "PLL_N": 336,
+    "PLL_P": 4,
+    "system_clock_source_status": 2,
+    "nominal_APB1_Hz": 42000000.0,
+    "CAN1_prescaler": 6,
+    "CAN1_BS1": 11,
+    "CAN1_BS2": 2,
+    "CAN1_SJW": 1,
+    "CAN1_loopback": false,
+    "CAN1_silent": false,
+    "nominal_CAN1_baud": 500000.0,
+    "CAN1_sample_point": 0.8571428571428571,
+    "CAN1_TEC_snapshot": 0,
+    "CAN1_REC_snapshot": 0,
+    "CAN1_LEC_snapshot": 0,
+    "CAN1_bus_off_snapshot": false,
+    "actual_frequency_measured": false,
+    "reference": "Same RCC tuple as archived 2026-10-03 HSE startup; nominal timing cannot prove signal quality or physical cause",
+    "reset_commands": 0,
+    "writes": 0
+  },
+  "physical_root_cause": "UNRESOLVED",
+  "firmware_or_parameters_changed": false,
+  "further_automatic_retry": false,
+  "control_route": "User prefers MotorWizard for present bench operation; no further MCU motion or NativeUSB ownership alongside GUI",
+  "screenshot": {
+    "original_path": "C:\\Users\\asus\\AppData\\Local\\Temp\\codex-clipboard-ddcf4de0-9e2c-4f33-b914-daa4a4b792f1.png",
+    "sha256": "51181248c32c1e6007efd37f03059c715d237237f60c99d14bbed0c0d810bea6",
+    "capture_time": "not established",
+    "reported_user_action": "User manually lifted to maximum forward pose; not a commanded positioning test",
+    "pose_pairing": "not established between screenshot and maximum pose",
+    "display_is_not_calibrated_shoulder_angle": true
+  }
+}

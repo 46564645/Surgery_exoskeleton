@@ -1,0 +1,71 @@
+      -------------------------------------------------------------------
+                       STM32CubeProgrammer v2.23.0                  
+      -------------------------------------------------------------------
+
+ST-LINK SN  : 066EFF555748874987182240
+ST-LINK FW  : V2J48M35
+Board       : --
+Voltage     : 3.22V
+SWD freq    : 4000 KHz
+Connect mode: Hot Plug
+Reset mode  : Software reset
+Device ID   : 0x421
+Revision ID : Rev A
+Device name : STM32F446xx
+NVM size    : 512 KBytes
+Device type : MCU
+Device CPU  : Cortex-M4
+BL Version  : 0x90
+
+
+UPLOADING ...
+  File          : H:\Desktop\Surgery_exoskeleton-git\firmware\Exoskeleton_F446\experiments\can_blackbox\captures\flash-20261006T005618131Z\after-failed-flash-512k.bin
+  Size          : 524288 Bytes
+  Address:      : 0x8000000
+Read progress:
+�������������������������������������������������� 0%
+�������������������������������������������������� 100%
+
+Data read successfully
+Time elapsed during read operation is: 00:00:03.838
+
+UPLOADING OPTION BYTES DATA ...
+
+  Bank          : 0x00
+  Address       : 0x40023c14 
+  Size          : 4 Bytes
+
+�������������������������������������������������� 50%
+�������������������������������������������������� 100%
+
+
+OPTION BYTES BANK: 0
+
+   Read Out Protection:
+
+     RDP          : 0xAA (Level 0, no protection) 
+
+   PCROP Protection:
+
+     SPRMOD       : 0x0 (PCROP disabled. nWPRi bits used for Write protection on sector i) 
+
+   BOR Level:
+
+     BOR_LEV      : 0x3 (BOR  OFF    reset threshold level from 1.80 to 2.10 V) 
+
+   User Configuration:
+
+     WDG_SW       : 0x1 (Software watchdog) 
+     nRST_STOP    : 0x1 (No reset generated) 
+     nRST_STDBY   : 0x1 (No reset generated) 
+
+   Write Protection:
+
+     nWRP0        : 0x1 (Write protection not active) 
+     nWRP1        : 0x1 (Write protection not active) 
+     nWRP2        : 0x1 (Write protection not active) 
+     nWRP3        : 0x1 (Write protection not active) 
+     nWRP4        : 0x1 (Write protection not active) 
+     nWRP5        : 0x1 (Write protection not active) 
+     nWRP6        : 0x1 (Write protection not active) 
+     nWRP7        : 0x1 (Write protection not active) 

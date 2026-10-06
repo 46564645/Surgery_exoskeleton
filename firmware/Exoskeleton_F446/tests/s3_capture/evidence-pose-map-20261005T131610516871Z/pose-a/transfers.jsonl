@@ -1,0 +1,40 @@
+{"event": "request_attempt", "number": 1, "name": "serial_number", "started_utc": "2026-10-05T13:16:11.326482+00:00", "request_hex": "810005800800d7f7"}
+{"event": "response", "number": 1, "name": "serial_number", "started_utc": "2026-10-05T13:16:11.326482+00:00", "request_hex": "810005800800d7f7", "response_hex": "818032356b0979b30000", "finished_utc": "2026-10-05T13:16:11.327345+00:00"}
+{"event": "request_attempt", "number": 2, "name": "hw_version_major", "started_utc": "2026-10-05T13:16:11.327624+00:00", "request_hex": "820006800100d7f7"}
+{"event": "response", "number": 2, "name": "hw_version_major", "started_utc": "2026-10-05T13:16:11.327624+00:00", "request_hex": "820006800100d7f7", "response_hex": "828003", "finished_utc": "2026-10-05T13:16:11.328057+00:00"}
+{"event": "request_attempt", "number": 3, "name": "hw_version_minor", "started_utc": "2026-10-05T13:16:11.328444+00:00", "request_hex": "830007800100d7f7"}
+{"event": "response", "number": 3, "name": "hw_version_minor", "started_utc": "2026-10-05T13:16:11.328444+00:00", "request_hex": "830007800100d7f7", "response_hex": "83800b", "finished_utc": "2026-10-05T13:16:11.328865+00:00"}
+{"event": "request_attempt", "number": 4, "name": "hw_version_variant", "started_utc": "2026-10-05T13:16:11.329061+00:00", "request_hex": "840008800100d7f7"}
+{"event": "response", "number": 4, "name": "hw_version_variant", "started_utc": "2026-10-05T13:16:11.329061+00:00", "request_hex": "840008800100d7f7", "response_hex": "848001", "finished_utc": "2026-10-05T13:16:11.329403+00:00"}
+{"event": "request_attempt", "number": 5, "name": "fw_version_major", "started_utc": "2026-10-05T13:16:11.329581+00:00", "request_hex": "850009800100d7f7"}
+{"event": "response", "number": 5, "name": "fw_version_major", "started_utc": "2026-10-05T13:16:11.329581+00:00", "request_hex": "850009800100d7f7", "response_hex": "858000", "finished_utc": "2026-10-05T13:16:11.329951+00:00"}
+{"event": "request_attempt", "number": 6, "name": "fw_version_minor", "started_utc": "2026-10-05T13:16:11.330105+00:00", "request_hex": "86000a800100d7f7"}
+{"event": "response", "number": 6, "name": "fw_version_minor", "started_utc": "2026-10-05T13:16:11.330105+00:00", "request_hex": "86000a800100d7f7", "response_hex": "868006", "finished_utc": "2026-10-05T13:16:11.330443+00:00"}
+{"event": "request_attempt", "number": 7, "name": "fw_version_revision", "started_utc": "2026-10-05T13:16:11.330611+00:00", "request_hex": "87000b800100d7f7"}
+{"event": "response", "number": 7, "name": "fw_version_revision", "started_utc": "2026-10-05T13:16:11.330611+00:00", "request_hex": "87000b800100d7f7", "response_hex": "878005", "finished_utc": "2026-10-05T13:16:11.330902+00:00"}
+{"event": "request_attempt", "number": 8, "name": "axis0.config.can.node_id", "started_utc": "2026-10-05T13:16:11.331088+00:00", "request_hex": "8800b4800400d7f7"}
+{"event": "response", "number": 8, "name": "axis0.config.can.node_id", "started_utc": "2026-10-05T13:16:11.331088+00:00", "request_hex": "8800b4800400d7f7", "response_hex": "888001000000", "finished_utc": "2026-10-05T13:16:11.331453+00:00"}
+{"event": "request_attempt", "number": 9, "name": "axis0.current_state", "started_utc": "2026-10-05T13:16:11.331602+00:00", "request_hex": "89008e800100d7f7"}
+{"event": "response", "number": 9, "name": "axis0.current_state", "started_utc": "2026-10-05T13:16:11.331602+00:00", "request_hex": "89008e800100d7f7", "response_hex": "898001", "finished_utc": "2026-10-05T13:16:11.331913+00:00"}
+{"event": "request_attempt", "number": 10, "name": "axis0.motor.is_calibrated", "started_utc": "2026-10-05T13:16:11.332070+00:00", "request_hex": "8a00c3800100d7f7"}
+{"event": "response", "number": 10, "name": "axis0.motor.is_calibrated", "started_utc": "2026-10-05T13:16:11.332070+00:00", "request_hex": "8a00c3800100d7f7", "response_hex": "8a8001", "finished_utc": "2026-10-05T13:16:11.332414+00:00"}
+{"event": "request_attempt", "number": 11, "name": "axis0.encoder.is_ready", "started_utc": "2026-10-05T13:16:11.332567+00:00", "request_hex": "8b006e810100d7f7"}
+{"event": "response", "number": 11, "name": "axis0.encoder.is_ready", "started_utc": "2026-10-05T13:16:11.332567+00:00", "request_hex": "8b006e810100d7f7", "response_hex": "8b8001", "finished_utc": "2026-10-05T13:16:11.332902+00:00"}
+{"event": "request_attempt", "number": 12, "name": "axis0.controller.input_torque", "started_utc": "2026-10-05T13:16:11.333062+00:00", "request_hex": "8c0010810400d7f7"}
+{"event": "response", "number": 12, "name": "axis0.controller.input_torque", "started_utc": "2026-10-05T13:16:11.333062+00:00", "request_hex": "8c0010810400d7f7", "response_hex": "8c8000000000", "finished_utc": "2026-10-05T13:16:11.333384+00:00"}
+{"event": "request_attempt", "number": 13, "name": "axis0.controller.config.control_mode", "started_utc": "2026-10-05T13:16:11.333535+00:00", "request_hex": "8d001f810100d7f7"}
+{"event": "response", "number": 13, "name": "axis0.controller.config.control_mode", "started_utc": "2026-10-05T13:16:11.333535+00:00", "request_hex": "8d001f810100d7f7", "response_hex": "8d8003", "finished_utc": "2026-10-05T13:16:11.333904+00:00"}
+{"event": "request_attempt", "number": 14, "name": "axis0.controller.config.input_mode", "started_utc": "2026-10-05T13:16:11.334050+00:00", "request_hex": "8e0020810100d7f7"}
+{"event": "response", "number": 14, "name": "axis0.controller.config.input_mode", "started_utc": "2026-10-05T13:16:11.334050+00:00", "request_hex": "8e0020810100d7f7", "response_hex": "8e8003", "finished_utc": "2026-10-05T13:16:11.334359+00:00"}
+{"event": "request_attempt", "number": 15, "name": "axis0.encoder.pos_estimate", "started_utc": "2026-10-05T13:16:11.334502+00:00", "request_hex": "8f0074810400d7f7"}
+{"event": "response", "number": 15, "name": "axis0.encoder.pos_estimate", "started_utc": "2026-10-05T13:16:11.334502+00:00", "request_hex": "8f0074810400d7f7", "response_hex": "8f80013f3440", "finished_utc": "2026-10-05T13:16:11.334860+00:00"}
+{"event": "request_attempt", "number": 16, "name": "axis0.encoder.vel_estimate", "started_utc": "2026-10-05T13:16:11.335008+00:00", "request_hex": "90007a810400d7f7"}
+{"event": "response", "number": 16, "name": "axis0.encoder.vel_estimate", "started_utc": "2026-10-05T13:16:11.335008+00:00", "request_hex": "90007a810400d7f7", "response_hex": "90800100fa3b", "finished_utc": "2026-10-05T13:16:11.335366+00:00"}
+{"event": "request_attempt", "number": 17, "name": "axis0.motor.config.torque_constant", "started_utc": "2026-10-05T13:16:11.335517+00:00", "request_hex": "9100f7800400d7f7"}
+{"event": "response", "number": 17, "name": "axis0.motor.config.torque_constant", "started_utc": "2026-10-05T13:16:11.335517+00:00", "request_hex": "9100f7800400d7f7", "response_hex": "9180f0a7c63d", "finished_utc": "2026-10-05T13:16:11.335820+00:00"}
+{"event": "request_attempt", "number": 18, "name": "axis0.motor.config.current_lim", "started_utc": "2026-10-05T13:16:11.335976+00:00", "request_hex": "9200f9800400d7f7"}
+{"event": "response", "number": 18, "name": "axis0.motor.config.current_lim", "started_utc": "2026-10-05T13:16:11.335976+00:00", "request_hex": "9200f9800400d7f7", "response_hex": "928000003442", "finished_utc": "2026-10-05T13:16:11.336349+00:00"}
+{"event": "request_attempt", "number": 19, "name": "axis0.controller.config.vel_limit", "started_utc": "2026-10-05T13:16:11.336497+00:00", "request_hex": "93002d810400d7f7"}
+{"event": "response", "number": 19, "name": "axis0.controller.config.vel_limit", "started_utc": "2026-10-05T13:16:11.336497+00:00", "request_hex": "93002d810400d7f7", "response_hex": "93800000f041", "finished_utc": "2026-10-05T13:16:11.336805+00:00"}
+{"event": "request_attempt", "number": 20, "name": "axis0.current_state", "started_utc": "2026-10-05T13:16:11.336981+00:00", "request_hex": "94008e800100d7f7"}
+{"event": "response", "number": 20, "name": "axis0.current_state", "started_utc": "2026-10-05T13:16:11.336981+00:00", "request_hex": "94008e800100d7f7", "response_hex": "948001", "finished_utc": "2026-10-05T13:16:11.337296+00:00"}

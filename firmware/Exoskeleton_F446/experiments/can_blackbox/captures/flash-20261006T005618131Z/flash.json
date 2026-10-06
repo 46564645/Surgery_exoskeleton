@@ -1,0 +1,7 @@
+{
+  "exit_code": 1,
+  "sha256": "97BCD52898191C1BAFB8F246DE88A66881CC47B1D38B480566EAD287A1769416",
+  "utc": "2026-10-06T00:56:32.7360095Z",
+  "attempts": 1,
+  "bin": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\can-blackbox-hse-source\\build\\ON\\Exoskeleton_F446.bin"
+}

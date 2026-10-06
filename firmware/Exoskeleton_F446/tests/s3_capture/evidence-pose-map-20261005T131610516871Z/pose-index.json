@@ -1,0 +1,35 @@
+{
+  "status": "POSE_A_ONLY_MAPPING_NOT_ESTABLISHED",
+  "scope": "manual_supported_pose_nativeusb_read_only",
+  "axis": "RIGHT/SHOULDER_SIDE",
+  "user_report": {
+    "power": "24V_ON_USB_CONNECTED_DEBUG_WINDOWS_CLOSED",
+    "supported": true,
+    "neutral_definition": "natural_arm_hanging_is_zero_forward_flexion_positive",
+    "posterior_movement_unavailable_at_reported_zero": true,
+    "stated_range_deg": [
+      -20,
+      115
+    ],
+    "stated_range_basis": "NOT_ESTABLISHED_AS_MEASURED_HARDWARE_LIMITS"
+  },
+  "poses": [
+    {
+      "id": "A",
+      "angle_deg": 0.0,
+      "angle_source": "user_report_not_independent_angle_measurement",
+      "raw_capture": "pose-a/capture.json",
+      "rotor_position_rev": 2.816345453262329,
+      "position_started_utc": "2026-10-05T13:16:11.334486+00:00",
+      "position_finished_utc": "2026-10-05T13:16:11.334990+00:00",
+      "axis_idle_before_and_after": true,
+      "controller_input_torque": 0.0
+    }
+  ],
+  "controller_output_disabled_evidence": "controller-status/summary.json",
+  "measurement_zero_persisted_to_firmware": false,
+  "mapping_applied": false,
+  "motion_commands_sent": 0,
+  "next_measurement": "user_measured_small_forward_flexion_pose_held_still",
+  "raw_source_archive": "D:\\codex_tasks\\2026-10-01\\task\\s3-shoulder-supervised\\usb\\captures\\20261005T131610.516871Z"
+}

@@ -1,0 +1,27 @@
+{
+  "usb_physical_state": "User explicitly confirmed: GDS68 USB disconnected before this power-on; STM32 USB retained",
+  "new_mcu_boot_observed": true,
+  "agent_reset_commands": 0,
+  "uart_observation_ms": [
+    35694,
+    37759,
+    39790
+  ],
+  "error_counts": [
+    5,
+    5,
+    6
+  ],
+  "first_error_ms": 9320,
+  "tec": 0,
+  "rec": 1,
+  "lec": 2,
+  "tx_mailboxes_empty": true,
+  "pre_rx_count": 56,
+  "pre_first_ms": 8810,
+  "pre_last_ms": 9310,
+  "post_first_rx_ms": 9320,
+  "tx_events_in_retained_window": 0,
+  "capture_sha256": "3c8c500f43e42fa90170cc79d6eab3b6e76127a2dd271502dd563634ef4128f7",
+  "conclusion": "Receive-side Form recurred with GDS68 USB physically disconnected per user confirmation. GDS USB connection is not necessary for the fault; effect on fault rate remains unproven."
+}

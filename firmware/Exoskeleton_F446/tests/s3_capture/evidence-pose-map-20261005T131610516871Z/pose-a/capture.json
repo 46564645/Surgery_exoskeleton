@@ -1,0 +1,527 @@
+{
+  "source": "live-nativeusb-cached-exact-schema",
+  "success": true,
+  "started_utc": "2026-10-05T13:16:10.517378+00:00",
+  "identity_verified": true,
+  "power_condition_user_report": "USER_REPORTED_24V_ON_IDLE",
+  "power_condition_independently_verified": false,
+  "schema_sha256": "cfd83580745d91c18d87c6832daa34677685e32e9d051e7f2b4bb562a90c9bc1",
+  "interface_crc16": 63447,
+  "schema_source": "D:\\codex_tasks\\2026-10-01\\task\\s2-final-acceptance\\usb-introspection\\captures\\20261002T162136.617552Z\\endpoints.json",
+  "parameter_writes": false,
+  "can_requests": 0,
+  "reset_or_configuration_changes_requested": false,
+  "bounds": {
+    "read_seconds": 8.0,
+    "process_seconds": 20,
+    "request_ms_write_plus_read": 500,
+    "maximum_requests": 20,
+    "retries": 0
+  },
+  "interpretation": "Actual scalar readings only; capture success is not S3 motion readiness approval.",
+  "transfers": [
+    {
+      "number": 1,
+      "name": "serial_number",
+      "started_utc": "2026-10-05T13:16:11.326482+00:00",
+      "request_hex": "810005800800d7f7",
+      "response_hex": "818032356b0979b30000",
+      "finished_utc": "2026-10-05T13:16:11.327345+00:00"
+    },
+    {
+      "number": 2,
+      "name": "hw_version_major",
+      "started_utc": "2026-10-05T13:16:11.327624+00:00",
+      "request_hex": "820006800100d7f7",
+      "response_hex": "828003",
+      "finished_utc": "2026-10-05T13:16:11.328057+00:00"
+    },
+    {
+      "number": 3,
+      "name": "hw_version_minor",
+      "started_utc": "2026-10-05T13:16:11.328444+00:00",
+      "request_hex": "830007800100d7f7",
+      "response_hex": "83800b",
+      "finished_utc": "2026-10-05T13:16:11.328865+00:00"
+    },
+    {
+      "number": 4,
+      "name": "hw_version_variant",
+      "started_utc": "2026-10-05T13:16:11.329061+00:00",
+      "request_hex": "840008800100d7f7",
+      "response_hex": "848001",
+      "finished_utc": "2026-10-05T13:16:11.329403+00:00"
+    },
+    {
+      "number": 5,
+      "name": "fw_version_major",
+      "started_utc": "2026-10-05T13:16:11.329581+00:00",
+      "request_hex": "850009800100d7f7",
+      "response_hex": "858000",
+      "finished_utc": "2026-10-05T13:16:11.329951+00:00"
+    },
+    {
+      "number": 6,
+      "name": "fw_version_minor",
+      "started_utc": "2026-10-05T13:16:11.330105+00:00",
+      "request_hex": "86000a800100d7f7",
+      "response_hex": "868006",
+      "finished_utc": "2026-10-05T13:16:11.330443+00:00"
+    },
+    {
+      "number": 7,
+      "name": "fw_version_revision",
+      "started_utc": "2026-10-05T13:16:11.330611+00:00",
+      "request_hex": "87000b800100d7f7",
+      "response_hex": "878005",
+      "finished_utc": "2026-10-05T13:16:11.330902+00:00"
+    },
+    {
+      "number": 8,
+      "name": "axis0.config.can.node_id",
+      "started_utc": "2026-10-05T13:16:11.331088+00:00",
+      "request_hex": "8800b4800400d7f7",
+      "response_hex": "888001000000",
+      "finished_utc": "2026-10-05T13:16:11.331453+00:00"
+    },
+    {
+      "number": 9,
+      "name": "axis0.current_state",
+      "started_utc": "2026-10-05T13:16:11.331602+00:00",
+      "request_hex": "89008e800100d7f7",
+      "response_hex": "898001",
+      "finished_utc": "2026-10-05T13:16:11.331913+00:00"
+    },
+    {
+      "number": 10,
+      "name": "axis0.motor.is_calibrated",
+      "started_utc": "2026-10-05T13:16:11.332070+00:00",
+      "request_hex": "8a00c3800100d7f7",
+      "response_hex": "8a8001",
+      "finished_utc": "2026-10-05T13:16:11.332414+00:00"
+    },
+    {
+      "number": 11,
+      "name": "axis0.encoder.is_ready",
+      "started_utc": "2026-10-05T13:16:11.332567+00:00",
+      "request_hex": "8b006e810100d7f7",
+      "response_hex": "8b8001",
+      "finished_utc": "2026-10-05T13:16:11.332902+00:00"
+    },
+    {
+      "number": 12,
+      "name": "axis0.controller.input_torque",
+      "started_utc": "2026-10-05T13:16:11.333062+00:00",
+      "request_hex": "8c0010810400d7f7",
+      "response_hex": "8c8000000000",
+      "finished_utc": "2026-10-05T13:16:11.333384+00:00"
+    },
+    {
+      "number": 13,
+      "name": "axis0.controller.config.control_mode",
+      "started_utc": "2026-10-05T13:16:11.333535+00:00",
+      "request_hex": "8d001f810100d7f7",
+      "response_hex": "8d8003",
+      "finished_utc": "2026-10-05T13:16:11.333904+00:00"
+    },
+    {
+      "number": 14,
+      "name": "axis0.controller.config.input_mode",
+      "started_utc": "2026-10-05T13:16:11.334050+00:00",
+      "request_hex": "8e0020810100d7f7",
+      "response_hex": "8e8003",
+      "finished_utc": "2026-10-05T13:16:11.334359+00:00"
+    },
+    {
+      "number": 15,
+      "name": "axis0.encoder.pos_estimate",
+      "started_utc": "2026-10-05T13:16:11.334502+00:00",
+      "request_hex": "8f0074810400d7f7",
+      "response_hex": "8f80013f3440",
+      "finished_utc": "2026-10-05T13:16:11.334860+00:00"
+    },
+    {
+      "number": 16,
+      "name": "axis0.encoder.vel_estimate",
+      "started_utc": "2026-10-05T13:16:11.335008+00:00",
+      "request_hex": "90007a810400d7f7",
+      "response_hex": "90800100fa3b",
+      "finished_utc": "2026-10-05T13:16:11.335366+00:00"
+    },
+    {
+      "number": 17,
+      "name": "axis0.motor.config.torque_constant",
+      "started_utc": "2026-10-05T13:16:11.335517+00:00",
+      "request_hex": "9100f7800400d7f7",
+      "response_hex": "9180f0a7c63d",
+      "finished_utc": "2026-10-05T13:16:11.335820+00:00"
+    },
+    {
+      "number": 18,
+      "name": "axis0.motor.config.current_lim",
+      "started_utc": "2026-10-05T13:16:11.335976+00:00",
+      "request_hex": "9200f9800400d7f7",
+      "response_hex": "928000003442",
+      "finished_utc": "2026-10-05T13:16:11.336349+00:00"
+    },
+    {
+      "number": 19,
+      "name": "axis0.controller.config.vel_limit",
+      "started_utc": "2026-10-05T13:16:11.336497+00:00",
+      "request_hex": "93002d810400d7f7",
+      "response_hex": "93800000f041",
+      "finished_utc": "2026-10-05T13:16:11.336805+00:00"
+    },
+    {
+      "number": 20,
+      "name": "axis0.current_state",
+      "started_utc": "2026-10-05T13:16:11.336981+00:00",
+      "request_hex": "94008e800100d7f7",
+      "response_hex": "948001",
+      "finished_utc": "2026-10-05T13:16:11.337296+00:00"
+    }
+  ],
+  "usb": {
+    "bus": 2,
+    "address": 13,
+    "interface": 2,
+    "alternate_setting": 0,
+    "bulk_in": 131,
+    "bulk_out": 3,
+    "descriptor_label_is_not_board_identity": true
+  },
+  "identity": {
+    "serial_number": 197332430435634,
+    "hw_version_major": 3,
+    "hw_version_minor": 11,
+    "hw_version_variant": 1,
+    "fw_version_major": 0,
+    "fw_version_minor": 6,
+    "fw_version_revision": 5,
+    "axis0.config.can.node_id": 1,
+    "axis0.current_state": 1
+  },
+  "named_reads": [
+    {
+      "name": "serial_number",
+      "endpoint_id": 5,
+      "type": "uint64",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.326445+00:00",
+      "finished_utc": "2026-10-05T13:16:11.327593+00:00",
+      "value": 197332430435634
+    },
+    {
+      "name": "hw_version_major",
+      "endpoint_id": 6,
+      "type": "uint8",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.327599+00:00",
+      "finished_utc": "2026-10-05T13:16:11.328413+00:00",
+      "value": 3
+    },
+    {
+      "name": "hw_version_minor",
+      "endpoint_id": 7,
+      "type": "uint8",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.328420+00:00",
+      "finished_utc": "2026-10-05T13:16:11.329038+00:00",
+      "value": 11
+    },
+    {
+      "name": "hw_version_variant",
+      "endpoint_id": 8,
+      "type": "uint8",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.329042+00:00",
+      "finished_utc": "2026-10-05T13:16:11.329560+00:00",
+      "value": 1
+    },
+    {
+      "name": "fw_version_major",
+      "endpoint_id": 9,
+      "type": "uint8",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.329565+00:00",
+      "finished_utc": "2026-10-05T13:16:11.330084+00:00",
+      "value": 0
+    },
+    {
+      "name": "fw_version_minor",
+      "endpoint_id": 10,
+      "type": "uint8",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.330088+00:00",
+      "finished_utc": "2026-10-05T13:16:11.330590+00:00",
+      "value": 6
+    },
+    {
+      "name": "fw_version_revision",
+      "endpoint_id": 11,
+      "type": "uint8",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.330594+00:00",
+      "finished_utc": "2026-10-05T13:16:11.331066+00:00",
+      "value": 5
+    },
+    {
+      "name": "axis0.config.can.node_id",
+      "endpoint_id": 180,
+      "type": "uint32",
+      "access": "rw",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.331070+00:00",
+      "finished_utc": "2026-10-05T13:16:11.331583+00:00",
+      "value": 1
+    },
+    {
+      "name": "axis0.current_state",
+      "endpoint_id": 142,
+      "type": "uint8",
+      "access": "r",
+      "phase": "identity",
+      "started_utc": "2026-10-05T13:16:11.331587+00:00",
+      "finished_utc": "2026-10-05T13:16:11.332048+00:00",
+      "value": 1
+    },
+    {
+      "name": "axis0.motor.is_calibrated",
+      "endpoint_id": 195,
+      "type": "bool",
+      "access": "r",
+      "phase": "s3_properties",
+      "started_utc": "2026-10-05T13:16:11.332053+00:00",
+      "finished_utc": "2026-10-05T13:16:11.332547+00:00",
+      "value": true
+    },
+    {
+      "name": "axis0.encoder.is_ready",
+      "endpoint_id": 366,
+      "type": "bool",
+      "access": "r",
+      "phase": "s3_properties",
+      "started_utc": "2026-10-05T13:16:11.332551+00:00",
+      "finished_utc": "2026-10-05T13:16:11.333041+00:00",
+      "value": true
+    },
+    {
+      "name": "axis0.controller.input_torque",
+      "endpoint_id": 272,
+      "type": "float",
+      "access": "rw",
+      "phase": "s3_properties",
+      "started_utc": "2026-10-05T13:16:11.333045+00:00",
+      "finished_utc": "2026-10-05T13:16:11.333516+00:00",
+      "value": 0.0
+    },
+    {
+      "name": "axis0.controller.config.control_mode",
+      "endpoint_id": 287,
+      "type": "uint8",
+      "access": "rw",
+      "phase": "s3_properties",
+      "started_utc": "2026-10-05T13:16:11.333520+00:00",
+      "finished_utc": "2026-10-05T13:16:11.334032+00:00",
+      "value": 3
+    },
+    {
+      "name": "axis0.controller.config.input_mode",
+      "endpoint_id": 288,
+      "type": "uint8",
+      "access": "rw",
+      "phase": "s3_properties",
+      "started_utc": "2026-10-05T13:16:11.334035+00:00",
+      "finished_utc": "2026-10-05T13:16:11.334482+00:00",
+      "value": 3
+    },
+    {
+      "name": "axis0.encoder.pos_estimate",
+      "endpoint_id": 372,
+      "type": "float",
+      "access": "r",
+      "phase": "s3_properties",
+      "started_utc": "2026-10-05T13:16:11.334486+00:00",
+      "finished_utc": "2026-10-05T13:16:11.334990+00:00",
+      "value": 2.816345453262329
+    },
+    {
+      "name": "axis0.encoder.vel_estimate",
+      "endpoint_id": 378,
+      "type": "float",
+      "access": "r",
+      "phase": "s3_properties",
+      "started_utc": "2026-10-05T13:16:11.334993+00:00",
+      "finished_utc": "2026-10-05T13:16:11.335498+00:00",
+      "value": 0.007629394996911287
+    },
+    {
+      "name": "axis0.motor.config.torque_constant",
+      "endpoint_id": 247,
+      "type": "float",
+      "access": "rw",
+      "phase": "limits",
+      "started_utc": "2026-10-05T13:16:11.335502+00:00",
+      "finished_utc": "2026-10-05T13:16:11.335958+00:00",
+      "value": 0.09700000286102295
+    },
+    {
+      "name": "axis0.motor.config.current_lim",
+      "endpoint_id": 249,
+      "type": "float",
+      "access": "rw",
+      "phase": "limits",
+      "started_utc": "2026-10-05T13:16:11.335961+00:00",
+      "finished_utc": "2026-10-05T13:16:11.336476+00:00",
+      "value": 45.0
+    },
+    {
+      "name": "axis0.controller.config.vel_limit",
+      "endpoint_id": 301,
+      "type": "float",
+      "access": "rw",
+      "phase": "limits",
+      "started_utc": "2026-10-05T13:16:11.336481+00:00",
+      "finished_utc": "2026-10-05T13:16:11.336962+00:00",
+      "value": 30.0
+    },
+    {
+      "name": "axis0.current_state",
+      "endpoint_id": 142,
+      "type": "uint8",
+      "access": "r",
+      "phase": "final_idle",
+      "started_utc": "2026-10-05T13:16:11.336966+00:00",
+      "finished_utc": "2026-10-05T13:16:11.337422+00:00",
+      "value": 1
+    }
+  ],
+  "s3_properties": {
+    "axis0.motor.is_calibrated": true,
+    "axis0.encoder.is_ready": true,
+    "axis0.controller.input_torque": 0.0,
+    "axis0.controller.config.control_mode": 3,
+    "axis0.controller.config.input_mode": 3,
+    "axis0.encoder.pos_estimate": 2.816345453262329,
+    "axis0.encoder.vel_estimate": 0.007629394996911287
+  },
+  "limits": {
+    "axis0.motor.config.torque_constant": 0.09700000286102295,
+    "axis0.motor.config.current_lim": 45.0,
+    "axis0.controller.config.vel_limit": 30.0
+  },
+  "final_axis_current_state": 1,
+  "interface_released": true,
+  "resources_disposed": true,
+  "requests_attempted": 20,
+  "requests": [
+    {
+      "endpoint_id": 5,
+      "input_hex": "",
+      "expected_output_bytes": 8
+    },
+    {
+      "endpoint_id": 6,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 7,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 8,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 9,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 10,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 11,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 180,
+      "input_hex": "",
+      "expected_output_bytes": 4
+    },
+    {
+      "endpoint_id": 142,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 195,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 366,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 272,
+      "input_hex": "",
+      "expected_output_bytes": 4
+    },
+    {
+      "endpoint_id": 287,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 288,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    },
+    {
+      "endpoint_id": 372,
+      "input_hex": "",
+      "expected_output_bytes": 4
+    },
+    {
+      "endpoint_id": 378,
+      "input_hex": "",
+      "expected_output_bytes": 4
+    },
+    {
+      "endpoint_id": 247,
+      "input_hex": "",
+      "expected_output_bytes": 4
+    },
+    {
+      "endpoint_id": 249,
+      "input_hex": "",
+      "expected_output_bytes": 4
+    },
+    {
+      "endpoint_id": 301,
+      "input_hex": "",
+      "expected_output_bytes": 4
+    },
+    {
+      "endpoint_id": 142,
+      "input_hex": "",
+      "expected_output_bytes": 1
+    }
+  ],
+  "finished_utc": "2026-10-05T13:16:11.337450+00:00"
+}

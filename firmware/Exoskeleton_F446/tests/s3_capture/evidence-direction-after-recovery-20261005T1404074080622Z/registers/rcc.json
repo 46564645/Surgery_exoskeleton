@@ -1,0 +1,26 @@
+{
+  "command": [
+    "C:/Users/asus/AppData/Local/stm32cube/bundles/programmer/2.23.0/bin/STM32_Programmer_CLI.exe",
+    "-c",
+    "port=SWD",
+    "mode=HOTPLUG",
+    "freq=4000",
+    "sn=066EFF555748874987182240",
+    "-r32",
+    "0x40023800",
+    "12"
+  ],
+  "started_utc": "2026-10-05T14:06:36.980969+00:00",
+  "reset_commands": 0,
+  "flash_commands": 0,
+  "writes": 0,
+  "returncode": 0,
+  "words": [
+    "03077B83",
+    "22415408",
+    "0000100A"
+  ],
+  "success": true,
+  "raw_sha256": "acc539d653d881df2ea6cf4f90253abf05211287059ae5c95b06a033693ff915",
+  "finished_utc": "2026-10-05T14:06:37.070553+00:00"
+}

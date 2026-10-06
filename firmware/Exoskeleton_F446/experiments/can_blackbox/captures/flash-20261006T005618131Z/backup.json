@@ -1,0 +1,8 @@
+{
+  "backup_exit": 0,
+  "backup_bytes": 524288,
+  "backup_sha256": "298C7046A761330E559ED744C2F92A964A2B0626501191DB2C2F9C79B0B7F583",
+  "probe": "066EFF555748874987182240",
+  "power_basis": "User explicitly confirmed 24V closed after reporting it was on",
+  "utc": "2026-10-06T00:56:22.1608267Z"
+}
