@@ -5,7 +5,8 @@
 typedef enum {
     SHOULDER_READ_IDLE, SHOULDER_READ_PENDING, SHOULDER_READ_RECEIVED,
     SHOULDER_READ_TIMEOUT, SHOULDER_READ_TX_FAILED, SHOULDER_READ_STREAM_OWNED,
-    SHOULDER_READ_S3_OWNED, SHOULDER_READ_QUALIFICATION_OWNED
+    SHOULDER_READ_S3_OWNED, SHOULDER_READ_QUALIFICATION_OWNED,
+    SHOULDER_READ_S4_OWNED
 } ShoulderReadPhase;
 typedef struct {
     ShoulderReadPhase phase;
@@ -29,5 +30,6 @@ void ShoulderRead_GetStatus(ShoulderReadStatus *out);
  * no mode may reset/reuse another's untagged SDO transaction history. */
 bool ShoulderRead_ClaimStream(void);
 bool ShoulderRead_ClaimS3(void);
+bool ShoulderRead_ClaimS4(void);
 bool ShoulderRead_ClaimQualification(void);
 #endif

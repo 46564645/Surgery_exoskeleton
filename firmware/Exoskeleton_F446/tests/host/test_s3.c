@@ -2,10 +2,12 @@
 #include "test_s3.h"
 #include "output_gateway.h"
 #include "s3_bench.h"
+#include "s3_site_mock.h"
 #include "output_can_transport.h"
 #include "can_tx_mock.h"
 #include "gds_feedback.h"
 #include "s3_feedback.h"
+#include "elbow_session_angle.h"
 #include "can_monitor.h"
 #include "can_mock.h"
 #include "board_can_tx.h"
@@ -280,6 +282,64 @@ static void test_bxcan(void)
     assert(TestCanTx_Last(BOARD_CAN_SHOULDER)->id == 0x27U);
     for (unsigned i = 0U; i < 8U; i++) { assert(TestCanTx_Last(BOARD_CAN_ELBOW)->data[i] == 0U); }
 
+    /* A real bxCAN abort can stay pending after HAL accepted ABRQ. Cancel
+     * withdraws permission immediately, then sends zero only after the old
+     * elbow-current mailbox is gone. HAL enqueue alone does not finish stop. */
+    TestCanTx_Reset();
+    config.enabled_axes = SAFETY_ELBOW_AXES;
+    config.stop_policy = SAFETY_STOP_SUPERVISED_C620_BENCH;
+    OutputGateway_Init(&g, &config, &port, 1U, 1U);
+    /* Preparation is covered separately; enter READY here to isolate TX. */
+    g.state = OUTPUT_READY; g.driver_phase = DRIVER_READY;
+    g.prepare_ms = 99U; g.prepare_timeout_ms = 1000U;
+    in = healthy(100U); in.feedback_stationary = true;
+    assert(OutputGateway_Arm(&g, &in, 100U));
+    assert(OutputGateway_Replace(&g, 1U, 0.2f, 50U, 100U));
+    OutputGateway_Step(&g, &in, 101U);
+    assert(TestCanTx_Sent(BOARD_CAN_ELBOW) == 1U);
+    const BoardCanFrame *old = TestCanTx_Pending(BOARD_CAN_ELBOW, 0U);
+    assert(old != NULL && (old->data[0] != 0U || old->data[1] != 0U));
+    TestCanTx_AbortCompletes(BOARD_CAN_ELBOW, false);
+    OutputGateway_Cancel(&g);
+    assert(g.state != OUTPUT_ARMED && g.state != OUTPUT_ACTIVE && !g.request_valid);
+    assert(g.stop_pending_purge && !g.stop_accepted);
+    assert(TestCanTx_Aborts(BOARD_CAN_ELBOW) >= 1U);
+    assert(TestCanTx_Sent(BOARD_CAN_ELBOW) == 1U);
+    assert(TestCanTx_Pending(BOARD_CAN_ELBOW, 0U) != NULL);
+    assert(TestCanTx_Pending(BOARD_CAN_ELBOW, 1U) == NULL);
+    TestCanTx_CompleteAbort(BOARD_CAN_ELBOW);
+    in = healthy(102U);
+    OutputGateway_Step(&g, &in, 102U);
+    assert(TestCanTx_Sent(BOARD_CAN_ELBOW) == 2U);
+    for (unsigned i = 0U; i < 8U; i++) {
+        assert(TestCanTx_Last(BOARD_CAN_ELBOW)->data[i] == 0U);
+    }
+    assert(TestCanTx_Pending(BOARD_CAN_ELBOW, 0U) != NULL);
+    assert(TestCanTx_Pending(BOARD_CAN_ELBOW, 1U) == NULL);
+    assert(g.stop_pending_tx && !g.stop_delivery_failed);
+    TestCanTx_Complete(BOARD_CAN_ELBOW);
+    in = healthy(125U); /* A late poll must see TXOK before judging deadline. */
+    OutputGateway_Step(&g, &in, 125U);
+    assert(g.state == OUTPUT_SAFE_OFF && g.stop_accepted && !g.stop_delivery_failed
+        && !g.stop_pending_tx);
+
+    TestCanTx_Reset();
+    OutputGateway_Init(&g, &config, &port, 1U, 1U);
+    g.state = OUTPUT_READY; g.driver_phase = DRIVER_READY;
+    g.prepare_ms = 99U; g.prepare_timeout_ms = 1000U;
+    in = healthy(100U); in.feedback_stationary = true;
+    assert(OutputGateway_Arm(&g, &in, 100U));
+    assert(OutputGateway_Replace(&g, 1U, 0.2f, 50U, 100U));
+    in = healthy(101U); OutputGateway_Step(&g, &in, 101U);
+    OutputGateway_CancelAt(&g, 101U);
+    assert(g.stop_pending_tx && g.stop_accepted);
+    TestCanTx_CompleteFailed(BOARD_CAN_ELBOW);
+    in = healthy(102U); OutputGateway_Step(&g, &in, 102U);
+    assert(g.state == OUTPUT_FAULT && g.stop_delivery_failed && !g.stop_pending_tx);
+
+    config.enabled_axes = SAFETY_ALL_AXES;
+    config.stop_policy = SAFETY_STOP_EXTERNAL_INPUT;
+    in = healthy(101U);
     TestCanTx_Reset(); OutputGateway_Init(&g, &config, &port, 1U, 1U);
     arm(&g, 100U); assert(OutputGateway_Replace(&g, 0U, 0.2f, 20U, 100U));
     TestCanTx_Busy(BOARD_CAN_SHOULDER, false); /* ABRQ accepted but NOT completed */
@@ -287,7 +347,7 @@ static void test_bxcan(void)
     assert(g.state == OUTPUT_FAULT && !g.purge_ok && !g.stop_accepted);
     assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == 0U);
     assert(TestCanTx_Sent(BOARD_CAN_ELBOW) == 1U); /* still attempted its STOP */
-    assert(TestCanTx_Aborts(BOARD_CAN_SHOULDER) == 2U); /* bounded, no wait loop */
+    assert(TestCanTx_Aborts(BOARD_CAN_SHOULDER) == 1U); /* do not reissue a pending ABRQ */
 
     TestCanTx_Reset(); OutputGateway_Init(&g, &config, &port, 1U, 1U);
     arm(&g, 100U); assert(OutputGateway_Replace(&g, 0U, 0.2f, 20U, 100U));
@@ -468,7 +528,7 @@ static void test_axes(void)
 }
 static void test_observations(void)
 {
-    TestClock_Set(0U); CanMonitor_Init();
+    TestClock_Set(0U); CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3);
     S3SiteProfile p = {0}; p.shoulder_node = p.elbow_id = 1U;
     S3SiteSample s; assert(!S3Feedback_Read(&p, 0U, &s));
     assert(s.observed_axes == 0U && s.wire_valid_axes == 0U);
@@ -559,6 +619,127 @@ static void test_standstill(void)
     C620Standstill_After(&s, UINT32_MAX);
     observe(&s, UINT32_MAX, 3437U, 0); assert(!C620Standstill_Read(&s, UINT32_MAX).seen);
     observe(&s, 0U, 3437U, 0); assert(C620Standstill_Read(&s, 0U).seen);
+    C620Standstill_Reset(&s);
+    for (uint32_t t = 0U; t <= C620_STILL_WINDOW_MS; t++) {
+        observe(&s, t, (uint16_t)(8191U + t % 3U) % 8192U, 0);
+    }
+    assert(C620Standstill_Read(&s, C620_STILL_WINDOW_MS).stationary);
+    observe(&s, C620_STILL_WINDOW_MS + 1U, 2U, 0);
+    assert(!C620Standstill_Read(&s, C620_STILL_WINDOW_MS + 1U).stationary);
+}
+
+static C620Feedback elbow_frame(uint32_t stamp, uint16_t ticks, float velocity)
+{
+    C620Feedback f = {0};
+    f.has_sample = f.valid = true; f.received_ms = stamp;
+    f.sequence = stamp;
+    f.rotor_angle_ticks = ticks; f.rotor_velocity_rad_s = velocity;
+    return f;
+}
+static void test_elbow_session_angle(void)
+{
+    ElbowSessionAngle s = {0}; JointState joint;
+    assert(ElbowSessionAngle_Begin(&s, 100U));
+    C620Feedback f = elbow_frame(100U, 8191U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, true, 100U, 10U, 5.0f, 1);
+    assert(s.phase == ELBOW_SESSION_WAITING); /* Pre-command frame cannot set zero. */
+    f = elbow_frame(101U, 8191U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, true, 101U, 10U, 5.0f, 1);
+    assert(ElbowSessionAngle_Read(&s, 101U, 10U, &joint) && joint.position_rad == 0.0f);
+    f = elbow_frame(102U, 0U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 102U, 10U, 5.0f, 1);
+    assert(ElbowSessionAngle_Read(&s, 102U, 10U, &joint)
+        && joint.position_rad > 0.0f && joint.position_rad < 0.001f);
+    uint32_t fresh_ms = joint.received_ms;
+    ElbowSessionAngle_Observe(&s, &f, false, 103U, 10U, 5.0f, 1);
+    assert(ElbowSessionAngle_Read(&s, 103U, 10U, &joint) && joint.received_ms == fresh_ms);
+    f = elbow_frame(102U, 1U, 0.0f); f.sequence = 103U;
+    ElbowSessionAngle_Observe(&s, &f, false, 103U, 10U, 5.0f, 1);
+    assert(ElbowSessionAngle_Read(&s, 103U, 10U, &joint)
+        && joint.position_rad > 0.001f && joint.received_ms == 102U);
+    f = elbow_frame(104U, 2U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 104U, 10U, 5.0f, -1);
+    assert(ElbowSessionAngle_Read(&s, 104U, 10U, &joint) && joint.position_rad < 0.0f);
+    f = elbow_frame(105U, 100U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 105U, 10U, 5.0f, -1);
+    assert(s.phase == ELBOW_SESSION_FAULT && !ElbowSessionAngle_Read(&s, 105U, 10U, &joint));
+    ElbowSessionAngle_Reset(&s);
+    assert(ElbowSessionAngle_Begin(&s, 200U));
+    f = elbow_frame(201U, 50U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, true, 201U, 10U, 5.0f, 1);
+    assert(ElbowSessionAngle_Read(&s, 211U, 10U, &joint));
+    f = elbow_frame(201U, 50U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 212U, 10U, 5.0f, 1);
+    assert(s.phase == ELBOW_SESSION_FAULT && !ElbowSessionAngle_Read(&s, 212U, 10U, &joint));
+}
+static void elbow_bus_sample(uint32_t now_ms, uint16_t ticks)
+{
+    uint8_t data[8] = {(uint8_t)(ticks >> 8), (uint8_t)ticks, 0U, 0U,
+                       0U, 0U, 30U, 0U};
+    TestClock_Set(now_ms);
+    TestCan_InjectData(BOARD_CAN_ELBOW, 0x201U, 8U, 0U, 0U, data);
+    TestCan_Interrupt(BOARD_CAN_ELBOW);
+    CanMonitor_Poll();
+    S3Bench_Poll(now_ms, 10U);
+}
+static void test_elbow_session_bench(void)
+{
+    S3SiteProfile p = {0};
+    p.safety = confirmed_config();
+    p.safety.enabled_axes = SAFETY_ELBOW_AXES;
+    p.safety.stop_policy = SAFETY_STOP_SUPERVISED_C620_BENCH;
+    p.safety.joint[1].mapping = (JointMapping){1.0f, 0.0f, 1, true};
+    p.safety.joint[1].lower_rad = -0.1f;
+    p.safety.joint[1].upper_rad = 0.1f;
+    p.safety.joint[1].max_motor_command = 0.1f;
+    p.prepare_timeout_ms = 1000U;
+    p.shoulder_node = p.elbow_id = 1U;
+    p.trusted_feedback_axes = SAFETY_ELBOW_AXES;
+    p.coordinates[1] = S3_ASSEMBLED_JOINT;
+    p.operational_confirmed[1] = true;
+    TestS3Site_ConfigureShoulderChain(&p);
+    TestClock_Set(0U);
+    CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3);
+    TestCanTx_Reset();
+    S3Bench_Init();
+    S3BenchStatus gate;
+    S3Bench_GetStatus(&gate);
+    assert(!gate.configured && gate.transport_bound && !gate.output_allowed);
+    assert(S3Bench_Prepare(0U));
+    assert(!S3Bench_Prepare(0U));
+    for (uint32_t t = 1U; t <= 251U; t += 10U) {
+        elbow_bus_sample(t, (uint16_t)((8191U + (t / 10U) % 2U) % 8192U));
+    }
+    S3Bench_GetStatus(&gate);
+    assert(gate.elbow_zero_valid && !gate.elbow_zero_pending);
+    assert(gate.state == OUTPUT_PREPARING && !gate.output_allowed);
+    assert(TestCanTx_Sent(BOARD_CAN_ELBOW) == 1U);
+    for (unsigned i = 0U; i < 8U; i++) {
+        assert(TestCanTx_Last(BOARD_CAN_ELBOW)->data[i] == 0U);
+    }
+    elbow_bus_sample(261U, 8191U);
+    S3Bench_GetStatus(&gate);
+    assert(gate.state == OUTPUT_READY && !gate.output_allowed);
+    for (uint32_t t = 271U; t <= 511U; t += 10U) {
+        elbow_bus_sample(t, (uint16_t)((8191U + (t / 10U) % 2U) % 8192U));
+    }
+    assert(S3Bench_Arm(511U));
+    S3Bench_GetStatus(&gate);
+    assert(gate.output_allowed && gate.arm_token != 0U);
+    uint32_t token = gate.arm_token;
+    assert(S3Bench_Request(token, 1U, 0.05f, 50U, 511U));
+    TestClock_Set(512U); S3Bench_Poll(512U, 1U);
+    assert(TestCanTx_Last(BOARD_CAN_ELBOW)->id == 0x200U);
+    assert(TestCanTx_Last(BOARD_CAN_ELBOW)->data[0] != 0U
+        || TestCanTx_Last(BOARD_CAN_ELBOW)->data[1] != 0U);
+    S3Bench_Cancel();
+    S3Bench_GetStatus(&gate);
+    assert(gate.state == OUTPUT_SAFE_OFF && !gate.output_allowed && !gate.elbow_zero_valid);
+    assert(gate.stop_accepted && gate.purge_ok && !gate.request_valid);
+    for (unsigned i = 0U; i < 8U; i++) {
+        assert(TestCanTx_Last(BOARD_CAN_ELBOW)->data[i] == 0U);
+    }
+    assert(!S3Bench_Request(token, 1U, 0.05f, 50U, 512U));
 }
 static void test_bench_stop_policy(void)
 {
@@ -603,6 +784,8 @@ static void test_bench_stop_policy(void)
 void TestS3_Run(const char *scenario)
 {
     if (!strcmp(scenario, "s3_standstill")) { test_standstill(); }
+    else if (!strcmp(scenario, "s3_elbow_session_angle")) { test_elbow_session_angle(); }
+    else if (!strcmp(scenario, "s3_elbow_session_bench")) { test_elbow_session_bench(); }
     else if (!strcmp(scenario, "s3_bench_stop_policy")) { test_bench_stop_policy(); }
     else if (!strcmp(scenario, "s3_axes")) { test_axes(); }
     else if (!strcmp(scenario, "s3_observations")) { test_observations(); }

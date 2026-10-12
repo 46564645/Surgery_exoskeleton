@@ -6,7 +6,10 @@
 #include "gds_feedback.h"
 #include "c620_standstill.h"
 #include "shoulder_property_feedback.h"
-void CanMonitor_Init(void);
+#include "s3_shoulder_service.h"
+/* Cold-start selection only: reinitializing mid-session erases the exclusive
+ * read owner and reply association while old CAN replies may still arrive. */
+void CanMonitor_Init(const S3SiteProfile *active_profile, ShoulderReaderMode mode);
 void CanMonitor_Poll(void);
 void CanMonitor_ResetElbowStandstill(uint32_t after_ms);
 C620StandstillStatus CanMonitor_GetElbowStandstill(uint32_t now_ms);

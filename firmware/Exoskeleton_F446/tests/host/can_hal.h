@@ -1,7 +1,7 @@
 #ifndef TEST_CAN_HAL_H
 #define TEST_CAN_HAL_H
 /* Host-only CAN HAL seam; values below match the F446 register definitions. */
-typedef struct { uint32_t BTR, ESR; } CAN_TypeDef;
+typedef struct { uint32_t BTR, ESR, TSR; } CAN_TypeDef;
 typedef enum { HAL_CAN_STATE_RESET, HAL_CAN_STATE_READY, HAL_CAN_STATE_LISTENING, HAL_CAN_STATE_ERROR } HAL_CAN_StateTypeDef;
 typedef struct { CAN_TypeDef *Instance; uint32_t ErrorCode; HAL_CAN_StateTypeDef State; } CAN_HandleTypeDef;
 typedef struct {
@@ -31,6 +31,18 @@ typedef struct { uint32_t StdId, ExtId, IDE, RTR, DLC, TransmitGlobalTime; } CAN
 #define CAN_TX_MAILBOX0 1U
 #define CAN_TX_MAILBOX1 2U
 #define CAN_TX_MAILBOX2 4U
+#define CAN_TSR_RQCP0 (1U << 0)
+#define CAN_TSR_TXOK0 (1U << 1)
+#define CAN_TSR_ALST0 (1U << 2)
+#define CAN_TSR_TERR0 (1U << 3)
+#define CAN_TSR_RQCP1 (1U << 8)
+#define CAN_TSR_TXOK1 (1U << 9)
+#define CAN_TSR_ALST1 (1U << 10)
+#define CAN_TSR_TERR1 (1U << 11)
+#define CAN_TSR_RQCP2 (1U << 16)
+#define CAN_TSR_TXOK2 (1U << 17)
+#define CAN_TSR_ALST2 (1U << 18)
+#define CAN_TSR_TERR2 (1U << 19)
 #define CAN_IT_RX_FIFO0_MSG_PENDING (1U << 1)
 #define CAN_IT_RX_FIFO0_OVERRUN (1U << 3)
 #define CAN_IT_RX_FIFO1_MSG_PENDING (1U << 4)

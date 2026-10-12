@@ -7,7 +7,26 @@
 #include <stddef.h>
 #include <string.h>
 static S3RelativeAnchor anchor;
-void S3Feedback_Init(void) { anchor = (S3RelativeAnchor){0}; }
+static ElbowSessionAngle elbow_session;
+void S3Feedback_Init(void)
+{
+    anchor = (S3RelativeAnchor){0};
+    ElbowSessionAngle_Reset(&elbow_session);
+}
+bool S3Feedback_BeginElbowSession(uint32_t now_ms)
+{ return ElbowSessionAngle_Begin(&elbow_session, now_ms); }
+void S3Feedback_EndElbowSession(void)
+{ ElbowSessionAngle_Reset(&elbow_session); }
+ElbowSessionPhase S3Feedback_ElbowSessionPhase(void)
+{ return elbow_session.phase; }
+uint32_t S3Feedback_ElbowSessionSequence(void)
+{ return elbow_session.phase == ELBOW_SESSION_ACTIVE ? elbow_session.last_sequence : 0U; }
+bool S3Feedback_ElbowSessionRotorZeroRad(float *out_zero_rad)
+{
+    if (out_zero_rad == NULL || elbow_session.phase != ELBOW_SESSION_ACTIVE) { return false; }
+    *out_zero_rad = (float)elbow_session.zero_ticks * (6.2831853071795864769f / 8192.0f);
+    return true;
+}
 bool S3Feedback_BeginRelative(uint32_t now_ms)
 {
     if (anchor.phase != S3_RELATIVE_UNSET) { return false; }
@@ -21,6 +40,37 @@ void S3Feedback_EndRelative(void)
     }
 }
 S3RelativeAnchor S3Feedback_GetAnchor(void) { return anchor; }
+bool S3Feedback_ReadShoulderObservation(const S3SiteProfile *p, uint32_t now_ms,
+                                        S3ShoulderObservation *out)
+{
+    if (out == NULL) { return false; }
+    memset(out, 0, sizeof(*out));
+    if (!S3ShoulderService_ReadProfileReady(p)
+        || !CanMonitor_GetShoulderObservation(&out->heartbeat, &out->wire_valid)) {
+        return false;
+    }
+    const GdsFeedback *hb = &out->heartbeat;
+    out->has_heartbeat = hb->has_heartbeat;
+    out->heartbeat_healthy = hb->has_heartbeat && hb->life_contiguous
+        && hb->axis_error == 0U && hb->fault_flags == 0U
+        && (hb->axis_state == 1U || hb->axis_state == 8U)
+        && (uint32_t)(now_ms - hb->heartbeat_ms) <= p->safety.feedback_timeout_ms;
+    out->properties_fresh = CanMonitor_GetShoulderProperties(
+        now_ms, p->safety.feedback_timeout_ms, &out->properties);
+    const SafetyJointConfig *j = &p->safety.joint[0];
+    if (out->heartbeat_healthy && out->properties_fresh
+        && p->coordinates[0] == S3_ASSEMBLED_JOINT
+        && p->rotor_reference_confirmed[0]
+        && (p->trusted_feedback_axes & SAFETY_SHOULDER_AXES) != 0U
+        && j->feedback_confirmed && j->protocol_confirmed) {
+        const float tau = 6.2831853071795864769f;
+        (void)JointState_FromRotor(&j->mapping,
+            out->properties.value[GDS_PROPERTY_POSITION].real * tau,
+            out->properties.value[GDS_PROPERTY_VELOCITY].real * tau,
+            out->properties.requested_ms[GDS_PROPERTY_POSITION], true, &out->joint);
+    }
+    return true;
+}
 static bool relative_sample(const S3SiteProfile *p, const ShoulderPropertySnapshot *s,
                             const OutputDriverStatus *d, uint32_t now_ms, JointState *out)
 {
@@ -133,9 +183,27 @@ bool S3Feedback_Read(const S3SiteProfile *p, uint32_t now_ms, S3SiteSample *out)
         out->driver[1].valid = s->valid && p->elbow_id == S2_C620_ID
             && p->safety.joint[1].feedback_confirmed && p->safety.joint[1].protocol_confirmed
             && p->operational_confirmed[1]; /* Actual LED/commissioning evidence, default false. */
-        /* Bench sector has an explicit factory encoder origin; assembled mode
-         * still has no trusted multi-turn/reference provider. */
-        (void)elbow_bench_sector(p, s, &out->joint[1]);
+        /* Bench sector uses the factory encoder origin. Assembled 1:1 mode
+         * publishes only a bounded RAM session origin captured after prepare. */
+        if (p->coordinates[1] == S3_ASSEMBLED_JOINT
+            && p->elbow_id == S2_C620_ID
+            && (p->trusted_feedback_axes & SAFETY_ELBOW_AXES) != 0U
+            && p->safety.joint[1].feedback_confirmed
+            && p->safety.joint[1].protocol_confirmed
+            && p->safety.joint[1].mapping.confirmed
+            && p->safety.joint[1].mapping.rotor_per_joint == 1.0f
+            && p->safety.joint[1].mapping.rotor_zero_rad == 0.0f) {
+            C620StandstillStatus still = CanMonitor_GetElbowStandstill(now_ms);
+            ElbowSessionAngle_Observe(&elbow_session, s, still.stationary, now_ms,
+                p->safety.feedback_timeout_ms, p->safety.joint[1].max_speed_rad_s,
+                p->safety.joint[1].mapping.direction);
+            if (p->rotor_reference_confirmed[1] && out->driver[1].valid) {
+                (void)ElbowSessionAngle_Read(&elbow_session, now_ms,
+                    p->safety.feedback_timeout_ms, &out->joint[1]);
+            }
+        } else {
+            (void)elbow_bench_sector(p, s, &out->joint[1]);
+        }
     }
     bool complete = p->safety.enabled_axes != 0U;
     for (unsigned axis = 0U; axis < 2U; axis++) {
@@ -144,7 +212,8 @@ bool S3Feedback_Read(const S3SiteProfile *p, uint32_t now_ms, S3SiteSample *out)
                 > p->safety.feedback_timeout_ms)) { complete = false; }
     }
     C620StandstillStatus still = CanMonitor_GetElbowStandstill(now_ms);
-    out->feedback_stationary = p->safety.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
+    out->feedback_stationary = (p->safety.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
+        || p->safety.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_FOLLOW)
         ? S3ShoulderService_GetStandstill(now_ms).stationary : still.stationary;
     if (p->stop_input_confirmed && p->safety.stop_policy == SAFETY_STOP_EXTERNAL_INPUT) {
         S3StopObservation stop = S3StopInput_Read(&p->operator_stop_input, &p->independent_stop_input);

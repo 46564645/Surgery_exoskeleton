@@ -54,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/application/s3_console.c
     App/application/can_monitor.c
     App/application/c620_standstill.c
+    App/application/elbow_session_angle.c
     App/devices/c620_feedback.c
     App/devices/motor_command.c
     App/devices/gds_feedback.c
@@ -63,11 +64,17 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/application/encoder_stream.c
     App/application/shoulder_property_feedback.c
     App/control/joint_state.c
+    App/control/gravity_compensation.c
+    App/control/s5_elbow_support.c
     App/control/safety_supervisor.c
     App/application/output_gateway.c
     App/application/output_can_transport.c
     App/application/s3_bench.c
     App/application/s3_site.c
+    App/application/s4_site.c
+    App/application/s4_follow.c
+    App/application/s5_site.c
+    App/application/s5_follow.c
     App/application/s3_feedback.c
     App/application/shoulder_standstill.c
     App/application/s3_shoulder_service.c
@@ -91,8 +98,46 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add project symbols (macros)
+option(S5_R2_ELBOW_TRIAL "Build the isolated one-shot elbow direction/stop candidate" OFF)
+option(S5_R4_ELBOW_FOLLOW "Build the isolated elbow-only FOLLOW candidate" OFF)
+option(S5_R5_DUAL_FOLLOW "Build the isolated low-pose dual-axis FOLLOW candidate" OFF)
+set(S5_R5_ELBOW_SUPPORT_SIGN "" CACHE STRING "R5 dual FOLLOW elbow-current sign, explicitly 1 or -1 after direction observation")
+set(S5_R5_ELBOW_SUPPORT_MA "" CACHE STRING "R5 dual FOLLOW elbow-current magnitude in mA, explicitly 1..2000 after observation")
+if(S5_R5_DUAL_FOLLOW)
+    if(S5_R2_ELBOW_TRIAL OR S5_R4_ELBOW_FOLLOW)
+        message(FATAL_ERROR "R5 dual FOLLOW must use a separate build from R2 and R4")
+    endif()
+    if(NOT "${S5_R5_ELBOW_SUPPORT_SIGN}" MATCHES "^(1|-1)$")
+        message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_ELBOW_SUPPORT_SIGN=1 or -1 after direction observation")
+    endif()
+    if(NOT "${S5_R5_ELBOW_SUPPORT_MA}" MATCHES "^[1-9][0-9]?[0-9]?[0-9]?$"
+        OR S5_R5_ELBOW_SUPPORT_MA GREATER 2000)
+        message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_ELBOW_SUPPORT_MA=1..2000 after observation")
+    endif()
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+        S5_R5_DUAL_FOLLOW S5_R5_ELBOW_SUPPORT_SIGN=${S5_R5_ELBOW_SUPPORT_SIGN}
+        S5_R5_ELBOW_SUPPORT_MA=${S5_R5_ELBOW_SUPPORT_MA})
+endif()
+set(S5_R4_ELBOW_SUPPORT_SIGN "" CACHE STRING "R4 elbow support-current sign, explicitly 1 or -1 after R2 direction observation")
+set(S5_R4_ELBOW_SUPPORT_MA "" CACHE STRING "R4 elbow support-current magnitude in mA, explicitly 1..4000 after R2 observation")
+if(S5_R4_ELBOW_FOLLOW)
+    if(S5_R2_ELBOW_TRIAL)
+        message(FATAL_ERROR "R2 elbow trial and R4 elbow FOLLOW must use separate builds")
+    endif()
+    if(NOT "${S5_R4_ELBOW_SUPPORT_SIGN}" MATCHES "^(1|-1)$")
+        message(FATAL_ERROR "R4 elbow FOLLOW requires S5_R4_ELBOW_SUPPORT_SIGN=1 or -1 after R2 direction observation")
+    endif()
+    if(NOT "${S5_R4_ELBOW_SUPPORT_MA}" MATCHES "^[1-9][0-9]?[0-9]?[0-9]?$"
+        OR S5_R4_ELBOW_SUPPORT_MA GREATER 4000)
+        message(FATAL_ERROR "R4 elbow FOLLOW requires S5_R4_ELBOW_SUPPORT_MA=1..4000 after R2 observation")
+    endif()
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+        S5_R4_ELBOW_FOLLOW S5_R4_ELBOW_SUPPORT_SIGN=${S5_R4_ELBOW_SUPPORT_SIGN}
+        S5_R4_ELBOW_SUPPORT_MA=${S5_R4_ELBOW_SUPPORT_MA})
+endif()
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
+    $<$<BOOL:${S5_R2_ELBOW_TRIAL}>:S5_R2_ELBOW_TRIAL>
 )
 
 # Remove wrong libob.a library dependency when using cpp files
@@ -107,3 +152,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 # Temporary diagnostics: deleting this experiment directory is supported.
 include(experiments/can_blackbox/experiment.cmake OPTIONAL)
+include(experiments/elbow_capture/experiment.cmake OPTIONAL)

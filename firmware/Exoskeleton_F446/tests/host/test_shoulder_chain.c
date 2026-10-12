@@ -20,7 +20,7 @@
 
 static void mailboxes(void)
 {
-    TestCanTx_Reset(); S3ShoulderService_Init(NULL);
+    TestCanTx_Reset(); S3ShoulderService_Init(NULL, SHOULDER_READER_S3);
     BoardCanFrame read, command[2] = {{0},{0}};
     assert(GdsSdoRead_PropertyRequest(GDS_PROPERTY_POSITION, &read));
     command[0].id=0x02EU; command[0].dlc=4U;

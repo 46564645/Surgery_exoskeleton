@@ -7,13 +7,31 @@
 #include "s2_config.h"
 #include <stddef.h>
 static const S3SiteProfile *profile;
+static ShoulderReaderMode reader_mode;
 static S3ReaderStatus status;
 static ShoulderStandstill standstill;
-static uint32_t started_ms, cycle_ms;
+static uint32_t started_ms, cycle_ms, read_submitted_ms, cancel_started_ms;
 static bool have_cycle, cancellation_failed;
+static uint8_t read_arbitration_retries;
 static bool duration(uint32_t t) { return t > 0U && t < UINT32_C(0x80000000); }
 static bool bench(void)
-{ return profile != NULL && profile->safety.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH; }
+{ return profile != NULL && (profile->safety.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
+    || profile->safety.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_FOLLOW
+    || profile->safety.stop_policy == SAFETY_STOP_SUPERVISED_DUAL_FOLLOW); }
+bool S3ShoulderService_ReadProfileReady(const S3SiteProfile *p)
+{
+    return p != NULL && p->shoulder_source == S3_SHOULDER_ENCODER_PROPERTIES
+        && p->shoulder_node == S2_GDS_NODE
+        && duration(p->safety.feedback_timeout_ms)
+        && duration(p->shoulder_property_reply_ms)
+        && duration(p->shoulder_property_period_ms)
+        && duration(p->shoulder_property_window_ms)
+        && p->shoulder_property_reply_ms <= p->safety.feedback_timeout_ms
+        && p->shoulder_property_period_ms < p->safety.feedback_timeout_ms
+        && p->shoulder_property_window_ms > p->shoulder_property_period_ms
+        && (uint64_t)p->shoulder_property_window_ms
+            > (uint64_t)GDS_PROPERTY_COUNT * p->shoulder_property_reply_ms;
+}
 bool S3ShoulderService_ProfileReady(const S3SiteProfile *p)
 {
     if (p == NULL) { return false; }
@@ -42,11 +60,16 @@ bool S3ShoulderService_ProfileReady(const S3SiteProfile *p)
         && p->shoulder_property_period_ms < p->safety.feedback_timeout_ms
         && p->shoulder_property_window_ms > p->prepare_timeout_ms;
 }
-void S3ShoulderService_Init(const S3SiteProfile *p)
+void S3ShoulderService_Init(const S3SiteProfile *p, ShoulderReaderMode mode)
 {
-    profile = p; have_cycle = cancellation_failed = false; started_ms = cycle_ms = 0U;
+    reader_mode = mode;
+    profile = p; have_cycle = cancellation_failed = false;
+    started_ms = cycle_ms = read_submitted_ms = cancel_started_ms = 0U;
+    read_arbitration_retries = 0U;
     status = (S3ReaderStatus){0};
-    status.state = S3ShoulderService_ProfileReady(p) ? S3_READER_IDLE : S3_READER_DISABLED;
+    bool ready = mode == SHOULDER_READER_S4 ? S3ShoulderService_ReadProfileReady(p)
+        : mode == SHOULDER_READER_S3 && S3ShoulderService_ProfileReady(p);
+    status.state = ready ? S3_READER_IDLE : S3_READER_DISABLED;
     ShoulderStandstill_Init(&standstill, p == NULL ? NULL : &p->shoulder_standstill);
 }
 S3ReaderStatus S3ShoulderService_Get(void) { return status; }
@@ -63,7 +86,8 @@ ShoulderStandstillStatus S3ShoulderService_GetStandstill(uint32_t now_ms)
 bool S3ShoulderService_Stop(void)
 {
     if (status.state == S3_READER_ACTIVE || status.state == S3_READER_IDLE
-        || status.state == S3_READER_STOPPING || status.state == S3_READER_OBSERVING) {
+        || status.state == S3_READER_STOPPING || status.state == S3_READER_OBSERVING
+        || status.state == S3_READER_CANCELLING) {
         status.state = S3_READER_STOPPED;
     }
     CanMonitor_InvalidateShoulderProperties();
@@ -71,6 +95,14 @@ bool S3ShoulderService_Stop(void)
     if (!stopped) { cancellation_failed = true; }
     if (cancellation_failed) { status.state = S3_READER_FAULT; status.reason = S3_READ_TX; }
     return !cancellation_failed;
+}
+bool S3ShoulderService_BeginReadOnlyStop(uint32_t now_ms)
+{
+    if (reader_mode != SHOULDER_READER_S4 || status.state != S3_READER_ACTIVE) { return false; }
+    CanMonitor_InvalidateShoulderProperties();
+    status.state = S3_READER_CANCELLING;
+    cancel_started_ms = now_ms;
+    return true;
 }
 static void fail(S3ReadReason reason)
 {
@@ -97,15 +129,17 @@ void S3ShoulderService_AfterOutputStop(bool accepted, uint32_t now_ms)
 }
 static bool healthy(uint32_t now_ms, BoardCanStats *can)
 {
+    /* Historical protocol errors are diagnostic; require a live, valid heartbeat. */
     if (profile == NULL || BoardConsole_HasFault()
         || !BoardCan_GetStats(BOARD_CAN_SHOULDER, can) || !can->started
-        || can->start_error != BOARD_CAN_START_OK || can->bus_off || can->errors != 0U
+        || can->start_error != BOARD_CAN_START_OK || can->bus_off
         || can->dropped != 0U || can->invalid != 0U || can->fifo_overruns != 0U) { return false; }
     GdsFeedback hb; bool wire;
     if (!CanMonitor_GetShoulderObservation(&hb, &wire) || !hb.has_heartbeat || !hb.life_contiguous
         || hb.axis_error != 0U || hb.fault_flags != 0U || (hb.axis_state != 1U && hb.axis_state != 8U)
         || (uint32_t)(now_ms - hb.heartbeat_ms) > profile->safety.feedback_timeout_ms) { return false; }
-    if (bench()) { return true; } /* Explicit supervised policy; no invented GPIO. */
+    if (reader_mode == SHOULDER_READER_S4 || bench()) { return true; }
+    /* S4 read-only mode has no installed stop GPIO; output stays separate. */
     S3StopObservation stop = S3StopInput_Read(&profile->operator_stop_input, &profile->independent_stop_input);
     return stop.available && stop.operator_stop_clear;
 }
@@ -114,9 +148,10 @@ bool S3ShoulderService_Start(uint32_t now_ms)
     BoardCanStats can; GdsFeedback hb; bool wire;
     if (status.state != S3_READER_IDLE || !healthy(now_ms, &can) || can.queued != 0U
         || !CanMonitor_GetShoulderObservation(&hb, &wire) || hb.axis_state != 1U
-        || !ShoulderRead_ClaimS3()) { return false; }
+        || !(reader_mode == SHOULDER_READER_S4
+             ? ShoulderRead_ClaimS4() : ShoulderRead_ClaimS3())) { return false; }
     status.state = S3_READER_ACTIVE; started_ms = cycle_ms = now_ms;
-    have_cycle = false; return true;
+    have_cycle = false; read_arbitration_retries = 0U; return true;
 }
 void S3ShoulderService_Observe(const BoardCanFrame *f, uint32_t now_ms)
 {
@@ -128,6 +163,16 @@ void S3ShoulderService_Observe(const BoardCanFrame *f, uint32_t now_ms)
 }
 void S3ShoulderService_Poll(uint32_t now_ms)
 {
+    if (status.state == S3_READER_CANCELLING) {
+        BoardCanReadCancelResult cancel = BoardCanTx_CancelShoulderReadStep();
+        if (cancel == BOARD_CAN_READ_CANCEL_DONE) {
+            status.state = S3_READER_STOPPED;
+        } else if (cancel == BOARD_CAN_READ_CANCEL_FAILED
+            || (uint32_t)(now_ms - cancel_started_ms) >= profile->shoulder_property_reply_ms) {
+            fail(S3_READ_TX);
+        }
+        return;
+    }
     bool observing = status.state == S3_READER_OBSERVING;
     if (status.state != S3_READER_ACTIVE && !observing) { return; }
     if ((observing && (uint32_t)(now_ms - status.stop_ms) >= profile->shoulder_stop_window_ms)
@@ -151,7 +196,27 @@ void S3ShoulderService_Poll(uint32_t now_ms)
             return;
         }
     }
-    if (pending) { return; }
+    if (pending) {
+        BoardCanReadTxResult tx = BoardCanTx_ShoulderReadResult();
+        if (tx == BOARD_CAN_READ_TX_ALST) {
+            /* NART deliberately remains on for motion frames. A lost read is
+             * known not to have reached the motor, so one same-field retry is
+             * safe while the original reply deadline is still open. */
+            if (read_arbitration_retries != 0U
+                || (uint32_t)(now_ms - read_submitted_ms) >= profile->shoulder_property_reply_ms) {
+                fail(S3_READ_TX); return;
+            }
+            if (!BoardCanTx_ShoulderReadReady()) { return; }
+            BoardCanFrame retry;
+            if (!GdsSdoRead_PropertyRequest(next, &retry)
+                || !BoardCanTx_SubmitShoulderRead(&retry)) { fail(S3_READ_TX); return; }
+            read_arbitration_retries = 1U;
+            status.requests++;
+        } else if (tx == BOARD_CAN_READ_TX_FAILED || tx == BOARD_CAN_READ_TX_NONE) {
+            fail(S3_READ_TX);
+        }
+        return;
+    }
     if (next == GDS_PROPERTY_POSITION && have_cycle
         && (uint32_t)(now_ms - cycle_ms) < profile->shoulder_property_period_ms) { return; }
     /* New reads cannot precede the stop output leaving its hardware mailbox. */
@@ -159,6 +224,8 @@ void S3ShoulderService_Poll(uint32_t now_ms)
     BoardCanFrame read;
     if (!GdsSdoRead_PropertyRequest(next, &read) || !BoardCanTx_SubmitShoulderRead(&read)
         || !CanMonitor_ExpectShoulderProperty(next, now_ms)) { fail(S3_READ_TX); return; }
+    read_submitted_ms = now_ms;
+    read_arbitration_retries = 0U;
     if (next == GDS_PROPERTY_POSITION) { cycle_ms = now_ms; have_cycle = true; }
     status.requests++;
 }

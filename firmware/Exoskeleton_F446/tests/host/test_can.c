@@ -53,7 +53,7 @@ static void queue(void)
 }
 static void budget(void)
 {
-    CanMonitor_Init();
+    CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3);
     for (unsigned i = 0; i < 5; i++) { TestCan_Inject(BOARD_CAN_ELBOW, 1, 8, 0, 0, (uint8_t)i); }
     TestCan_Interrupt(BOARD_CAN_ELBOW);
     BoardCanStats s;
@@ -68,7 +68,7 @@ static void budget(void)
 }
 static void invalid(void)
 {
-    CanMonitor_Init();
+    CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3);
     TestCan_Inject(BOARD_CAN_SHOULDER, 1, 9, 0, 0, 0);
     TestCan_Inject(BOARD_CAN_SHOULDER, 1, 8, CAN_ID_EXT, 0, 0);
     TestCan_Inject(BOARD_CAN_SHOULDER, 1, 8, 0, CAN_RTR_REMOTE, 0);

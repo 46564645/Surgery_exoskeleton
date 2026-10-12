@@ -20,6 +20,7 @@ static bool claim(ShoulderReadPhase owner)
 }
 bool ShoulderRead_ClaimStream(void) { return claim(SHOULDER_READ_STREAM_OWNED); }
 bool ShoulderRead_ClaimS3(void) { return claim(SHOULDER_READ_S3_OWNED); }
+bool ShoulderRead_ClaimS4(void) { return claim(SHOULDER_READ_S4_OWNED); }
 bool ShoulderRead_ClaimQualification(void) { return claim(SHOULDER_READ_QUALIFICATION_OWNED); }
 bool ShoulderRead_Start(GdsReadField field, uint32_t now_ms)
 {
@@ -27,7 +28,8 @@ bool ShoulderRead_Start(GdsReadField field, uint32_t now_ms)
     if (!GdsSdoRead_Request(field, &frames[0])) { return false; }
     uint8_t bit = (uint8_t)(1U << (unsigned)field);
     if (status.phase == SHOULDER_READ_PENDING || status.phase == SHOULDER_READ_STREAM_OWNED
-        || status.phase == SHOULDER_READ_S3_OWNED || status.phase == SHOULDER_READ_QUALIFICATION_OWNED
+        || status.phase == SHOULDER_READ_S3_OWNED || status.phase == SHOULDER_READ_S4_OWNED
+        || status.phase == SHOULDER_READ_QUALIFICATION_OWNED
         || status.quarantined
         || (status.used_fields & bit) != 0U || BoardConsole_HasFault()) { return false; }
     S3BenchStatus gate; S3Bench_GetStatus(&gate);

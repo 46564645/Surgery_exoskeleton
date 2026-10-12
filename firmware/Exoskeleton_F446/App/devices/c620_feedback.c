@@ -59,6 +59,8 @@ bool C620_Receive(C620Device *device, BoardCanBus bus,
     }
     C620Feedback next = {0};
     next.received_ms = frame->received_ms;
+    next.sequence = device->feedback.sequence + 1U;
+    if (next.sequence == 0U) { next.sequence = 1U; }
     next.rotor_angle_ticks = angle;
     next.rotor_speed_rpm = read_i16_be(frame->data + 2);
     next.torque_current_raw = read_i16_be(frame->data + 4);

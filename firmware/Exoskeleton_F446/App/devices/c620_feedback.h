@@ -7,6 +7,7 @@
 
 typedef struct {
     uint32_t received_ms;
+    uint32_t sequence; /* Accepted feedback frames; distinct even within one ms. */
     uint32_t age_ms; /* Derived by GetFeedback at the same time as validity. */
     float rotor_position_rad;
     float rotor_velocity_rad_s;

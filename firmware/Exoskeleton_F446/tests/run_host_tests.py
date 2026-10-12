@@ -15,10 +15,22 @@ out.mkdir(parents=True, exist_ok=True)
 sources = ["tests/host/test_s1.c", "Core/Src/board_console.c", "Core/Src/board_runtime.c",
            "App/application/app_main.c", "App/application/console_commands.c",
            "App/application/c620_standstill.c",
+           "App/application/elbow_session_angle.c",
            "Core/Src/board_can.c", "App/application/can_monitor.c",
            "tests/host/can_mock.c", "tests/host/test_can.c",
            "App/devices/c620_feedback.c", "tests/host/test_c620.c",
            "App/devices/motor_command.c", "App/control/joint_state.c",
+           "App/control/gravity_compensation.c", "tests/host/test_s4_gravity.c",
+           "App/control/s5_elbow_support.c", "App/application/s5_site.c",
+           "App/application/s5_follow.c",
+           "tests/host/test_s5_follow.c",
+           "App/application/s4_site.c", "tests/host/test_s4_site.c",
+           "tests/host/test_s4_reader.c",
+           "tests/host/test_s4_observe.c", "App/application/s4_follow.c",
+           "tests/host/test_s4_chain.c",
+           "tests/host/test_s4_gateway.c",
+           "tests/host/test_s5_gateway.c",
+           "tests/host/test_s4_follow_output.c",
            "App/control/safety_supervisor.c", "App/application/output_gateway.c",
            "App/application/s3_bench.c", "App/application/s3_feedback.c", "tests/host/test_s3.c",
            "App/devices/gds_feedback.c", "tests/host/s3_site_mock.c",
@@ -39,6 +51,27 @@ sources = ["tests/host/test_s1.c", "Core/Src/board_console.c", "Core/Src/board_r
 sources += [str(p.relative_to(root)) for p in sorted((root / "third_party/clip/src").glob("*.c"))]
 includes = ["tests/host", "Core/Inc", "App/application", "App/devices", "App/control", "third_party/lwrb/src/include", "third_party/clip/src"]
 env = os.environ.copy()
+r4_sign = env.get("S5_R4_HOST_SIGN")
+r4_ma = env.get("S5_R4_HOST_MA")
+r4_defines = []
+if r4_sign is not None or r4_ma is not None:
+    if r4_sign not in ("1", "-1") or r4_ma is None or not r4_ma.isdecimal() \
+            or not 1 <= int(r4_ma) <= 4000:
+        raise SystemExit("S5 R4 host profile requires sign=1/-1 and magnitude=1..4000 mA")
+    r4_defines = ["S5_R4_ELBOW_FOLLOW", f"S5_R4_ELBOW_SUPPORT_SIGN={r4_sign}",
+                  f"S5_R4_ELBOW_SUPPORT_MA={r4_ma}"]
+r5_sign = env.get("S5_R5_HOST_SIGN")
+r5_ma = env.get("S5_R5_HOST_MA")
+r5_defines = []
+if r5_sign is not None or r5_ma is not None:
+    if r5_sign not in ("1", "-1") or r5_ma is None or not r5_ma.isdecimal() \
+            or not 1 <= int(r5_ma) <= 2000:
+        raise SystemExit("S5 R5 host profile requires sign=1/-1 and magnitude=1..2000 mA")
+    r5_defines = ["S5_R5_DUAL_FOLLOW", f"S5_R5_ELBOW_SUPPORT_SIGN={r5_sign}",
+                  f"S5_R5_ELBOW_SUPPORT_MA={r5_ma}"]
+if r4_defines and r5_defines:
+    raise SystemExit("S5 R4 and R5 host profiles are mutually exclusive")
+site_defines = r4_defines + r5_defines
 exe = out / ("test_s1.exe" if os.name == "nt" else "test_s1")
 if os.name == "nt":
     if shutil.which("cl", path=env.get("PATH")) is None:
@@ -59,8 +92,9 @@ if os.name == "nt":
     compiler = shutil.which("cl", path=env.get("Path", env.get("PATH")))
     if compiler is None:
         raise SystemExit("MSVC environment did not provide cl.exe")
-    cmd = [compiler, "/nologo", "/std:c11", "/experimental:c11atomics", "/W3", "/WX", "/Zi", "/Od", "/D_CRT_SECURE_NO_WARNINGS",
+    cmd = [compiler, "/nologo", "/std:c11", "/experimental:c11atomics", "/W3", "/WX", "/Zi", "/Od", "/D_CRT_SECURE_NO_WARNINGS", "/DS4_SITE_HOST_TEST", "/DS5_SITE_HOST_TEST",
            f"/Fe:{exe}", f"/Fo:{out}{os.sep}", f"/Fd:{out / 'host.pdb'}"]
+    cmd += [f"/D{definition}" for definition in site_defines]
     cmd += [f"/I{p}" for p in includes]
     # Only this unchanged upstream CLIP translation unit narrows double->float
     # and size_t->byte (MSVC C4244/C4267). Keep /WX for all project code.
@@ -75,11 +109,25 @@ if os.name == "nt":
     sources.remove(console)
     sources.append(str(out / "board_console.obj"))
 else:
-    cmd = [os.environ.get("HOST_CC", "cc"), "-std=c11", "-Wall", "-Wextra", "-Werror",
+    cmd = [os.environ.get("HOST_CC", "cc"), "-std=c11", "-Wall", "-Wextra", "-Werror", "-DS4_SITE_HOST_TEST", "-DS5_SITE_HOST_TEST",
            "-g", "-O1", "-fsanitize=address,undefined", "-o", str(exe)]
+    cmd += [f"-D{definition}" for definition in site_defines]
     cmd += [f"-I{p}" for p in includes]
 subprocess.run(cmd + sources, cwd=root, check=True, env=env)
 cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_relative_cli", "s3_chain_relative_config",
+         "s4_gravity",
+         "s4_site",
+         "s4_reader_claim",
+         "s4_reader_mode",
+         "s4_read_status_cli",
+         "s4_gateway_ramp", "s4_gateway_expiry", "s4_gateway_faults",
+         "s5_gateway_pair", "s5_gateway_stop",
+         "s5_model_site", "s5_elbow_follow", "s5_dual_follow",
+         "s4_follow_cli_cancel", "s4_follow_expiry", "s4_follow_long_warning", "s4_follow_midcycle_arm",
+         "s4_follow_read",
+         "s4_observe_raw_mapping", "s4_observe_age_fault",
+         "s4_chain_complete_fault", "s4_chain_cancel_pending", "s4_chain_cancel_delayed_abort", "s4_chain_alst_retry",
+         "s4_chain_alst_failures", "s4_chain_alst_stray",
          "s3_telemetry_cli", "s3_chain_recording", "shoulder_qual_success", "shoulder_qual_faults",
          "shoulder_qual_ownership", "shoulder_qual_can_fault", "shoulder_qual_uart_fault", "s3_shoulder_standstill", "s3_gateway_ready_deadline", "s3_gateway_first_deadline",
          "s3_gateway_shoulder_once", "s3_chain_supervised", "s3_chain_supervised_faults", "s3_stop_input", "s3_chain_mailboxes", "s3_chain_run", "s3_chain_faults",
@@ -93,7 +141,11 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
              "can_errors", "can_commands", "can_failure_console",
              "c620_codec", "c620_invalid", "c620_freshness", "c620_wrap",
              "c620_integration", "c620_queue_age", "c620_console", "c620_failure_console",
-             "s3_codec", "s3_mapping", "s3_default", "s3_lifecycle", "s3_interlocks", "s3_transport", "s3_bxcan", "s3_prepare", "s3_gds", "s3_cli", "s3_axes", "s3_observations", "s3_shoulder_console", "s3_standstill", "s3_bench_stop_policy", "s3_bench_stop_cli"]
+              "s3_codec", "s3_mapping", "s3_default", "s3_lifecycle", "s3_interlocks", "s3_transport", "s3_bxcan", "s3_prepare", "s3_gds", "s3_cli", "s3_axes", "s3_observations", "s3_shoulder_console", "s3_standstill", "s3_elbow_session_angle", "s3_elbow_session_bench", "s3_bench_stop_policy", "s3_bench_stop_cli"]
+if r4_defines:
+    cases.append("s5_r4_site")
+if r5_defines:
+    cases += ["s5_r5_site", "s5_r5_dual_chain", "s5_r5_dual_elbow_stale"]
 selected = sys.argv[1:] or cases
 if any(case not in cases for case in selected):
     raise SystemExit("Unknown host scenario")

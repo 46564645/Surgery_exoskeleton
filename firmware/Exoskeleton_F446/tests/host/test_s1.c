@@ -22,9 +22,19 @@
 #include "test_gateway_deadlines.h"
 #include "test_shoulder_qualification.h"
 #include "test_console_probe.h"
+#include "test_s4_gravity.h"
+#include "test_s4_site.h"
+#include "test_s4_reader.h"
+#include "test_s4_observe.h"
+#include "test_s4_chain.h"
+#include "test_s4_gateway.h"
+#include "test_s5_gateway.h"
+#include "test_s5_follow.h"
+#include "test_s4_follow_output.h"
 #include "s3_bench.h"
 #include "s3_site_mock.h"
 #include "can_tx_mock.h"
+#include "board_can_tx.h"
 #include "s2_config.h"
 #include <assert.h>
 #include <stdio.h>
@@ -149,7 +159,7 @@ static void test_commands(void)
     assert(strstr(wire + before, "uart_errors=0"));
     S3Bench_Init();
     query("outputstatus\n", "OK stage=S2_CAN_RX s3_state=0 reason=1 configured=0 transport_bound=0 "
-          "output_allowed=0 request_valid=0 stop_attempted=0 prep_state=0 arm_token=0 feedback_pending=0 reader=0 reader_reason=0\r\n");
+          "output_allowed=0 request_valid=0 stop_attempted=0 prep_state=0 arm_token=0 feedback_pending=0 reader=0 reader_reason=0 elbow_zero_pending=0 elbow_zero_valid=0\r\n");
 }
 
 static void test_rx_positions(void)
@@ -495,6 +505,9 @@ static void real_bench_service(unsigned count)
     const uint8_t feedback[8] = {0x0D,0x6D,0,0,0,0,28,0};
     for (unsigned i = 0; i < count; i++) {
         ticks++;
+        /* The bench mock does not transmit by itself. Complete the previous
+         * tick's CAN frame before the gateway checks TXOK on this tick. */
+        TestCanTx_Complete(BOARD_CAN_ELBOW);
         TestCan_InjectData(BOARD_CAN_ELBOW, 0x201U, 8U, 0U, 0U, feedback);
         TestCan_Interrupt(BOARD_CAN_ELBOW); App_Poll(); complete();
     }
@@ -540,6 +553,7 @@ static void test_bench_stop_cli(void)
     real_bench_service(251U); real_bench_query("ackfault\n", "OK fault_acknowledged output_allowed=0\r\n");
     size_t before = wire_length; feed("stopstatus\n", 11U); real_bench_service(5U);
     assert(strstr(wire + before, "policy=1 source=c620_feedback seen=1 fresh=1 stationary=1"));
+    assert(strstr(wire + before, "stop_pending=0 stop_txok=1"));
     assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == 0U);
 }
 
@@ -581,6 +595,15 @@ static void test_sdo_cli(void)
     ticks += SHOULDER_READ_TIMEOUT_MS;
     before = wire_length; feed("shoulderreadstatus\n", 19U); service(5U);
     assert(strstr(wire + before, "value=-0.125000 fresh=0")); /* Cached is not live feedback. */
+}
+
+static void test_s4_read_status_cli(void)
+{
+    TestS3Site_Reset(); ticks = 100U; App_Init(); TestCanTx_Reset();
+    assert(ShoulderRead_ClaimS4());
+    const char *answer = TestConsole_QueryCached("shoulderreadstatus\n");
+    assert(strstr(answer, "phase=s4_owned"));
+    assert(strstr(answer, "output_allowed=0"));
 }
 
 static void test_stream_cli(void)
@@ -627,7 +650,7 @@ static void test_stream_cli(void)
     assert(gate.state == OUTPUT_SAFE_OFF && !gate.configured && !gate.transport_bound && !gate.output_allowed);
 }
 
-const char *TestConsole_QueryCached(const char *command)
+const char *TestConsole_QueryRaw(const char *command)
 {
     size_t before = wire_length;
     feed(command, strlen(command));
@@ -635,8 +658,17 @@ const char *TestConsole_QueryCached(const char *command)
         BoardConsole_Poll(ticks); ConsoleCommands_Poll(ticks, 0U); complete();
     }
     assert(wire_length - before < S1_REPLY_SIZE);
-    assert(!strncmp(wire + before, "OK ", 3U));
     return wire + before;
+}
+void TestConsole_Drain(unsigned rounds)
+{
+    for (unsigned i = 0U; i < rounds; i++) { BoardConsole_Poll(ticks); complete(); }
+}
+const char *TestConsole_QueryCached(const char *command)
+{
+    const char *answer = TestConsole_QueryRaw(command);
+    assert(!strncmp(answer, "OK ", 3U));
+    return answer;
 }
 static void test_s3_telemetry_cli(void)
 {
@@ -646,10 +678,14 @@ static void test_s3_telemetry_cli(void)
     TestS3Site_ConfigureShoulderChain(&profile); ticks = UINT32_MAX - 32U; App_Init(); TestCanTx_Reset();
     const uint32_t values[7] = {0x40300000U, 0xBD000000U, 1U, 1U, 0x3E000000U, 3U, 3U};
     for (unsigned i = 0U; i < GDS_PROPERTY_COUNT; i++) {
+        BoardCanFrame request;
+        assert(GdsSdoRead_PropertyRequest((GdsPropertyField)i, &request));
+        assert(BoardCanTx_SubmitShoulderRead(&request));
         assert(CanMonitor_ExpectShoulderProperty((GdsPropertyField)i, ticks));
         uint16_t ep = GdsSdoRead_PropertyEndpoint((GdsPropertyField)i);
         uint8_t data[8] = {0U, (uint8_t)ep, (uint8_t)(ep >> 8), 0U};
         for (unsigned j = 0U; j < 4U; j++) { data[j+4U] = (uint8_t)(values[i] >> (8U*j)); }
+        TestCanTx_Complete(BOARD_CAN_SHOULDER);
         ticks++; TestCan_InjectData(BOARD_CAN_SHOULDER, 0x025U, 8U, 0U, 0U, data);
         TestCan_Interrupt(BOARD_CAN_SHOULDER); CanMonitor_Poll(); ticks++;
     }
@@ -661,7 +697,7 @@ static void test_s3_telemetry_cli(void)
     assert(strstr(a, "fresh=1 tq=3E000000 cal=1 ready=1 cm=3 im=3"));
     const char *commands[] = {"s3reader\n", "s3limits\n", "s3timing\n", "s3stopcfg\n", "qualstatus\n", "qualfield 6\n", "qualerror\n", "s3help\n"};
     for (unsigned i = 0U; i < sizeof(commands)/sizeof(commands[0]); i++) { (void)TestConsole_QueryCached(commands[i]); }
-    assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == 0U && TestCanTx_Sent(BOARD_CAN_ELBOW) == 0U);
+    assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == GDS_PROPERTY_COUNT && TestCanTx_Sent(BOARD_CAN_ELBOW) == 0U);
     query("qualfield 7\n", "ERR args\r\n"); query("qualfield -1\n", "ERR args\r\n");
     query("qualfield 1 extra\n", "ERR args\r\n"); query("s3feedback extra\n", "ERR args\r\n");
     ticks += 101U;
@@ -670,7 +706,7 @@ static void test_s3_telemetry_cli(void)
     CanMonitor_InvalidateShoulderProperties();
     a = TestConsole_QueryCached("s3properties\n");
     assert(strstr(a, "seq=1") && strstr(a, "fresh=0"));
-    assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == 0U);
+    assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == GDS_PROPERTY_COUNT);
 }
 
 int main(int argc, char **argv)
@@ -679,6 +715,9 @@ int main(int argc, char **argv)
     if (!strcmp(argv[1], "s2_stream_cli")) { test_stream_cli(); }
     else if (!strncmp(argv[1], "s2_stream_", 10)) { TestEncoderStream_Run(argv[1]); }
     else if (!strcmp(argv[1], "s2_sdo_cli")) { test_sdo_cli(); }
+    else if (!strcmp(argv[1], "s4_read_status_cli")) { test_s4_read_status_cli(); }
+    else if (!strcmp(argv[1], "s4_follow_read")) { TestS4Reader_Run(argv[1]); }
+    else if (!strncmp(argv[1], "s4_follow_", 10U)) { TestS4FollowOutput_Run(argv[1]); }
     else if (!strncmp(argv[1], "s2_sdo_", 7)) { TestSdo_Run(argv[1]); }
     else if (!strcmp(argv[1], "commands")) { test_commands(); }
     else if (!strcmp(argv[1], "can_commands")) { test_can_commands(false); }
@@ -686,6 +725,21 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "c620_console")) { test_c620_console(false); }
     else if (!strcmp(argv[1], "c620_failure_console")) { test_c620_console(true); }
     else if (!strcmp(argv[1], "s3_telemetry_cli")) { test_s3_telemetry_cli(); }
+    else if (!strcmp(argv[1], "s4_gravity")) { TestS4Gravity_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_site")) { TestS4Site_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_reader_claim")) { TestS4Reader_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_reader_mode")) { TestS4Reader_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_observe_raw_mapping")) { TestS4Observe_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_observe_age_fault")) { TestS4Observe_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_chain_complete_fault")) { TestS4Chain_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_chain_cancel_pending")) { TestS4Chain_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_chain_cancel_delayed_abort")) { TestS4Chain_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_chain_alst_retry")) { TestS4Chain_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_chain_alst_failures")) { TestS4Chain_Run(argv[1]); }
+    else if (!strcmp(argv[1], "s4_chain_alst_stray")) { TestS4Chain_Run(argv[1]); }
+    else if (!strncmp(argv[1], "s4_gateway_", 11)) { TestS4Gateway_Run(argv[1]); }
+    else if (!strncmp(argv[1], "s5_gateway_", 11)) { TestS5Gateway_Run(argv[1]); }
+    else if (!strncmp(argv[1], "s5_", 3)) { TestS5Follow_Run(argv[1]); }
     else if (!strncmp(argv[1], "shoulder_qual_", 14)) { TestShoulderQualification_Run(argv[1]); }
     else if (!strcmp(argv[1], "s3_shoulder_console")) { test_shoulder_console(); }
     else if (!strcmp(argv[1], "s3_bench_stop_cli")) { test_bench_stop_cli(); }

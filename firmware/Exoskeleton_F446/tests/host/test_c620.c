@@ -30,7 +30,8 @@ static void codec(void)
                       .data = {0x0C,0x13,0,0,0xFF,0xFC,0x1E,0}};
     assert(C620_Receive(&d, BOARD_CAN_ELBOW, &f, 1001));
     C620Feedback s = get(&d, 1001);
-    assert(s.has_sample && s.valid && s.received_ms == 1000 && s.age_ms == 1);
+    assert(s.has_sample && s.valid && s.received_ms == 1000 && s.age_ms == 1
+        && s.sequence == 1U);
     assert(s.rotor_angle_ticks == 3091 && s.rotor_speed_rpm == 0);
     assert(s.torque_current_raw == -4 && s.temperature_c == 30);
     assert(fabs((double)s.rotor_position_rad - 2.370767308) < 0.000001);
@@ -38,7 +39,7 @@ static void codec(void)
     /* Independently specified wire values verify big endian and both signs. */
     f = frame(258, 60, 28, 1010); f.data[7] = 0xA5;
     assert(C620_Receive(&d, BOARD_CAN_ELBOW, &f, 1010)); s = get(&d, 1010);
-    assert(s.rotor_angle_ticks == 258 && s.reserved_raw == 0xA5);
+    assert(s.rotor_angle_ticks == 258 && s.reserved_raw == 0xA5 && s.sequence == 2U);
     assert(fabs((double)s.rotor_velocity_rad_s - 6.283185307) < 0.00001);
     f = frame(4096, -60, -51, 1020);
     assert(C620_Receive(&d, BOARD_CAN_ELBOW, &f, 1020)); s = get(&d, 1020);
@@ -81,7 +82,8 @@ static void invalid(void)
     assert(!C620_Receive(&d, BOARD_CAN_COUNT, &good, 20));
     assert(!C620_Receive(&d, BOARD_CAN_ELBOW, NULL, 20));
     C620Feedback s = get(&d, 20);
-    assert(s.received_ms == 10 && s.rotor_angle_ticks == 3091 && s.rotor_speed_rpm == -60);
+    assert(s.received_ms == 10 && s.rotor_angle_ticks == 3091 && s.rotor_speed_rpm == -60
+        && s.sequence == 1U);
     assert(s.valid && s.age_ms == 10);
     assert(!C620_Init(&d, 0, 100) && !C620_Init(&d, 9, 100));
     assert(!C620_Init(&d, 1, 0) && !C620_Init(&d, 1, 0x80000000U));
@@ -114,7 +116,8 @@ static void freshness(void)
     assert(!C620_Receive(&d, BOARD_CAN_ELBOW, &f, 122)); /* Out of order. */
     f.received_ms = 120;
     assert(C620_Receive(&d, BOARD_CAN_ELBOW, &f, 122));
-    s = get(&d, 122); assert(s.received_ms == 120 && s.age_ms == 2 && s.rotor_angle_ticks == 4001);
+    s = get(&d, 122); assert(s.received_ms == 120 && s.age_ms == 2 && s.rotor_angle_ticks == 4001
+        && s.sequence == 3U);
     f.received_ms = 124;
     assert(!C620_Receive(&d, BOARD_CAN_ELBOW, &f, 123)); /* Future clock snapshot. */
     assert(get(&d, 221).valid == false);
@@ -135,7 +138,7 @@ static void wrap(void)
 }
 static void integration(void)
 {
-    TestClock_Set(0); CanMonitor_Init();
+    TestClock_Set(0); CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3);
     C620Feedback s; assert(CanMonitor_GetElbowFeedback(&s) && !s.has_sample);
     BoardCanFrame f = frame(3091, 0, -4, 10);
     TestClock_Set(10);
@@ -168,7 +171,7 @@ static void integration(void)
 }
 static void queue_age(void)
 {
-    TestClock_Set(10); CanMonitor_Init();
+    TestClock_Set(10); CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3);
     BoardCanFrame f = frame(3091, 0, -4, 10);
     TestCan_InjectData(BOARD_CAN_ELBOW, f.id, 8, 0, 0, f.data);
     TestCan_Interrupt(BOARD_CAN_ELBOW);

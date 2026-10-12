@@ -12,7 +12,15 @@ void C620Standstill_After(C620Standstill *s, uint32_t after_ms)
 static void clear_window(C620Standstill *s)
 {
     s->tracking = s->seen = false;
-    s->start_ms = s->last_ms = 0U; s->minimum = s->maximum = 0U;
+    s->start_ms = s->last_ms = 0U; s->anchor_ticks = 0U;
+    s->minimum = s->maximum = 0;
+}
+static int16_t signed_offset(uint16_t ticks, uint16_t anchor)
+{
+    int32_t delta = (int32_t)ticks - (int32_t)anchor;
+    if (delta > 4096) { delta -= 8192; }
+    if (delta < -4096) { delta += 8192; }
+    return (int16_t)delta;
 }
 void C620Standstill_Observe(C620Standstill *s, const C620Feedback *f, uint32_t now_ms)
 {
@@ -35,11 +43,13 @@ void C620Standstill_Observe(C620Standstill *s, const C620Feedback *f, uint32_t n
     if (s->seen && gap > C620_STILL_FRESH_MS) { s->tracking = false; }
     s->seen = true; s->last_ms = f->received_ms;
     if (f->rotor_speed_rpm != 0) { s->tracking = false; return; }
-    uint16_t low = s->minimum < f->rotor_angle_ticks ? s->minimum : f->rotor_angle_ticks;
-    uint16_t high = s->maximum > f->rotor_angle_ticks ? s->maximum : f->rotor_angle_ticks;
-    if (!s->tracking || (uint32_t)(high - low) > C620_STILL_SPAN_TICKS) {
+    int16_t offset = signed_offset(f->rotor_angle_ticks, s->anchor_ticks);
+    int16_t low = s->minimum < offset ? s->minimum : offset;
+    int16_t high = s->maximum > offset ? s->maximum : offset;
+    if (!s->tracking || (uint32_t)((int32_t)high - (int32_t)low) > C620_STILL_SPAN_TICKS) {
         s->start_ms = f->received_ms;
-        s->minimum = s->maximum = f->rotor_angle_ticks;
+        s->anchor_ticks = f->rotor_angle_ticks;
+        s->minimum = s->maximum = 0;
         s->tracking = true;
     } else {
         s->minimum = low; s->maximum = high;

@@ -126,7 +126,8 @@ COM10 只是此前实测端口，不能假定永久不变。串口参数为 1152
 
 - NUCLEO-F446RE / STM32F446RET6；ioc记录 CubeMX 6.18.1、STM32CubeF4 V1.28.3。
 - 当前 Windows 工具版本见上方工具准备；此前 Mac 使用 GCC 14.3.1+st.2 的记录作为历史结果保留。
-- S1已基本完成，S2/S3硬件验收仍未完成，阶段S2_CAN_RX。当前源码逐帧接入C620反馈和未验证的GDS rev2.2档案观测，并实现每轴门控；生产enabled_axes=0、现场确认false/0、S3输出发送未绑定；新增固定端点CAN只读诊断直接复用L1 CAN1发送，在默认门控关闭且新鲜IDLE心跳下各端点每次启动一次。HX711、StateSmith、FOLLOW/Lock/Amplify未接入。当前板上为2026-10-02 17:00 UTC已烧录、官方校验/复位并独立读回匹配的HSI连续观察镜像 `e8466a15caad32216d94a927cb14f336c5ab17b6f7601e211dbd695379ad381e`（BIN72604B），包含原停止策略、限定属性读取和有界连续观察。16:11六条USB状态查询确认默认禁用；16:21限定两次CAN属性读取已完成，位置与紧邻USB近似，周期029仍全零，尚无物理动态证据。17:02被动USB prepare通过，配置/绑定/输出0，stream active/pairs/tx0；未启动连续CAN读取，明早现场连续反馈及一次小幅手动变化仍待验收。
+- 当前状态（2026-10-12）：S4 肩侧低姿态 FOLLOW 已观察到非零目标、主动停止和主观支撑感，具体力值仍待 S5 后合并测量。S5 肘单轴 R2 有两次轻微屈肘观察；R4 有短时出力记录，但最近 `4 A` 窗口启动后故障撤权，未取得有辅助力值或该轮正常停止。板上现为已[刷入并独立读回](build/s5-r5-dual-canhealth-board-20261012/attempt.json)的 R5 双关节隔离镜像，BIN SHA256 `83DEE5CC8B9CF00B53601CAA42AFE7D6FD8FFC841BA357AE7AA2BA048D08041C`。最新 R6 准备窗口中，抬肩后肘会话角持续无效，未进入 READY、未发送 `followstart`，双轴助力、手动跟随和带输出正常停止均未通过。操作者最后确认 24 V 已关闭、两关节承托静止。生产 S4/S5 profile 仍为 `enabled_axes=0`、`output_enabled=false`；细节见[唯一开发日志](<../../Main_ project/docs/development_schedule.md>)。
+- S5 配置：R4 肘单轴隔离 site 构建时须显式给出肘支撑方向 ±1／幅值 `1–4000 mA`；R5 双轴隔离 site 须显式给出方向 ±1／幅值 `1–2000 mA`。当前板上 R5 使用肘正向 `2000 mA` 电流指令目标、肩侧低姿态局部候选及最长 `10 s` 会话／`1 s` 撤力设置；这些是软件目标和限值，不等于实测扶持力。此前 R4 上板和试验详情保留在[开发日志](<../../Main_ project/docs/development_schedule.md>)。普通生产构建仍禁用输出。
 - App/application包含调度和命令；Core中的board_console/board_runtime提供平台接口，应用层不持有HAL句柄。App/devices含C620接收解析和纯命令编码，App/control含坐标转换/安全检查，App/application含默认关闭的输出门控；不改变CAN物理层配置。
 - Drivers不手改；Core中的接入代码放USER CODE区。自有源文件加入顶层CMakeLists.txt；不手改生成的cmake/stm32cubemx清单。
 - 顶层AGENTS.md及硬件接口登记仍为工作依据。根目录到这里的路径为 firmware/Exoskeleton_F446。
@@ -141,10 +142,10 @@ COM10 只是此前实测端口，不能假定永久不变。串口参数为 1152
 
 2026-09-25：Mac端Debug构建及13项主机模拟测试通过，CubeMX重新生成后自有代码保留。Mac端SWD连接报USB错误，虚拟磁盘HEX写入尝试不等于读回校验通过。Windows端现已完成S1烧录校验、IRQ优先级读回、三次复位后的串口查询与10分钟通信测试。用户报告物理USB重插后，VCP命令恢复，但SWD报`DEV_USB_COMM_ERR`；Windows系统级重新枚举后SWD恢复，根因未定。用户目视LD2约每秒闪一次，与500 ms翻转、完整亮灭周期约1秒的设定定性相符，未用仪器测量时序。用户已决定S1基本完成，SWD偶发异常作为已知问题按需处理，不阻塞S2；详见唯一开发日志。
 
-## 通信行为（沿用 S1，当前状态为 S2）
+## 通信行为（S1 基础；板上为 R5 双关节 FOLLOW 隔离镜像）
 
-- USB VCP使用USART2 PA2/PA3，115200、8N1、无流控，区分大小写，以LF或CRLF结束。当前源码只读查询包括`ping/status/help/?/canstatus/shoulder/elbow/elbowfeedback/shoulderfeedback/shoulderreadstatus/outputstatus/stopstatus`；另有门控后的人工prepare/arm/cancel/ackfault及pulse语法，见下节。shoulderfeedback和每轴门控已随13:27镜像烧录；stopstatus、停止策略和限定shoulderreadpos/shoulderreadvel已随16:09镜像上板；16:21已各读一次。新增encstart/encstop/encfeedback已随17:00镜像上板，用于有界连续只读观察，尚未启动；详见下方连续观察说明。
-- 当前默认`status`报告`stage=S2_CAN_RX output_allowed=0`；启用许可取决于S3唯一门控，不能通过CLI改变现场确认。正常LD2每500 ms翻转；启动核验失败或通信故障每100 ms翻转，复位恢复。
+- USB VCP 使用 USART2 PA2/PA3，115200、8N1、无流控，命令区分大小写，以 LF 或 CRLF 结束。当前源码保留 S1/S2 查询与 S3 `prepare/arm/cancel/ackfault`、单次 pulse；S4/S5 的选路在冷启动由编译配置和 site 就绪条件决定，FOLLOW 命令为 `followobserve/followprepare/followstart/followstop/followstatus`，公共 `cancel` 路由到选中模式的停止。板上 R5 隔离镜像选择双关节 S5 FOLLOW；早前 R4 肘单轴镜像的单轴 FOLLOW 选路、R2 黑匣子镜像的 `prepare/arm/elbowpulse/cancel` 与 `ec*` 查询均不代表当前板上选路。R4 故障具体触发条件与旧 R2 间歇故障根因均待定位。生产 S4/S5 输出配置仍禁用；完整阶段行为和验收结果见开发日志。
+- 当前通用 `status` 仍报告 `stage=S2_CAN_RX`；实际输出许可与故障应查选中模式的 `outputstatus` 或 `followstatus`，不能据通用阶段字样判断 FOLLOW 已启用。S3/S4/S5 均经唯一 OutputGateway 门控，CLI 不能更改现场确认或打开编译期输出开关。正常 LD2 每500 ms 翻转；启动核验失败或通信故障每100 ms 翻转，复位恢复。
 - DMA1 Stream5/Channel4循环RX、Stream6/Channel4普通TX；与USART2同抢占优先级5。BSP按键初始化后由`BoardRuntime_FinalizeInterrupts`将EXTI最终设为10并读回核验；SysTick为0，GROUP4。
 - 参数集中在`Core/Inc/s1_config.h`。RX DMA为512字节，LwRB RX/TX存储1024/2048字节（各保留1字节区分满空），TX暂存256字节。中断服务延迟须小于半个DMA数组接收时间（115200下约22 ms）；位置差不能识别完全未服务的一整圈。
 - 通信每1 ms处理最多128字节及一条完整命令；行最多96字节，非法/超长行整行丢弃。UART/DMA错误、RX溢出或TX超过100 ms锁存故障，停止命令处理。

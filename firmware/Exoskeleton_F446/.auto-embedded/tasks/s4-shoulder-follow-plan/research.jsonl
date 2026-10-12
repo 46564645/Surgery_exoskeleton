@@ -1,0 +1,2 @@
+{"file": "spec/architecture/index.md", "reason": "S4沿用L1-L4和唯一输出入口"}
+{"file": "spec/hardware/index.md", "reason": "F446和既有CAN资源"}

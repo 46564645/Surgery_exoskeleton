@@ -7,13 +7,39 @@
 #include "board_runtime.h"
 #include "can_monitor.h"
 #include "s3_shoulder_service.h"
+#include "s2_config.h"
+#include <math.h>
 #include <stddef.h>
 #include <string.h>
 static OutputGateway gateway;
 static const S3SiteProfile *profile;
+static S3SiteProfile elbow_site;
+static bool elbow_session_mode, elbow_zero_pending;
+static uint32_t elbow_zero_started_ms;
 static uint32_t last_service_interval, token_counter, arm_token;
 static bool previous_live, feedback_pending;
 static uint32_t feedback_prepare_ms;
+
+static bool elbow_session_site(const S3SiteProfile *p)
+{
+    if (p == NULL || p->safety.enabled_axes != SAFETY_ELBOW_AXES
+        || p->safety.stop_policy != SAFETY_STOP_SUPERVISED_C620_BENCH
+        || p->coordinates[1] != S3_ASSEMBLED_JOINT
+        || p->elbow_id != S2_C620_ID || !p->operational_confirmed[1]
+        || (p->trusted_feedback_axes & SAFETY_ELBOW_AXES) == 0U
+        || !SafetySupervisor_ConfigReady(&p->safety)) { return false; }
+    const SafetyJointConfig *j = &p->safety.joint[1];
+    return j->mapping.rotor_per_joint == 1.0f && j->mapping.rotor_zero_rad == 0.0f
+        && j->lower_rad > -3.14159265f && j->upper_rad < 3.14159265f
+        && (double)j->max_speed_rad_s * p->safety.feedback_timeout_ms / 1000.0 < 3.14159265;
+}
+static void end_elbow_session(void)
+{
+    if (!elbow_session_mode) { return; }
+    elbow_zero_pending = false;
+    elbow_site.rotor_reference_confirmed[1] = false;
+    S3Feedback_EndElbowSession();
+}
 
 static bool site_ready(void)
 {
@@ -34,9 +60,12 @@ static bool site_ready(void)
         && (profile->trusted_feedback_axes & profile->safety.enabled_axes) == profile->safety.enabled_axes
         && ((profile->safety.stop_policy == SAFETY_STOP_EXTERNAL_INPUT && profile->stop_input_confirmed
                 && S3StopInput_ConfigReady(&profile->operator_stop_input, &profile->independent_stop_input))
-            || (profile->safety.stop_policy == SAFETY_STOP_SUPERVISED_C620_BENCH
+             || (profile->safety.stop_policy == SAFETY_STOP_SUPERVISED_C620_BENCH
                 && profile->safety.enabled_axes == SAFETY_ELBOW_AXES
-                && profile->coordinates[1] == S3_BENCH_ROTOR)
+                && (profile->coordinates[1] == S3_BENCH_ROTOR
+                    || (elbow_session_mode && elbow_session_site(profile)
+                        && profile->rotor_reference_confirmed[1]
+                        && S3Feedback_ElbowSessionPhase() == ELBOW_SESSION_ACTIVE)))
             || (profile->safety.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
                 && S3ShoulderService_ProfileReady(profile)))
         && profile->prepare_timeout_ms > 0U && profile->prepare_timeout_ms < UINT32_C(0x80000000)
@@ -45,7 +74,8 @@ static bool site_ready(void)
 static bool inputs(uint32_t now_ms, SafetyInputs *in, S3SiteSample *site)
 {
     memset(in, 0, sizeof(*in)); memset(site, 0, sizeof(*site));
-    bool received = S3Site_ReadSample(now_ms, site);
+    bool received = elbow_session_mode ? S3Feedback_Read(profile, now_ms, site)
+        : S3Site_ReadSample(now_ms, site);
     if (!site_ready() || !received) { return false; }
     memcpy(in->joint, site->joint, sizeof(in->joint));
     in->operator_stop_clear = site->operator_stop_clear;
@@ -69,6 +99,7 @@ static void invalidate_token(void)
         S3Feedback_EndRelative();
     }
     if (gateway.state == OUTPUT_FAULT) {
+        end_elbow_session();
         feedback_pending = false;
         if (gateway.stop_delivery_failed || gateway.reason == OUTPUT_REASON_TRANSPORT
             || gateway.reason == OUTPUT_REASON_SERVICE || gateway.reason == OUTPUT_REASON_HEALTH
@@ -78,19 +109,28 @@ static void invalidate_token(void)
     }
     bool live = gateway.state == OUTPUT_ARMED || gateway.state == OUTPUT_ACTIVE
         || gateway.state == OUTPUT_PREPARING || gateway.state == OUTPUT_READY;
-    if (previous_live && !live) { CanMonitor_ResetElbowStandstill(BoardRuntime_NowMs()); }
+    if (previous_live && !live) {
+        CanMonitor_ResetElbowStandstill(BoardRuntime_NowMs());
+        end_elbow_session();
+    }
     previous_live = live;
     if (gateway.state != OUTPUT_ARMED && gateway.state != OUTPUT_ACTIVE) { arm_token = 0U; }
 }
 void S3Bench_Init(void)
 {
     S3Feedback_Init();
-    profile = S3Site_GetProfile(); last_service_interval = token_counter = arm_token = 0U;
+    const S3SiteProfile *initial = S3Site_GetProfile();
+    if (initial != NULL) { elbow_site = *initial; }
+    elbow_session_mode = initial != NULL && !initial->rotor_reference_confirmed[1]
+        && elbow_session_site(initial);
+    profile = elbow_session_mode ? &elbow_site : initial;
+    elbow_zero_pending = false; elbow_zero_started_ms = 0U;
+    last_service_interval = token_counter = arm_token = 0U;
     previous_live = feedback_pending = false; feedback_prepare_ms = 0U; CanMonitor_ResetElbowStandstill(BoardRuntime_NowMs());
     OutputTransport port = {0};
-    if (site_ready()) { port = OutputCanTransport_Create(); }
+    if (site_ready() || elbow_session_mode) { port = OutputCanTransport_Create(); }
     OutputGateway_Init(&gateway, profile == NULL ? NULL : &profile->safety,
-                        site_ready() ? &port : NULL,
+                         (site_ready() || elbow_session_mode) ? &port : NULL,
                         profile == NULL ? 1U : profile->shoulder_node,
                         profile == NULL ? 1U : profile->elbow_id);
 }
@@ -108,6 +148,31 @@ void S3Bench_Poll(uint32_t now_ms, uint32_t service_interval_ms)
         (void)S3ShoulderService_Stop();
     }
     S3ShoulderService_Poll(now_ms);
+    if (elbow_zero_pending) {
+        S3SiteSample observed;
+        (void)S3Feedback_Read(profile, now_ms, &observed);
+        if (S3Feedback_ElbowSessionPhase() == ELBOW_SESSION_ACTIVE) {
+            elbow_site.rotor_reference_confirmed[1] = true;
+        }
+        uint32_t spent_ms = now_ms - elbow_zero_started_ms;
+        if (S3Feedback_ElbowSessionPhase() == ELBOW_SESSION_FAULT
+            || spent_ms >= profile->prepare_timeout_ms) {
+            end_elbow_session();
+        } else if (elbow_site.rotor_reference_confirmed[1]) {
+            SafetyInputs zero_inputs; S3SiteSample zero_sample;
+            bool complete = inputs(now_ms, &zero_inputs, &zero_sample);
+            if (complete && zero_inputs.feedback_stationary && zero_inputs.transport_healthy
+                && zero_sample.driver[1].valid
+                && SafetySupervisor_CheckBeforePrepare(&profile->safety,
+                    &zero_inputs, now_ms) == SAFETY_OK) {
+                elbow_zero_pending = false;
+                if (OutputGateway_Prepare(&gateway, &zero_inputs, zero_sample.driver,
+                    profile->prepare_timeout_ms - spent_ms, now_ms)) {
+                    CanMonitor_ResetElbowStandstill(now_ms);
+                } else { end_elbow_session(); }
+            }
+        }
+    }
     if (feedback_pending) {
         SafetyInputs first; S3SiteSample sample;
         if (S3ShoulderService_Get().state != S3_READER_ACTIVE) {
@@ -132,7 +197,15 @@ void S3Bench_Poll(uint32_t now_ms, uint32_t service_interval_ms)
 }
 bool S3Bench_Prepare(uint32_t now_ms)
 {
-    if (feedback_pending) { return false; }
+    if (feedback_pending || elbow_zero_pending) { return false; }
+    if (elbow_session_mode && !elbow_site.rotor_reference_confirmed[1]) {
+        if (gateway.state != OUTPUT_SAFE_OFF || !elbow_session_site(profile)
+            || !S3Feedback_BeginElbowSession(now_ms)) { return false; }
+        CanMonitor_ResetElbowStandstill(now_ms);
+        elbow_zero_pending = true;
+        elbow_zero_started_ms = now_ms;
+        return true; /* Captures zero and continues to zero-current READY; Arm remains manual. */
+    }
     if (profile != NULL && profile->shoulder_source == S3_SHOULDER_ENCODER_PROPERTIES) {
         bool relative = profile->coordinates[0] == S3_BENCH_RELATIVE_ROTOR;
         if (relative && S3Feedback_GetAnchor().phase != S3_RELATIVE_UNSET) { return false; }
@@ -180,13 +253,15 @@ bool S3Bench_Request(uint32_t token, unsigned joint, float value, uint32_t ttl_m
 void S3Bench_RejectRequest(void)
 {
     feedback_pending = false; OutputGateway_RejectRequest(&gateway);
+    end_elbow_session();
     if (S3ShoulderService_Get().state != S3_READER_OBSERVING) { (void)S3ShoulderService_Stop(); }
     invalidate_token();
 }
 void S3Bench_Cancel(void)
 {
     feedback_pending = false;
-    OutputGateway_Cancel(&gateway); /* Revoke output before starting any read-only tail. */
+    OutputGateway_CancelAt(&gateway, BoardRuntime_NowMs()); /* Revoke before read-only tail. */
+    end_elbow_session();
     bool read_stopped = S3ShoulderService_Get().state == S3_READER_OBSERVING
         || S3ShoulderService_Stop();
     if (!read_stopped && gateway.state != OUTPUT_FAULT) { OutputGateway_RejectRequest(&gateway); }
@@ -194,6 +269,7 @@ void S3Bench_Cancel(void)
 }
 bool S3Bench_AcknowledgeFault(uint32_t now_ms)
 {
+    if (elbow_session_mode) { return false; /* Fresh boot, not old zero, after a fault. */ }
     SafetyInputs in; S3SiteSample site;
     if (!inputs(now_ms, &in, &site) || !SafetySupervisor_StopObserved(&gateway.config, &in)) { return false; }
     for (unsigned axis = 0U; axis < 2U; axis++) {
@@ -214,5 +290,12 @@ void S3Bench_GetStatus(S3BenchStatus *out)
         gateway.request_valid, gateway.stop_attempted, gateway.driver_phase,
         gateway.state == OUTPUT_ARMED || gateway.state == OUTPUT_ACTIVE ? arm_token : 0U,
         gateway.config.stop_policy, gateway.stop_accepted, gateway.purge_ok, gateway.stop_delivery_failed,
-        feedback_pending, (unsigned)S3ShoulderService_Get().state, (unsigned)S3ShoulderService_Get().reason};
+         feedback_pending, (unsigned)S3ShoulderService_Get().state, (unsigned)S3ShoulderService_Get().reason,
+         elbow_zero_pending, elbow_session_mode && elbow_site.rotor_reference_confirmed[1]
+             && S3Feedback_ElbowSessionPhase() == ELBOW_SESSION_ACTIVE,
+         gateway.stop_pending_purge || gateway.stop_pending_tx,
+         gateway.config.stop_policy == SAFETY_STOP_SUPERVISED_C620_BENCH
+             && gateway.stop_attempted && gateway.stop_accepted && gateway.purge_ok
+             && !gateway.stop_pending_purge && !gateway.stop_pending_tx
+             && !gateway.stop_delivery_failed};
 }

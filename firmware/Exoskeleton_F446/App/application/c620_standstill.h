@@ -7,7 +7,8 @@
 #define C620_STILL_SPAN_TICKS 2U
 typedef struct {
     uint32_t start_ms, last_ms, after_ms;
-    uint16_t minimum, maximum;
+    uint16_t anchor_ticks;
+    int16_t minimum, maximum; /* Signed ticks around anchor, including 8191 -> 0. */
     bool tracking, seen, fenced;
 } C620Standstill;
 typedef struct {

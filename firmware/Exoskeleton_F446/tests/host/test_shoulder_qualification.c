@@ -23,7 +23,7 @@ static void boot(uint32_t now_ms)
     /* Host fixtures emulate MCU boots. Runtime qualification never calls Init. */
     TestClock_Set(now_ms); TestS3Site_Reset();
     if (!booted) { App_Init(); booted = true; }
-    else { CanMonitor_Init(); S3Bench_Init(); }
+    else { CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3); S3Bench_Init(); }
     TestCanTx_Reset(); life = 0U;
 }
 static void queue(const BoardCanFrame *f)

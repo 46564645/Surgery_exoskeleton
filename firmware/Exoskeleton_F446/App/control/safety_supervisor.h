@@ -9,7 +9,10 @@
 typedef enum {
     SAFETY_STOP_EXTERNAL_INPUT = 0,
     SAFETY_STOP_SUPERVISED_C620_BENCH,
-    SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
+    SAFETY_STOP_SUPERVISED_SHOULDER_BENCH,
+    SAFETY_STOP_SUPERVISED_SHOULDER_FOLLOW,
+    SAFETY_STOP_SUPERVISED_ELBOW_FOLLOW,
+    SAFETY_STOP_SUPERVISED_DUAL_FOLLOW
 } SafetyStopPolicy;
 typedef struct {
     JointMapping mapping;
@@ -32,6 +35,7 @@ typedef struct {
     JointState joint[SAFETY_JOINT_COUNT];
     bool transport_healthy, operator_stop_clear, drivers_ready, independently_stopped;
     bool feedback_stationary; /* Encoder/RPM evidence only, never independent stop. */
+    uint8_t stationary_axes; /* S5 independent standstill proofs: bit 0 shoulder, bit 1 elbow. */
 } SafetyInputs;
 typedef enum {
     SAFETY_OK, SAFETY_UNCONFIGURED, SAFETY_TRANSPORT,

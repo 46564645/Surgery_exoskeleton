@@ -4,6 +4,7 @@
 #include "can_monitor.h"
 #include "can_mock.h"
 #include "can_tx_mock.h"
+#include "board_can_tx.h"
 #include "s3_bench.h"
 #include "s3_feedback.h"
 #include "s3_site_mock.h"
@@ -99,7 +100,7 @@ static void association(void)
 static void consumer(void)
 {
     TestClock_Set(0U); TestS3Site_ConfigureShoulderProperties(10U);
-    CanMonitor_Init(); TestCanTx_Reset(); S3Bench_Init();
+    CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3); TestCanTx_Reset(); S3Bench_Init();
     S3SiteProfile p = *S3Site_GetProfile();
     p.shoulder_node = p.elbow_id = 1U; p.safety.enabled_axes = SAFETY_SHOULDER_AXES;
     p.safety.feedback_timeout_ms = 50U;
@@ -117,8 +118,12 @@ static void consumer(void)
     assert(!S3Feedback_Read(&p, 100U, &s)); /* Legacy zero frame cannot supply S3. */
     for (unsigned i = 0U; i < GDS_PROPERTY_COUNT; i++) {
         uint32_t sent = 101U + 2U*i;
+        BoardCanFrame request;
+        assert(GdsSdoRead_PropertyRequest((GdsPropertyField)i, &request));
+        assert(BoardCanTx_SubmitShoulderRead(&request));
         assert(CanMonitor_ExpectShoulderProperty((GdsPropertyField)i, sent));
         BoardCanFrame f = reply(i, sent+1U, payload[i]);
+        TestCanTx_Complete(BOARD_CAN_SHOULDER);
         TestClock_Set(sent+1U);
         TestCan_InjectData(BOARD_CAN_SHOULDER, f.id, f.dlc, 0U, 0U, f.data);
         TestCan_Interrupt(BOARD_CAN_SHOULDER); CanMonitor_Poll();
@@ -142,7 +147,7 @@ static void consumer(void)
     assert(!S3Feedback_Read(&p, 114U, &s));
     S3BenchStatus gate; S3Bench_GetStatus(&gate);
     assert(!gate.configured && !gate.transport_bound && !gate.output_allowed);
-    assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == 0U && TestCanTx_Sent(BOARD_CAN_ELBOW) == 0U);
+    assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == GDS_PROPERTY_COUNT && TestCanTx_Sent(BOARD_CAN_ELBOW) == 0U);
 }
 void TestShoulderProperties_Run(const char *name)
 {

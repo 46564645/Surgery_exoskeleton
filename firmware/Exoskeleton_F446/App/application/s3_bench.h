@@ -11,6 +11,8 @@ typedef struct {
     bool stop_accepted, purge_ok, stop_delivery_failed;
     bool feedback_pending;
     unsigned reader_state, reader_reason;
+    bool elbow_zero_pending, elbow_zero_valid;
+    bool stop_pending, stop_txok; /* R2: accepted is not CAN delivery proof. */
 } S3BenchStatus;
 void S3Bench_Init(void);
 void S3Bench_Poll(uint32_t now_ms, uint32_t service_interval_ms);

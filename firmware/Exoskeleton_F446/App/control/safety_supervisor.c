@@ -14,11 +14,20 @@ bool SafetySupervisor_ConfigReady(const SafetyConfig *c)
     if (c == NULL || c->enabled_axes == 0U || (c->enabled_axes & ~SAFETY_ALL_AXES) != 0U
         || (c->stop_policy != SAFETY_STOP_EXTERNAL_INPUT
             && c->stop_policy != SAFETY_STOP_SUPERVISED_C620_BENCH
-            && c->stop_policy != SAFETY_STOP_SUPERVISED_SHOULDER_BENCH)
+            && c->stop_policy != SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
+            && c->stop_policy != SAFETY_STOP_SUPERVISED_SHOULDER_FOLLOW
+            && c->stop_policy != SAFETY_STOP_SUPERVISED_ELBOW_FOLLOW
+            && c->stop_policy != SAFETY_STOP_SUPERVISED_DUAL_FOLLOW)
         || (c->stop_policy == SAFETY_STOP_SUPERVISED_C620_BENCH
             && c->enabled_axes != SAFETY_ELBOW_AXES)
         || (c->stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
             && c->enabled_axes != SAFETY_SHOULDER_AXES)
+        || (c->stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_FOLLOW
+            && c->enabled_axes != SAFETY_SHOULDER_AXES)
+        || (c->stop_policy == SAFETY_STOP_SUPERVISED_ELBOW_FOLLOW
+            && c->enabled_axes != SAFETY_ELBOW_AXES)
+        || (c->stop_policy == SAFETY_STOP_SUPERVISED_DUAL_FOLLOW
+            && c->enabled_axes != SAFETY_ALL_AXES)
         || !c->protection_confirmed
         || !c->stop_method_confirmed || !c->timing_confirmed
         || !duration_valid(c->feedback_timeout_ms) || !duration_valid(c->service_limit_ms)
@@ -72,8 +81,13 @@ bool SafetySupervisor_StopObserved(const SafetyConfig *c, const SafetyInputs *in
     if (c->stop_policy == SAFETY_STOP_SUPERVISED_C620_BENCH) {
         return c->enabled_axes == SAFETY_ELBOW_AXES && in->feedback_stationary;
     }
-    if (c->stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH) {
-        return c->enabled_axes == SAFETY_SHOULDER_AXES && in->feedback_stationary;
+    if (c->stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH
+        || c->stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_FOLLOW) {
+        return in->feedback_stationary;
+    }
+    if (c->stop_policy == SAFETY_STOP_SUPERVISED_ELBOW_FOLLOW
+        || c->stop_policy == SAFETY_STOP_SUPERVISED_DUAL_FOLLOW) {
+        return (in->stationary_axes & c->enabled_axes) == c->enabled_axes;
     }
     return c->stop_policy == SAFETY_STOP_EXTERNAL_INPUT && in->independently_stopped;
 }

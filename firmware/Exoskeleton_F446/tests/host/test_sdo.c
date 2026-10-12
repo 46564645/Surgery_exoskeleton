@@ -28,7 +28,7 @@ static void reset(uint32_t now)
     TestClock_Set(now);
     TestS3Site_Reset();
     if (!booted) { App_Init(); booted = true; }
-    else { CanMonitor_Init(); S3Bench_Init(); }
+    else { CanMonitor_Init(S3Site_GetProfile(), SHOULDER_READER_S3); S3Bench_Init(); }
     ShoulderRead_Init();
     TestCanTx_Reset();
     heartbeat_life = 0U;

@@ -1,7 +1,7 @@
 #include "can_mock.h"
 #include <assert.h>
 #include <string.h>
-static CAN_TypeDef registers[2] = {{0x001A0005U, 0}, {0x001A0002U, 0}};
+static CAN_TypeDef registers[2] = {{0x001A0005U, 0U, 0U}, {0x001A0002U, 0U, 0U}};
 CAN_HandleTypeDef hcan1 = {&registers[0], 0, HAL_CAN_STATE_READY};
 CAN_HandleTypeDef hcan2 = {&registers[1], 0, HAL_CAN_STATE_READY};
 typedef struct { CAN_RxHeaderTypeDef header; uint8_t data[8]; } MockFrame;

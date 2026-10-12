@@ -14,6 +14,8 @@
 #include "encoder_stream.h"
 #include "clip.h"
 #include "s3_console.h"
+#include "s4_follow.h"
+#include "s5_follow.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -21,7 +23,11 @@ static char line[S1_LINE_MAX + 1U];
 static size_t used;
 static bool saw_cr, invalid_line, long_line;
 static const char help_text[] = "OK commands=ping,status,help,?,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,shoulderreadpos,shoulderreadvel,shoulderreadstatus,encstart,encstop,encfeedback,outputstatus,stopstatus,prepare,arm,cancel,ackfault,shoulderpulse,elbowpulse,s3help\r\n";
+static const char s4_help_text[] = "OK commands=ping,status,canstatus,shoulder,shoulderfeedback,shoulderreadstatus,followobserve,followprepare,followstart,followstop,followstatus,followangle,cancel,help\r\n";
+static const char s5_help_text[] = "OK commands=ping,status,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,followprepare,followstart,followstop,followstatus,followangle,cancel,help\r\n";
 _Static_assert(sizeof(help_text) <= S1_REPLY_SIZE, "help must fit reserved reply slot");
+_Static_assert(sizeof(s4_help_text) <= S1_REPLY_SIZE, "S4 help must fit reserved reply slot");
+_Static_assert(sizeof(s5_help_text) <= S1_REPLY_SIZE, "S5 help must fit reserved reply slot");
 
 typedef struct {
     uint32_t now_ms;
@@ -37,7 +43,17 @@ static void reply(const char *text)
 }
 
 static unsigned output_allowed(void)
-{ S3BenchStatus s; S3Bench_GetStatus(&s); return (unsigned)s.output_allowed; }
+{
+    if (S5Follow_IsSelected()) {
+        S5FollowStatus s; S5Follow_GetStatus(&s);
+        return (unsigned)s.output_allowed;
+    }
+    if (S4Follow_IsSelected()) {
+        S4FollowStatus s; S4Follow_GetStatus(&s);
+        return (unsigned)s.output_allowed;
+    }
+    S3BenchStatus s; S3Bench_GetStatus(&s); return (unsigned)s.output_allowed;
+}
 
 static void can_reply(const char *command)
 {
@@ -128,6 +144,14 @@ static void milli_text(float value, char out[16])
     int32_t scaled = (int32_t)(value * 1000.0f);
     (void)snprintf(out, 16U, "%ld", (long)scaled);
 }
+static void micro_text(float value, char out[16])
+{
+    if (!(value <= 2147.0f && value >= -2147.0f)) {
+        (void)snprintf(out, 16U, "range"); return;
+    }
+    int32_t scaled = (int32_t)(value * 1000000.0f);
+    (void)snprintf(out, 16U, "%ld", (long)scaled);
+}
 static void shoulder_feedback_reply(void)
 {
     GdsFeedback s; bool wire;
@@ -152,7 +176,9 @@ static void shoulder_read_reply(const char *command)
         return;
     }
     ShoulderReadStatus s; ShoulderRead_GetStatus(&s);
-    static const char *const phases[] = {"idle", "pending", "received", "timeout", "tx_failed", "stream_owned", "s3_owned", "qualification_owned"};
+    static const char *const phases[] = {"idle", "pending", "received", "timeout", "tx_failed", "stream_owned", "s3_owned", "qualification_owned", "s4_owned"};
+    const char *phase = (unsigned)s.phase < sizeof(phases) / sizeof(phases[0])
+        ? phases[(unsigned)s.phase] : "invalid";
     char out[S1_REPLY_SIZE], value[20] = "na", hex[17] = "-";
     BoardCanFrame frame = s.has_value ? s.matched : s.raw;
     if (s.has_value) {
@@ -179,7 +205,7 @@ static void shoulder_read_reply(const char *command)
         "OK src=encoder_sdo field=%s unit=%s phase=%s seq=%lu ep=%u accepted=%u value=%s fresh=%u "
         "sent_ms=%lu rx_ms=%lu id=%03X dlc=%u raw=%s rejected=%lu output_allowed=%u\r\n",
         s.field == GDS_READ_POSITION ? "pos" : "vel", s.field == GDS_READ_POSITION ? "rev" : "rev_s",
-        phases[(unsigned)s.phase], (unsigned long)s.sequence, (unsigned)GdsSdoRead_Endpoint(s.field),
+        phase, (unsigned long)s.sequence, (unsigned)GdsSdoRead_Endpoint(s.field),
         (unsigned)s.accepted, value, fresh, (unsigned long)s.sent_ms,
         (unsigned long)frame.received_ms, (unsigned)frame.id, (unsigned)frame.dlc, hex,
         (unsigned long)s.rejected, output_allowed());
@@ -215,6 +241,174 @@ static void encoder_stream_reply(const char *command)
         (unsigned long)s.rejected, output_allowed());
     if (n > 0 && (size_t)n < sizeof(out)) { reply(out); } else { reply("ERR format\r\n"); }
 }
+
+static void s5_follow_status_reply(void)
+{
+    S5FollowStatus s; S5Follow_GetStatus(&s);
+    char out[S1_REPLY_SIZE];
+    char shoulder_q[16] = "na", elbow_q[16] = "na";
+    char shoulder_nm[16] = "na", elbow_a[16] = "na";
+    if (s.joint[0].valid) { milli_text(s.joint[0].position_rad, shoulder_q); }
+    if (s.joint[1].valid) { milli_text(s.joint[1].position_rad, elbow_q); }
+    if (s.model_valid) {
+        if ((s.axes & SAFETY_SHOULDER_AXES) != 0U) {
+            milli_text(s.target.shoulder_rotor_nm, shoulder_nm);
+        }
+        milli_text(s.target.elbow_current_a, elbow_a);
+    }
+    int n = snprintf(out, sizeof(out),
+        "OK s5=1 axes=%u phase=%u gate=%u reason=%u safety=%u "
+        "q_sh_mrad=%s q_el_mrad=%s cmd_sh_mNm=%s cmd_el_mA=%s "
+        "seq_sh=%lu seq_el=%lu zero_sh=%u zero_el=%u remaining_ms=%lu "
+        "output_allowed=%u stop=%u stop_failed=%u\r\n",
+        (unsigned)s.axes, (unsigned)s.phase, (unsigned)s.output_state,
+        (unsigned)s.output_reason, (unsigned)s.safety_reason,
+        shoulder_q, elbow_q, shoulder_nm, elbow_a,
+        (unsigned long)s.sample.sequence[0], (unsigned long)s.sample.sequence[1],
+        (unsigned)s.shoulder_zero_valid, (unsigned)s.elbow_zero_valid,
+        (unsigned long)s.remaining_ms, (unsigned)s.output_allowed,
+        (unsigned)s.stop_accepted, (unsigned)s.stop_delivery_failed);
+    if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
+    else { reply("ERR format\r\n"); }
+}
+
+static void s5_follow_command_reply(const char *command, uint32_t now_ms)
+{
+    if (strcmp(command, "followstatus") == 0 || strcmp(command, "followangle") == 0) {
+        s5_follow_status_reply(); return;
+    }
+    if (strcmp(command, "followprepare") == 0) {
+        reply(S5Follow_Prepare(now_ms) ? "OK S5 preparing output_allowed=0\r\n"
+            : "ERR blocked\r\n");
+        return;
+    }
+    if (strcmp(command, "followstart") == 0) {
+        if (!S5Follow_Start(now_ms)) { reply("ERR blocked\r\n"); return; }
+        S5FollowStatus s; S5Follow_GetStatus(&s);
+        char out[96];
+        int n = snprintf(out, sizeof(out),
+            "OK S5 started axes=%u expires_in_ms=%lu; support arm before stop\r\n",
+            (unsigned)s.axes, (unsigned long)s.remaining_ms);
+        if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
+        else { reply("ERR format\r\n"); }
+        return;
+    }
+    if (strcmp(command, "followstop") == 0) {
+        bool ramp = S5Follow_Cancel();
+        S5FollowStatus s; S5Follow_GetStatus(&s);
+        if (ramp) { reply("OK S5 ramping_down; support arm\r\n"); }
+        else if (s.phase == S5_FOLLOW_STOPPED || s.phase == S5_FOLLOW_STOPPING) {
+            reply("OK S5 session_closed; support arm\r\n");
+        } else if (s.phase == S5_FOLLOW_FAULT) { reply("ERR fault\r\n"); }
+        else { reply("ERR blocked\r\n"); }
+        return;
+    }
+    reply("ERR blocked\r\n");
+}
+
+static void follow_status_reply(void)
+{
+    if (!S4Follow_IsSelected()) { reply("ERR follow_unavailable\r\n"); return; }
+    S4FollowStatus s; S4Follow_GetStatus(&s);
+    char out[S1_REPLY_SIZE], position[16] = "na", joint[16] = "na", model[16] = "na";
+    if (s.observation.properties.valid) {
+        milli_text(s.observation.properties.value[GDS_PROPERTY_POSITION].real, position);
+    }
+    if (s.observation.joint.valid) { milli_text(s.observation.joint.position_rad, joint); }
+    if (s.model_valid) { milli_text(s.model_joint_torque_nm, model); }
+    unsigned warning = s.warning_failed ? 3U : s.warning_queued ? 2U : s.warning_due ? 1U : 0U;
+    int n = snprintf(out, sizeof(out),
+        "OK phase=%u reader=%u seq=%lu fresh=%u pos_mrev=%s joint_mrad=%s model_mNm=%s "
+        "remaining_ms=%lu ramp_in_ms=%lu ramp_left_ms=%lu ramping_down=%u "
+        "cmd_torque=%u output_allowed=%u zero=%u warn=%u stop=%u fault=%u\r\n",
+        (unsigned)s.phase, (unsigned)s.reader.state, (unsigned long)s.observation.properties.sequence,
+        (unsigned)s.sample_fresh_now, position, joint, model,
+        (unsigned long)s.remaining_ms, (unsigned long)s.ramp_in_ms,
+        (unsigned long)s.ramp_remaining_ms, (unsigned)s.ramping_down,
+        (unsigned)s.motor_effort_active, (unsigned)s.output_allowed,
+        (unsigned)s.session_zero_valid, warning,
+        (unsigned)s.stop_accepted,
+        (unsigned)(s.phase == S4_FOLLOW_FAULT || s.output_state == OUTPUT_FAULT));
+    if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
+    else { reply("ERR format\r\n"); }
+}
+
+static void follow_angle_reply(void)
+{
+    if (!S4Follow_IsSelected()) { reply("ERR follow_unavailable\r\n"); return; }
+    S4FollowStatus s; S4Follow_GetStatus(&s);
+    char out[S1_REPLY_SIZE], position[16] = "na", joint[16] = "na", zero[16] = "na";
+    char sample_ms[11] = "na", age_ms[11] = "na", zero_ms[11] = "na";
+    if (s.observation.properties.sequence != 0U) {
+        milli_text(s.observation.properties.value[GDS_PROPERTY_POSITION].real, position);
+        (void)snprintf(sample_ms, sizeof(sample_ms), "%lu",
+            (unsigned long)s.observation.properties.requested_ms[GDS_PROPERTY_POSITION]);
+        (void)snprintf(age_ms, sizeof(age_ms), "%lu", (unsigned long)s.sample_age_ms);
+    }
+    if (s.observation.joint.valid) { micro_text(s.observation.joint.position_rad, joint); }
+    if (s.session_zero_valid) {
+        milli_text(s.session_zero_rev, zero);
+        (void)snprintf(zero_ms, sizeof(zero_ms), "%lu",
+            (unsigned long)s.session_zero_sample_ms);
+    }
+    int n = snprintf(out, sizeof(out),
+        "OK phase=%u reader=%u seq=%lu pos_mrev=%s joint_urad=%s "
+        "sample_ms=%s asof_ms=%lu age_ms=%s fresh=%u angle_valid=%u "
+        "zero_mrev=%s zero_ms=%s output_allowed=%u ramping_down=%u cmd_torque=%u\r\n",
+        (unsigned)s.phase, (unsigned)s.reader.state,
+        (unsigned long)s.observation.properties.sequence, position, joint,
+        sample_ms, (unsigned long)s.sample_asof_ms, age_ms,
+        (unsigned)s.sample_fresh_now,
+        (unsigned)(s.sample_fresh_now && s.observation.joint.valid),
+        zero, zero_ms,
+        (unsigned)s.output_allowed,
+        (unsigned)s.ramping_down, (unsigned)s.motor_effort_active);
+    if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
+    else { reply("ERR format\r\n"); }
+}
+
+static void follow_command_reply(const char *command, uint32_t now_ms)
+{
+    if (S5Follow_IsSelected()) { s5_follow_command_reply(command, now_ms); return; }
+    if (!S4Follow_IsSelected()) { reply("ERR follow_unavailable\r\n"); return; }
+    if (strcmp(command, "followstatus") == 0) { follow_status_reply(); return; }
+    if (strcmp(command, "followangle") == 0) { follow_angle_reply(); return; }
+    if (strcmp(command, "followobserve") == 0) {
+        reply(S4Follow_Observe(now_ms) ? "OK FOLLOW observe_started output_allowed=0\r\n"
+            : "ERR blocked\r\n");
+        return;
+    }
+    if (strcmp(command, "followprepare") == 0) {
+        reply(S4Follow_Prepare(now_ms) ? "OK FOLLOW preparing output_allowed=0\r\n"
+            : "ERR blocked\r\n");
+        return;
+    }
+    if (strcmp(command, "followstart") == 0) {
+        if (!S4Follow_Start(now_ms)) { reply("ERR blocked\r\n"); return; }
+        S4FollowStatus s; S4Follow_GetStatus(&s);
+        char out[S1_REPLY_SIZE];
+        int n = snprintf(out, sizeof(out),
+            "OK FOLLOW started; expires_in_ms=%lu; ramp_in_ms=%lu; support arm before ramp\r\n",
+            (unsigned long)s.remaining_ms, (unsigned long)s.ramp_in_ms);
+        if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
+        else { reply("ERR format\r\n"); }
+        return;
+    }
+    if (strcmp(command, "followstop") == 0) {
+        bool ramp = S4Follow_Cancel();
+        S4FollowStatus s; S4Follow_GetStatus(&s);
+        if (ramp) { reply("OK FOLLOW ramping_down; support arm\r\n"); }
+        else if (s.phase == S4_FOLLOW_FAULT) { reply("ERR fault\r\n"); }
+        else if (s.phase == S4_FOLLOW_STOPPING) {
+            reply(s.reader.state == S3_READER_CANCELLING
+                ? "OK FOLLOW read_cancel_pending; support arm\r\n"
+                : "OK FOLLOW idle_submitted; observing_stop; support arm\r\n");
+        } else if (s.phase == S4_FOLLOW_STOPPED) {
+            reply("OK FOLLOW session_closed; support arm\r\n");
+        } else { reply("ERR blocked\r\n"); }
+    }
+}
+
 static void command_reply(const struct clip *self, const struct clip_command *cmd,
                           size_t argc, struct clip_arg_value argv[], void *context)
 {
@@ -239,21 +433,33 @@ static void command_reply(const struct clip *self, const struct clip_command *cm
     } else if (strcmp(cmd->name, "canstatus") == 0 || strcmp(cmd->name, "shoulder") == 0
                || strcmp(cmd->name, "elbow") == 0) {
         can_reply(cmd->name);
+    } else if (strcmp(cmd->name, "followobserve") == 0
+               || strcmp(cmd->name, "followprepare") == 0
+               || strcmp(cmd->name, "followstart") == 0
+               || strcmp(cmd->name, "followstop") == 0
+               || strcmp(cmd->name, "followstatus") == 0
+               || strcmp(cmd->name, "followangle") == 0) {
+        follow_command_reply(cmd->name, ((const CommandContext *)context)->now_ms);
     } else if (strcmp(cmd->name, "outputstatus") == 0) {
+        if (S5Follow_IsSelected()) { s5_follow_status_reply(); return; }
+        if (S4Follow_IsSelected()) { follow_status_reply(); return; }
         S3BenchStatus s;
         char out[S1_REPLY_SIZE];
         S3Bench_GetStatus(&s);
         int n = snprintf(out, sizeof(out),
             "OK stage=S2_CAN_RX s3_state=%u reason=%u configured=%u transport_bound=%u "
-            "output_allowed=%u request_valid=%u stop_attempted=%u prep_state=%u arm_token=%lu feedback_pending=%u reader=%u reader_reason=%u\r\n",
+            "output_allowed=%u request_valid=%u stop_attempted=%u prep_state=%u arm_token=%lu feedback_pending=%u reader=%u reader_reason=%u elbow_zero_pending=%u elbow_zero_valid=%u\r\n",
             (unsigned)s.state, (unsigned)s.reason, (unsigned)s.configured,
             (unsigned)s.transport_bound, (unsigned)s.output_allowed,
             (unsigned)s.request_valid, (unsigned)s.stop_attempted,
             (unsigned)s.preparation, (unsigned long)s.arm_token,
-            (unsigned)s.feedback_pending, s.reader_state, s.reader_reason);
+            (unsigned)s.feedback_pending, s.reader_state, s.reader_reason,
+            (unsigned)s.elbow_zero_pending, (unsigned)s.elbow_zero_valid);
         if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
         else { reply("ERR format\r\n"); }
     } else if (strcmp(cmd->name, "stopstatus") == 0) {
+        if (S5Follow_IsSelected()) { s5_follow_status_reply(); return; }
+        if (S4Follow_IsSelected()) { follow_status_reply(); return; }
         S3BenchStatus gate; S3Bench_GetStatus(&gate);
         if (gate.stop_policy == SAFETY_STOP_SUPERVISED_SHOULDER_BENCH) {
             uint32_t now = BoardRuntime_NowMs();
@@ -273,15 +479,20 @@ static void command_reply(const struct clip *self, const struct clip_command *cm
         char out[S1_REPLY_SIZE];
         int n = snprintf(out, sizeof(out),
             "OK policy=%u source=c620_feedback seen=%u fresh=%u stationary=%u dwell_ms=%lu age_ms=%lu "
-            "stop_attempted=%u stop_accepted=%u purge_ok=%u stop_delivery_failed=%u\r\n",
+            "stop_attempted=%u stop_accepted=%u purge_ok=%u stop_pending=%u stop_txok=%u stop_delivery_failed=%u\r\n",
             (unsigned)gate.stop_policy, (unsigned)s.seen, (unsigned)s.fresh, (unsigned)s.stationary,
             (unsigned long)s.dwell_ms, (unsigned long)s.age_ms, (unsigned)gate.stop_attempted,
-            (unsigned)gate.stop_accepted, (unsigned)gate.purge_ok, (unsigned)gate.stop_delivery_failed);
+            (unsigned)gate.stop_accepted, (unsigned)gate.purge_ok, (unsigned)gate.stop_pending,
+            (unsigned)gate.stop_txok, (unsigned)gate.stop_delivery_failed);
         if (n > 0 && (size_t)n < sizeof(out)) { reply(out); } else { reply("ERR format\r\n"); }
     } else if (strcmp(cmd->name, "prepare") == 0) {
+        if (S4Follow_IsSelected()) { reply("ERR s4_mode\r\n"); return; }
+        if (S5Follow_IsSelected()) { reply("ERR s5_mode\r\n"); return; }
         const CommandContext *ctx = context;
         reply(S3Bench_Prepare(ctx->now_ms) ? "OK preparing output_allowed=0\r\n" : "ERR blocked\r\n");
     } else if (strcmp(cmd->name, "arm") == 0) {
+        if (S4Follow_IsSelected()) { reply("ERR s4_mode\r\n"); return; }
+        if (S5Follow_IsSelected()) { reply("ERR s5_mode\r\n"); return; }
         const CommandContext *ctx = context;
         if (!S3Bench_Arm(ctx->now_ms)) { reply("ERR blocked\r\n"); }
         else {
@@ -290,22 +501,31 @@ static void command_reply(const struct clip *self, const struct clip_command *cm
             reply(out);
         }
     } else if (strcmp(cmd->name, "cancel") == 0) {
-        S3Bench_Cancel(); reply("OK cancelled output_allowed=0\r\n");
+        if (S4Follow_IsSelected() || S5Follow_IsSelected()) {
+            follow_command_reply("followstop", ((const CommandContext *)context)->now_ms);
+        }
+        else { S3Bench_Cancel(); reply("OK cancelled output_allowed=0\r\n"); }
     } else if (strcmp(cmd->name, "ackfault") == 0) {
+        if (S4Follow_IsSelected()) { reply("ERR s4_mode\r\n"); return; }
+        if (S5Follow_IsSelected()) { reply("ERR s5_mode\r\n"); return; }
         const CommandContext *ctx = context;
         reply(S3Bench_AcknowledgeFault(ctx->now_ms) ? "OK fault_acknowledged output_allowed=0\r\n" : "ERR blocked\r\n");
     } else if (strcmp(cmd->name, "shoulderfeedback") == 0) {
         shoulder_feedback_reply();
     } else if (strcmp(cmd->name, "shoulderreadpos") == 0 || strcmp(cmd->name, "shoulderreadvel") == 0
                || strcmp(cmd->name, "shoulderreadstatus") == 0) {
+        if (S5Follow_IsSelected()) { reply("ERR s5_mode\r\n"); return; }
         shoulder_read_reply(cmd->name);
     } else if (strcmp(cmd->name, "encstart") == 0 || strcmp(cmd->name, "encstop") == 0
                || strcmp(cmd->name, "encfeedback") == 0) {
+        if (S5Follow_IsSelected()) { reply("ERR s5_mode\r\n"); return; }
         encoder_stream_reply(cmd->name);
     } else if (strcmp(cmd->name, "elbowfeedback") == 0) {
         elbow_feedback_reply();
+    } else if (S5Follow_IsSelected()) {
+        reply(s5_help_text);
     } else if (!S3Console_Command(cmd->name, ((const CommandContext *)context)->now_ms)) {
-        reply(help_text);
+        reply(S4Follow_IsSelected() ? s4_help_text : help_text);
     }
 }
 
@@ -314,7 +534,8 @@ static void command_event(const struct clip *self, clip_event_t event,
 {
     (void)self; (void)arg; (void)context;
     if (event == CLIP_EVENT_HELP) {
-        reply(help_text);
+        reply(S5Follow_IsSelected() ? s5_help_text
+            : S4Follow_IsSelected() ? s4_help_text : help_text);
     } else if (event == CLIP_EVENT_COMMAND_NOT_FOUND) {
         reply("ERR unknown\r\n");
     } else if (event == CLIP_EVENT_ARGUMENTS_ERROR) {
@@ -362,6 +583,18 @@ static CLIP_DEF_ROOT_COMMAND(cancel_cmd, "cancel", "withdraw and stop both joint
 CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(ackfault_cmd, "ackfault", "acknowledge only with selected stop-policy evidence", command_reply)
 CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(followobserve_cmd, "followobserve", "one S4 read-only session", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(followprepare_cmd, "followprepare", "one S4 zero and mode preparation", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(followstart_cmd, "followstart", "manual bounded S4 FOLLOW start", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(followstop_cmd, "followstop", "normal bounded S4 withdrawal", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(followstatus_cmd, "followstatus", "S4 observation and output state", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(followangle_cmd, "followangle", "S4 cached angle and sample time", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(s3feedback_cmd, "s3feedback", "S3 cached query or bounded qualification", command_reply)
 CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(s3properties_cmd, "s3properties", "S3 cached query or bounded qualification", command_reply)
@@ -406,6 +639,12 @@ static CLIP_DEF_ROOT(commands, NULL, command_event)
     CLIP_DEF_ADD_ROOT_COMMAND(&arm_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&cancel_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&ackfault_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&followobserve_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&followprepare_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&followstart_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&followstop_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&followstatus_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&followangle_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&s3feedback_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&s3properties_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&s3reader_cmd)
@@ -445,6 +684,8 @@ static bool signed_arg(char **cursor, int32_t *value)
 }
 static void pulse_reply(unsigned joint, char *args, uint32_t now_ms)
 {
+    if (S4Follow_IsSelected()) { reply("ERR s4_mode\r\n"); return; }
+    if (S5Follow_IsSelected()) { reply("ERR s5_mode\r\n"); return; }
     uint32_t token, ttl; int32_t effort;
     if (!unsigned_arg(&args, UINT32_MAX, &token) || !signed_arg(&args, &effort)
         || !unsigned_arg(&args, INT32_MAX, &ttl)) {
@@ -473,6 +714,7 @@ static bool dispatch_line(CommandContext *context)
     char *rest = end;
     while (*rest == ' ') { rest++; }
     if ((size_t)(end - token) == strlen("qualfield") && strncmp(token, "qualfield", (size_t)(end - token)) == 0) {
+        if (S5Follow_IsSelected()) { reply("ERR s5_mode\r\n"); return true; }
         uint32_t field;
         bool valid = unsigned_arg(&rest, GDS_PROPERTY_COUNT - 1U, &field);
         while (*rest == ' ') { rest++; }

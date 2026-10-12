@@ -8,6 +8,7 @@
 #include "encoder_stream.h"
 #include "s3_site.h"
 #include "s3_shoulder_service.h"
+#include "board_can_tx.h"
 #include <stddef.h>
 #include <string.h>
 static BoardCanFrame last[BOARD_CAN_COUNT];
@@ -20,9 +21,8 @@ _Static_assert(S2_C620_ID >= 1U && S2_C620_ID <= 8U, "C620 ID range");
 _Static_assert(S2_C620_TIMEOUT_MS > 0U && S2_C620_TIMEOUT_MS < 0x80000000U,
                "C620 timeout range");
 
-void CanMonitor_Init(void)
+void CanMonitor_Init(const S3SiteProfile *site, ShoulderReaderMode mode)
 {
-    const S3SiteProfile *site = S3Site_GetProfile();
     ShoulderPropertyFeedback_Init(&shoulder_properties,
         site != NULL && site->shoulder_source == S3_SHOULDER_ENCODER_PROPERTIES
             ? site->shoulder_property_reply_ms : 0U);
@@ -36,7 +36,7 @@ void CanMonitor_Init(void)
     (void)GdsFeedback_Init(&shoulder_observation, S2_GDS_NODE,
         GDS_PROFILE_V22_FW_GE_0513, S2_GDS_OBSERVATION_TIMEOUT_MS);
     (void)BoardCan_Start(); /* Per-bus failure remains queryable. */
-    S3ShoulderService_Init(site);
+    S3ShoulderService_Init(site, mode);
 }
 void CanMonitor_Poll(void)
 {
@@ -51,8 +51,15 @@ void CanMonitor_Poll(void)
                                           &frame, BoardRuntime_NowMs());
                 ShoulderQualification_Receive((BoardCanBus)bus, &frame, BoardRuntime_NowMs());
                 S3ShoulderService_Observe(&frame, BoardRuntime_NowMs());
-                ShoulderPropertyFeedback_Receive(&shoulder_properties, (BoardCanBus)bus,
-                    &frame, BoardRuntime_NowMs());
+                if (frame.id == 0x025U && shoulder_properties.pending
+                    && BoardCanTx_ShoulderReadResult() != BOARD_CAN_READ_TX_SENT) {
+                    /* A same-field late/stray reply must not certify a request
+                     * that lost arbitration and was never put on the wire. */
+                    ShoulderPropertyFeedback_Invalidate(&shoulder_properties);
+                } else {
+                    ShoulderPropertyFeedback_Receive(&shoulder_properties, (BoardCanBus)bus,
+                        &frame, BoardRuntime_NowMs());
+                }
                 ShoulderRead_Receive((BoardCanBus)bus, &frame, BoardRuntime_NowMs());
                 EncoderStream_Receive((BoardCanBus)bus, &frame, BoardRuntime_NowMs());
             } else if (bus == BOARD_CAN_ELBOW) {
