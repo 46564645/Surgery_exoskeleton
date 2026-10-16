@@ -1,6 +1,14 @@
 # 个人项目开发 Schedule
 
-更新时间：2026-10-12。当前结论：S4 肩侧低姿态支撑测试按用户选定范围通过，具体测力待 S5 后集中完成。S5 肘部受控微动与单轴短时出力有有限现场记录，肘单轴完整功能仍未通过。板上现为已刷入并独立读回的 **R5 双关节 FOLLOW 隔离镜像**，BIN SHA256 `83DEE5CC8B9CF00B53601CAA42AFE7D6FD8FFC841BA357AE7AA2BA048D08041C`。最新 R6 窗口取得肩肘会话零位，但抬肩后肘会话角持续无效，未进入 READY，也未发送 `followstart`；双轴助力、手动跟随及带输出正常停止均未通过。操作者最后确认 24 V 已关闭、两关节承托静止。生产 site 仍默认禁用输出；旧 R2/R4 故障与现场过程见下方开发日志。
+更新时间：2026-10-16。当前结论：
+
+- **S4 按用户 2026-10-16 决定结束**：低姿态支撑测试按选定范围通过，具体测力并入 S5 之后集中完成。
+- **S5 进行中**：
+  - 板上为已独立读回的 R5 隔离镜像，BIN SHA256 `E8D87B98377699F0D2CBAE5CFD3E0D63035E6813FC3919621855FCE2887F4D26`：肩增益 1.0、上限 205 mNm（转子侧），肘恒定 2 A，肘下限 −20°，30 s 会话，输出帧仲裁丢失补发一次。
+  - 已有三个 30 s 窗口全程 RUNNING 并正常停止。肩补偿随姿态变化，用户报告"有一些助力"。
+  - 肘部没有形成有效支撑（裸 M3508 扭矩不足）。
+  - 遗留：肩读取 `S3_READ_TX` 的疑似顺序缺陷；放臂时软限暂停清零肩基线、可能引发 `SAFETY_SPEED`。用户选择暂不改代码，操作上慢放。
+- 生产 site 默认禁用输出。详见下方开发日志。
 
 2026-10-09 历史快照：当前状态：肩侧S3按用户调整后的范围收尾；S4 已完成 R0–R3 离线实现和软件检查。R4-0 台架只读采集得到 B≈+79.5° 的定性排查参考，用户跳过 A′ 回位精度复测，关节映射仍未验收。R4-1 的七属性只读链先查明 CAN 仲裁丢失及停止时异步邮箱撤销两处故障并小步修复；修复版在一次 8 秒实物只读窗口完成404组完整样本、正常停止、CAN错误0，限于该窗口通过。2026-10-08 旧 S3 镜像的 +20 mNm／100 ms 微脉冲只支持方向候选，RAM 垂臂会话零点当时仅离线实现、现已在板上多次成功建立；2026-10-09 用户口述确认输出端与肩轴直接相连，并决定以 ExoKit 设计角域、厂家名义 8:1 和已有转子趋势作离线候选，不再新增独立角度配对；用户对包含两端目视余量和 24V 切断可及性的提问确认垂臂零点后前屈 20°–30° 可用；这是口述可行性，实际停距和切断效能尚未验收。沿用既有S2批准范围和2026-10-04单次微动/停止证据；用户跳过S3进一步测角、控制参数落实、再次有限动作及异常停止方式验收，保留未验证状态。生产 `enabled_axes=0`、`output_enabled=false`；旧隔离 HSE 候选三轮及站稳修订候选前六轮均未启动持续输出，第六轮垂臂取零、手动入区间与固件 READY 准备测试通过。随后同一隔离 BIN 的 R4-2B 第七／八轮分别观察到短窗持续非零转矩命令与会话到期、以及主动 `followstop` 渐撤和新鲜 IDLE 心跳，运行中七属性持续更新且 CAN 错误为 0；这是命令链与反馈链的有界台架证据，不是物理力矩或重力补偿效果验收；独立带力断电按用户决定跳过追加试验，保留未测，不列为 S4 前置。下一步用同姿态有/无补偿的扶持努力对照验证效果。两轮结束后用户均确认 24V 已关闭、机构承托且静止无异常。S4 仍未完成；肘部S3保留至S5前，未宣称整个双关节S3实测完成。
 
@@ -15,8 +23,8 @@
 | S1 开发板与最小工程 | 2–3 | 先查明是否已有可用固件工程，确定唯一工程入口；构建、烧录、串口状态、静态调度和小型状态机；预留统一输出函数 | 稳定启动；复位后未使能；电脑能读取状态并发送命令 | 无 | 基本完成，可进入S2：Windows构建、烧录校验、IRQ读回和串口测试通过，LD2目视频率定性相符；SWD重插异常列为已知问题，不声称已修复 |
 | S2 两路驱动反馈 | 2–4 | 先GDS68后C620；读取版本、ID、反馈；解析位置/速度/有效性/时间戳，保留通信超时标记 | 当前批准范围为可信连续肩反馈及一次真实变化；本次以明确授权的受监督微动取得变化证据；实物掉线/恢复取消、未执行 | S1；逻辑供电与动力输入核对 | 当前批准范围验收通过：HSE静止30秒/300组新鲜观测，加2026-10-04单次微动16组新鲜观测、动作期位置趋势及停止后保留偏移。速度不作为方向证明；旧CAN/UART异常根因仍保留。本轮归档提交GitHub，远端结果以Git记录为准。 |
 | S3 分别受控运动 | 3–5 | 从小输出、小范围开始；核对方向和零位；建立输出限幅、活动范围限制、平滑变化、命令停止和断连处理 | 各自能按预期运动与停止；重启不恢复旧动作；实际停止表现有简单记录 | S2；电源极性、基本保护和可用停止方式落实 | 肩侧按2026-10-06用户调整范围收尾，追加测角等未验证项保留。肘部已在 S5 的 R2 短脉冲中观察到两次轻微屈肘、无持续出力；这仅是有限动作证据，方向与停止的完整 S3 范围未单独验收，随 S5 记录而不回退重测。 |
-| S4 肩侧FOLLOW | 3–5 | 肘部固定；建立姿态相关重力补偿；手推重定位；比较同一姿态有/无补偿的扶持努力 | 先有低姿态非零命令、新鲜反馈与正常停止；效果以同姿态扶持力或明确手感对照判断，保持可控、无自行加速、明显振荡或触边 | S3肩侧完成 | **本次选定的低姿态支撑测试通过，可进入 S5**：40°/s 隔离镜像已独立刷后读回一致；一次有界 FOLLOW 有非零目标读回、新鲜反馈、主动停止及停后撤权，用户报告已感受到支撑。助力段反馈角相对基线最多变化约 `2.51°`；同姿态定量扶持力、手推重定位、角度偏移来源与速度门物理安全性尚未验证，具体力值按用户决定在 S5 完成后合并测量。原两姿态与 0.5+5 s、0.5°/0.75°漂移不再作为当前个人原型的硬门槛；独立运行中人工切断 24V 由用户跳过，未测。 |
-| S5 肘部及双关节FOLLOW | 3–5 | 先肘部受控运动与 FOLLOW，再低姿态双关节 FOLLOW；不照搬肩侧驱动参数；任一关键执行链掉线时撤销两路许可 | 主观能感到支撑、手动改变姿态后继续跟随、正常停止；具体力值随后集中测量 | S4 选定范围通过；肘部已有 R2 有限动作观察 | 进行中：肘单轴 R4 有短时出力观察，早前 2 A 窗口有一次正常停止；最近 4 A 窗口启动后故障撤权，未取得有辅助力值或本轮正常停止。R5 双轴隔离镜像已上板并独立读回；最近 R6 窗口取到双零，但抬肩后肘会话角持续无效，未进入 READY，也未发送 `followstart`。双轴助力、手动跟随、带输出正常停止及具体测力均未通过；操作者最后确认 24 V 关闭、两关节承托静止。 |
+| S4 肩侧FOLLOW | 3–5 | 肘部固定；建立姿态相关重力补偿；手推重定位；比较同一姿态有/无补偿的扶持努力 | 先有低姿态非零命令、新鲜反馈与正常停止；效果以同姿态扶持力或明确手感对照判断，保持可控、无自行加速、明显振荡或触边 | S3肩侧完成 | **已结束（用户 2026-10-16 决定）**。S5 双轴窗口中肩补偿已提高到增益 1.0／205 mNm，用户报告"有一些助力"。以下为原通过记录与保留的未测项——**本次选定的低姿态支撑测试通过，可进入 S5**：40°/s 隔离镜像已独立刷后读回一致；一次有界 FOLLOW 有非零目标读回、新鲜反馈、主动停止及停后撤权，用户报告已感受到支撑。助力段反馈角相对基线最多变化约 `2.51°`；同姿态定量扶持力、手推重定位、角度偏移来源与速度门物理安全性尚未验证，具体力值按用户决定在 S5 完成后合并测量。原两姿态与 0.5+5 s、0.5°/0.75°漂移不再作为当前个人原型的硬门槛；独立运行中人工切断 24V 由用户跳过，未测。 |
+| S5 肘部及双关节FOLLOW | 3–5 | 先肘部受控运动与 FOLLOW，再低姿态双关节 FOLLOW；不照搬肩侧驱动参数；任一关键执行链掉线时撤销两路许可 | 主观能感到支撑、手动改变姿态后继续跟随、正常停止；具体力值随后集中测量 | S4 选定范围通过；肘部已有 R2 有限动作观察 | 进行中（2026-10-16）：R5 双轴 30 s 窗口三次全程 RUNNING 并正常停止。肩补偿随抬放姿态变化，用户报告"有一些助力"。肘恒定 2 A 无有效支撑，4 A 出现往复振荡，裸 M3508 扭矩不足。遗留：肩读取 `S3_READ_TX` 疑似顺序缺陷；放臂时软限暂停清零肩基线、可能引发 `SAFETY_SPEED`，用户选择操作上慢放。S5 是否按"肩有支撑、手动变姿态跟随、正常停止"判定通过，待用户确认。 |
 | S6 Lock | 2–3 | 进入时记录角度；实现保持控制与重力前馈；取消、新动作替换和故障退出 | 可保持当前位置，取消后回到有许可的FOLLOW，不恢复失效的旧使能 | S5 | 待开始 |
 | S7 Amplify | 3–5 | 先固定小幅增量；位置/速度判断运动趋势；调进入、低速暂停、反向和恢复；与Lock互斥 | 感受到额外助力；暂停/取消只撤增量，基线仍受健康和许可控制 | S5、S6动作生命周期已跑通 | 待开始 |
 | S8 演示与整理 | 1–2 | 固定一组已试过的参数；整理接线、启动命令和已知问题；录制台架演示 | 隔天可按说明重复启动与演示，不依赖临时改代码 | S5可先做P0版；S7后补完整版 | 待开始 |
@@ -1592,3 +1600,457 @@
 - 参数／接线变化：无；生产构建仍默认禁止输出。
 - 实际结果：主机检查 108 项全部通过，生成配置检查通过；WindowsDebug 配置与构建退出 0，Ninja 提示现有产物已是最新；双关节脚本 8 个离线情形通过。以上为软件检查，不等于双轴功能现场通过。
 - 遗留与下一步：R6 肘会话角失效仍待只读取证。`build/` 中的原始台架日志和刷写记录受 Git 忽略规则保护，仍保留本机，不随本次源码与文档同步到 GitHub。
+
+### 2026-10-12｜S5 R6 首次失效断点窗口：本次只命中准备超时，原肘角问题未复现
+
+- 本次完成：USB 恢复后，用 embeddedskills `terminal` 在 COM10 保持单一 VCP 会话；以板上已独立读回 BIN `83DEE5…` 配套的 ELF `4AFB6D…` 附加 ST-LINK，设置五个肘会话动态故障写入断点及 S5 `fail_follow()` 入口断点。24 V 关闭时确认 `phase=1/output_allowed=0`；操作者接通驱动器 24 V 后，只读确认 C620 与肩侧反馈，并只发送一次 `followprepare`。未发 `followstart`、未手动抬肩、未编译或刷写；操作者已确认窗口后切断 24 V。原始[串口记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/first-elbow-20261012/powered-baseline.log)、[首次断点记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/gdb-prep/canhealth-elf-first-elbow-20261012/first-elbow-raw.log)及[断电后 RAM 核对](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/first-elbow-20261012/postmortem-ram.log)均在 H 盘。
+- 参数／接线变化：无；板上镜像和输出配置未变，串口始终回报 `output_allowed=0`。
+- 实际结果：带电预检 C620 为 `valid=1/age_ms=1/3440 tick/rpm=0`，肩心跳和位置反馈存在。`followprepare` 于 22:15:11 接受；首次命中的是 `S5Follow_Poll()` 的 **20 s 准备超时**调用点，五个肘会话故障断点均未命中。断点前肘会话仍为 `ACTIVE`，最后 C620 反馈 `received_ms=910001/sequence=44557/3440 tick/rpm=0/valid=1`，S5 两轴零位标志均为 1、`preparation_submitted=false`、肩相对角约 `0.0009°`。当前固件肩准备角域是相对 `20°–30°`，静止在零位足以使准备范围检查持续等待；断电后读到肩静止判据 `dwell_ms=200`、最近位置／速度配对请求时间为 `909985/909986 ms`。主机直到 22:15:45 才查询准备状态，比发送准备晚约 34 s，错过原定不超过 10 s 的观察窗口。这次超时由本轮操作时序和未进入目标角域即可解释，**不能当作此前 `q_el_mrad=0→na` 的根因**，也不是双轴 READY、输出或正常停止的验收。
+- 遗留与下一步：原肘角首次失效条件仍未知。本次诊断计划写的肩相对 `0°–10°` 与现用固件的 READY 角域 `20°–30°` 不符；下一个独立窗口应先只针对 `q_el` 的首次失效，在两轴承托、输出为零时于 `followprepare` 后立即完成不超过 10 s 的连续查询与断点捕获，不以进入 READY 为此窗口目标。若要验证 READY，须另按已确认的 `20°–30°` 角域安排。根因明确前不修改固件，不在本轮连续重试或提高限值。
+
+### 2026-10-12｜S5 R6 首次肘角失效窗口准备：USB 暂不可用
+
+- 本次完成：复核板上回读 BIN `83DEE5…` 与 ELF `4AFB6D…` 的配对及六个断点地址；在 H 盘准备新的[断点脚本](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/first-elbow-trigger-20261012-b/capture-first-elbow.gdb)和只使用 embeddedskills 单一串口会话的[10 秒主机脚本](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/first-elbow-trigger-20261012-b/s5_first_elbow_trigger.py)。脚本限定一次 `followprepare`，禁止 `followstart`，目标可回复时发送 `followstop` 并核对输出为零；离线模拟的肘角 `na`、未复现、目标停核三种路径通过。
+- 参数／接线变化：无；未修改、编译或烧录固件。24 V 保持关闭。
+- 实际结果：本机 Python 缺少 `pyserial`，已将 3.5 版依赖安装到 H 盘构建临时目录。随后系统未枚举 ST-LINK 和 COM10，嵌入式串口会话未启动；本轮没有对板卡发送 `followprepare` 或任何驱动命令，未取得新的首次失效现场证据。
+- 遗留与下一步：操作者在 24 V 关闭、两关节承托时重接 ST-LINK USB；待电脑重新识别，再核对零输出和两轴新鲜反馈，才开始一次不超过 10 秒的取证窗口。肘角首次失效条件仍未知。
+
+### 2026-10-13｜S5 肘角首失效取证重新布置，尚未进入带电窗口
+
+- 本次完成：重接 USB 后确认 ST-LINK 和 COM10 正常枚举；用 embeddedskills `terminal` 建立单一 VCP 会话，断电基线回报 `phase=1/output_allowed=0`。官方探针识别 STM32F446；给匹配 ELF `4AFB6D…` 设置五个肘会话故障断点及一个 ACTIVE 阶段的读时效拒绝断点，增加栈和 CAN2 统计快照。修正 H 盘 10 秒主机脚本的双零提示、首次 `na` 保留现场、停止等待与截止时间；六个离线情形通过。调试器已脱离，串口会话已停止。
+- 参数／接线变化：无；未修改、编译或烧录固件，也未改变输出限值。
+- 实际结果：现场未收到 24 V 接通确认，因此没有发送 `followprepare`、没有手动抬肩或带输出测试。等待期间只读发现肩反馈 `wire_valid=0/error=00000040`、肘反馈 `valid=0/online=0/age_ms=872178`，符合驱动器未提供新鲜反馈的状态；不能据此判定肘角失效原因。[本轮断点与只读记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/first-elbow-trigger-20261013/)保存在 H 盘。
+- 遗留与下一步：肘角首次失效条件仍未知。下一次操作者确认 24 V 接通且两轴承托静止后，重新确认 `output_allowed=0` 与两轴新鲜反馈，再执行一次不超过 10 秒、无 `followstart` 的准备窗口；出现异常即停止并切断 24 V。
+
+### 2026-10-13｜S5 R6 一次无输出准备窗口：`followprepare` 被入口条件拒绝
+
+- 本次完成：操作者确认两关节承托静止并接通驱动器 24 V 后，沿用板上 R5 隔离镜像及匹配 ELF `4AFB6D…`，通过 embeddedskills `terminal` 的单一 COM10 会话只读预检，并保留六个肘会话失效断点；仅发送一次 `followprepare`。收到拒绝后发送 `followstop`，操作者确认本轮 24 V 已关闭；随后断电停核读 RAM，现已脱离调试器并关闭串口会话。原始[串口记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/first-elbow-trigger-20261013-c/s5-first-elbow-20261013-084511-889075.jsonl)及[断点／事后 RAM 记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-dual-20261012/first-elbow-trigger-20261013-c/first-elbow-raw.log)保存在 H 盘。
+- 参数／接线变化：无；未修改、编译或烧录固件，未提高输出或速度限值。
+- 实际结果与证据边界：准备前 `status output_allowed=0`；肩反馈 `est=1/hb=1/wire_valid=1`，肘反馈 `valid=1/online=1/age_ms=1/rpm=0`，均只证明各查询时刻的状态。唯一一次 `followprepare` 返回 `ERR blocked`，随后 `followstop` 返回 `OK S5 session_closed`、`phase=7/output_allowed=0/zero_sh=0/zero_el=0`。没有抬肩提示、手动抬肩、`followstart`、肘会话取零、READY 或带输出动作；六个肘角断点均未命中。源码显示拒绝发生在 S5 准备入口，最可能为肩侧读服务启动检查，但命令当刻的具体子条件没有抓到。断电停核后的 CAN1/CAN2 `fifo_overruns=1` 是无首次时间的累计值，不能归因本次拒绝。
+- 遗留与下一步：此前 `q_el_mrad=0→na` 的首次触发条件仍未知，本轮新增的是更早的准备入口拒绝。匹配 ELF 的离线反汇编已定位下一次可用的 S5 准备、S3 读服务及其 CAN／心跳健康拒绝点（`0x08016202/0x080189CA/0x08018878/0x080188E2`），但尚未在现场命中验证。保持 24 V 关闭；下一独立窗口先即时记录 CAN1 队列／溢出和肩心跳，再用这些断点抓命令当刻的拒绝条件；若准备获准则关闭会话，本窗口不抬肩。不得连续重试或凭事后错误计数修改固件。
+
+### 2026-10-13｜S5 判断精简前的准备入口复核：本窗口未复现拒绝
+
+- 本次完成：24 V 关闭、两关节承托时，重新只读回板上 137476 B 镜像，SHA256 `83DEE5CC…8041C`，确认仍为此前与 ELF `4AFB6D…AC73D` 配对的 BIN；复位后用 embeddedskills `terminal` 建立单一 COM10 会话，布置匹配 ELF 的四个准备入口拒绝断点。操作者确认接通 24 V 后只读预检，仅发送一次 `followprepare`，随即 `followstop`，操作者确认再次切断 24 V；调试器和串口已关闭。[原始回复顺序记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r6-first-entry-20261013/serial-window.jsonl)、[断点日志](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r6-first-entry-20261013/first-entry-gdb.log)和[板上读回](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r6-first-entry-20261013/board-readback-137476.bin)均保存在 H 盘。
+- 参数／接线变化：无；固件、输出上限、速度阈值和角域均未改，未编译或烧录。
+- 实际结果与证据边界：准备前 `output_allowed=0`，CAN1 `drop=0/invalid=0/fov=0/queued=0/bus_off=0`，肩反馈 `hb=1/state=1/error=0/fault=0`，肘反馈 `valid=1/online=1/age_ms=1/rpm=0`。唯一一次 `followprepare` 返回 `OK`，稍后 `zero_sh=1/zero_el=1/q_sh_mrad=0/q_el_mrad=0`；`followstop` 返回 `OK S5 session_closed`，最终 `phase=7/output_allowed=0`。四个准备入口拒绝断点均未命中；没有手动抬肩、`followstart`、READY、非零目标或实物双轴助力观察。该次成功不能排除此前间歇入口拒绝，也没有触发历史 `q_el_mrad=0→na` 的动作条件。
+- 遗留与下一步：首次拒绝或肘角失效的具体条件仍未知。依本轮计划的停止条件，暂不精简判断、不改固件、不做带输出试验；先在断电状态取得可复读的两轴相对零位活动端点，再另行安排一次针对肘角首次 `na` 的受控取证窗口，不能把本次未复现当成修复通过。
+
+### 2026-10-13｜S5 断电量角与肘角动态取证窗口：未执行预定手动抬肩
+
+- 本次完成：操作者在驱动器 24 V 关闭、关节承托下用量角器报告肩部从垂臂 0° 前抬至 110°、无后向空间，肘部从伸直 0° 屈曲至 110°、无反向空间；这些是操作者报告的无干涉端点，不是机械极限或人体安全范围。按两端各内收 5° 可得两轴各自物理量角坐标的候选测试区间 5°–105°，但两轴 0° 零位在区间外，肘会话零位若取在轻弯姿态也与伸直 0° 不同，尚未写入配置。板上回读 BIN `83DEE5…8041C` 与 ELF `4AFB6D…AC73D` 保持配对；断电复位、串口确认 `output_allowed=0` 后，布置六个匹配 ELF 的肘会话首次故障／读拒绝断点。H 盘诊断脚本补齐停核、准备故障及中断时不发串口停止的路径，九个离线情形通过。原始[串口记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r6-first-qel-20261013/s5-first-elbow-20261013-233139-745154.jsonl)和[断点记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r6-first-qel-20261013/first-qel-gdb.log)已保存。
+- 参数／接线变化：无；未修改、编译或烧录固件，未改变输出上限、斜率、速度阈值或角域。只修改 H 盘 `build/` 下的主机诊断脚本。
+- 实际结果与证据边界：操作者接通 24 V 后，一次 `followprepare` 获接受并取得双轴 RAM 零位；约 8 秒观察内取零后的 `q_sh_mrad=0/q_el_mrad=0`，阶段停在准备中，六个肘角断点均未命中。一次 `followstop` 返回会话关闭，最终 `phase=7/output_allowed=0`；没有 `followstart`、READY、非零目标或实物助力观察。操作者随后确认 24 V 已关闭，并说明听到提示后忘记手动抬肩，所以**原先“肩运动后肘角变 `na`”的触发条件本轮没有发生**；不能把静态未复现当作故障已消失。调试器已脱离，串口会话已关闭。
+- 遗留与下一步：肘角首次失效条件仍未知，故按计划不改固件、不做带输出测试。本窗口不连续重试；下一独立取证窗口若继续，须先让操作者理解并执行双零提示后的手动肩 0°–10° 缓抬，以便用断点捕捉首次条件。物理量角边界与会话零位的换算及准备／运行边界分离，待根因明确后再进入实现。
+
+### 2026-10-14｜S5 双轴判断精简的软件候选，待上板
+
+- 本次完成：依用户最新要求跳过进一步手动动态取证，直接推进**功能修订**；历史 `q_el_mrad=0→na` 的首次失效原因仍未知，本候选不称为该故障的根因修复。S5 隔离路径把肩位置／速度成对更新、零目标与模式写后单独重读；两轴在量角器 0° 取会话零位，准备及 READY 允许零输出手动移位，启动与运行继续检查反馈、驱动状态、速度和角度。修正 S5 准备早期 `followstop` 误进 FAULT；双轴上升命令直接限幅，正常停止仍有渐退。演示脚本改为两轴取零后等待肩 15°–25°、肘 8°–20° 的低姿态，READY 在 0° 时不自动启动。
+- 参数／接线变化：只在 S5 R5 隔离候选中，将双轴测试异常边界设为会话相对 5°–105°；依据此前断电手动屈肘 tick 递减观察，把肘关节角的正方向映射为编码器递减，同时选 `S5_R5_ELBOW_SUPPORT_SIGN=-1`，使目标 C620 命令仍为此前候选的正向 `+2 A`。肩 `0.040 Nm`、肘 `2 A` 固定命令帽、肩 `40°/s` 与肘 `20°/s` 运行速度门、10 秒会话和最多 1 秒正常渐退保留。无接线变化；断电量得 0°–110° 仅是操作者报告的无干涉范围，不是机械或人体安全极限。
+- 实际结果：H 盘主机默认配置 108/108 PASS；隔离 R5 相关 12/12 PASS，涵盖早期停止有／无挂起读、READY 手动肘部 4 rpm 更新、固定上限、反馈过期撤权与正常停止；演示脚本 9 个离线场景通过。embeddedskills `gcc` 的 `WindowsDebug` 配置和编译成功（0 警告）；同源隔离 R5 Debug 候选构建成功，BIN 133852 B，SHA256 `0CA19B8984CBD7DE963A7C64A4389A5E23C1F319D52F9DD2B4189BC2EF1452B1`，配套 ELF SHA256 `931D9DA1095F5CB031A91E648DF834A2B3A49AB0C917C4574908701396B117B0`。刷板脚本离线哈希检查通过。尚未刷板、未接通驱动器 24 V、未实测 READY、带输出助力或正常停止。
+- 遗留与下一步：刷板前只读检查未检测到 ST-LINK，COM10 仅是旧枚举项；已请操作者在 24 V 关闭、两关节承托时重接 NUCLEO USB。恢复后先备份板上完整 Flash 并核对旧 BIN `83DEE5…8041C`，再一次刷入隔离候选并独立读回；之后安排一次有人值守的 10 秒内双轴功能窗口。历史肘角失效条件仍未知，不把软件测试或新镜像视为物理验收。
+
+### 2026-10-14｜S5 隔离功能候选刷板及 USB 零输出核对
+
+- 本次完成：操作者说明昨夜拔掉 NUCLEO USB；重新枚举后 ST-LINK 序号 `066EFF555748874987182240` 和 COM10 都在线。按已确认的 24 V 关闭、关节承托条件，在 H 盘[刷板证据目录](../../firmware/Exoskeleton_F446/build/s5-r5-dual-functional-board-20261014/)备份完整 512 KiB Flash；前 137476 B 与旧 BIN `83DEE5…8041C` 逐字节一致后，只刷入一次 S5 R5 隔离候选。CubeProgrammer 官方校验成功、软件复位，随后独立读回新 BIN 全部 133852 B 并逐字节一致，SHA256 为 `0CA19B8984CBD7DE963A7C64A4389A5E23C1F319D52F9DD2B4189BC2EF1452B1`。只读 VCP 会话后已关闭。
+- 参数／接线变化：板上镜像由旧 R5 换成上述隔离候选；无接线修改，本次未发电机运动命令。
+- 实际结果：仅 USB 状态回报 `phase=1/output_allowed=0/zero_sh=0/zero_el=0`；肩侧 `hb=0`、肘侧 `seen=0/online=0`，与无驱动器反馈相符。该核对不证明带电驱动或助力。串口 skill 首次启动因当前 Python 未加入 pyserial 路径而失败；按固件 README 复用已有 H 盘 `build/s2-tools/python` 后建立单一 COM10 会话，未安装新依赖。
+- 遗留与下一步：等待操作者在两轴量角器 0° 承托静止时接通 24 V，随后执行唯一一次短时低姿态双轴助力与正常停止观察；旧 `q_el_mrad=na` 首次原因仍未知。
+
+### 2026-10-14｜S5 零位直接启动及一次双轴输出窗口
+
+- 本次完成：操作者指出无法在启动前精确抬到指定角度。核对后确认旧隔离候选把两轴运行下界设为会话相对 `+5°`，因此零位 READY 时 `followstart` 会被范围门拒绝。仅在 S5 R5 隔离配置中把测试下界改为 `−1°` 的零位测量余量、上界保持 `105°`；反方向实测没有活动空间，`−1°` **不是允许反向运动的物理范围**。演示脚本改为零位 READY 后单次启动，启动后只提示轻微抬肩，无精确目标角；本轮操作者忘记抬肩，随后又为下次独立窗口增加专门的抬肩提示音。增加零位启动和运行越过 `105°` 时撤权的主机检查，保留固定命令上限、反馈与速度门、10 秒会话和正常停止渐退。无接线变化。
+- 软件和刷板结果：H 盘默认主机检查 `108/108` 通过，R5 相关 `11/11` 通过，脚本九种离线情形通过；`WindowsDebug` 与隔离 R5 构建退出 0、无新增警告。先刷入 `−5°` 下界中间候选，复核量角记录后收紧到 `−1°` 并再次刷入；两次均先备份完整 Flash、核对旧 BIN 前缀，CubeProgrammer 校验后独立读回新 BIN 全长并逐字节一致。[最终刷板证据](../../firmware/Exoskeleton_F446/build/s5-r5-zero-tolerance-board-20261014/attempt.json)表明当前板上隔离 BIN 为 133852 B，SHA256 `CCA9E51CEE1391B75DDE9214B1B1628848AB998D10871286EB9B88F815274FE5`；对应 ELF SHA256 `9A8229122380EE7D53ADF94C8010038F105A7F031F9B9F7EC1AA6D60C2825B8A`。生产 `WindowsDebug` 仍默认关闭输出。
+- 一次带电窗口：[原始串口记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-zero-tolerance-20261014/functional-once/s5-r5-dual-follow-20261014-094943.jsonl)。通电预检时肩心跳有效且故障为 0、C620 新鲜反馈 `age_ms=1/rpm=0`、`output_allowed=0`。脚本一次 `followprepare` 取得双轴 RAM 零位，`q_sh_mrad=q_el_mrad=0` 进入 READY；一次 `followstart` 获接受，约 4.5 秒的 36 次运行查询均显示 `output_allowed=1`，串口所报肘**关节坐标目标** `−2000 mA`，肩角及肩指令目标均显示 0。源码中网关按肘方向 `−1` 再映射，C620 协议目标应为正向 `+2 A`；本窗口未独立抓取实际 CAN 发送帧。操作者事后明确确认“忘记了没有抬”，因此该肩侧零目标符合静态模型，不能据此判断肩角读数卡住。`followstop` 返回 `ramping_down`，最终 `phase=7/stop=1/stop_failed=0/output_allowed=0`；操作者确认 24 V 已关闭。命令目标和 C620 原始电流字段都不能当作实测关节支撑力。
+- 遗留与下一步：本轮已证明零位能进入 READY 和 RUNNING、能正常关闭；**未证明肩部非零助力、双轴随动或实际减重**。旧 `q_el_mrad=na` 首次原因仍未知，本窗口未复现。遵守一次窗口边界，不连续重试；若继续功能演示，另安排独立窗口，按新增声音提示缓慢抬肩并记录肩角、肩指令与操作者感受，再判断是否有真实故障。
+
+### 2026-10-14｜S5 第二次双轴窗口：启动后肘角失效并故障撤权
+
+- 本次完成：应操作者“重新来一次”的要求，先只读发现前次正常停止留下 `phase=7/output_allowed=0`，而新准备只接受 `phase=1`；未直接发送准备命令。操作者确认 24 V 关闭后，对同一 NUCLEO 用 STM32CubeProgrammer 2.23.0 执行一次软件复位；USB 只读核对 `phase=1/output_allowed=0`。重新接通 24 V 的预检确认肩心跳正常、错误为零，C620 `valid=1/online=1/age_ms=1/rpm=0`，输出许可仍为 0。关闭预检串口会话后运行一次[原始串口记录](../../firmware/Exoskeleton_F446/build/bench-logs/s5-r5-zero-tolerance-20261014/functional-second/s5-r5-dual-follow-20261014-100640.jsonl)中的短时脚本；操作者在故障后确认已切断 24 V、两关节承托。没有重刷、修改固件或调高任何限值；板上仍是 `CCA9E51C…274FE5` 镜像。
+- 实际结果与边界：双轴 RAM 取零、READY 及唯一一次 `followstart` 均成功；首次 RUNNING 回报 `output_allowed=1/q_sh_mrad=0/q_el_mrad=0/cmd_sh_mNm=0/cmd_el_mA=-2000`。紧随的一次 C620 原始查询仍 `valid=1/age_ms=1/rpm=0/tick=3338`；约 123 ms 后首次查询已是 `phase=8 FAULT/q_el_mrad=na/output_allowed=0/stop=1/stop_failed=0`，距启动成功回复约 176 ms。脚本随后发 `followstop`，因已处故障态返回 `ERR fault`，没有正常渐退确认；操作者按提示切断 24 V。故障后的 C620 查询再次新鲜、RPM 0、tick 3347，但前后快照不能排除中间瞬时速度、计数跳变、反馈有效性／时效或序号异常。`reason=3/safety=0` 只表示通用请求撤权，不标识最先失效的判断；`stop=1` 只证明停止帧提交被接受，不证明实际电流或关节力矩已归零。脚本在新增的第四声抬肩提示之前退出，操作者本轮没有肩运动任务，肩非零目标和实际双轴助力均未观察到。
+- 遗留与下一步：肘会话角首次变无效的具体分支仍未抓到；本次真实故障阻断直接重复功能演示。24 V 保持关闭，先结合匹配 ELF 布置首个肘角拒绝分支与同步反馈快照的最小取证，再决定是否需要改固件；不能凭两次新鲜原始查询或通用故障码猜根因。生产构建的输出许可默认关闭，S5 仍进行中。
+
+### 2026-10-14｜S5 双轴肘角失效门槛精简与一次准备期故障窗口
+
+- 本次完成：应操作者“极度简化失效门槛”的明确要求，只在 S5 双轴隔离路径将肘会话角的运行期单帧跳变／RPM 永久故障改为忽略该帧、等待新鲜反馈；双轴 S5 主判断不再把 CAN 历史累计丢帧／格式错误当作实时故障，演示脚本的预检同步只要求 CAN1 当前未 bus-off。单轴 S3 行为、原始反馈过期撤权、驱动故障、运行角域与速度门、肩 `0.040 Nm`／肘 `2 A` 命令上限、10 秒会话与停止路径未改。此前 `q_el_mrad=0→na` 的首次原因仍未知，这次是功能条件修订，**不是根因修复**。
+- 软件／刷板结果：H 盘选定的默认主机检查 2 项、隔离 R5 主机检查 6 项及演示脚本 9 个离线情形通过；embeddedskills `gcc` 的生产 `WindowsDebug` 与隔离 R5 Debug 构建成功，均未见新警告。操作者确认 24 V 关闭、两轴承托、USB 连接后，备份完整 512 KiB Flash；旧镜像前 133852 B 与此前读回逐字节一致。仅刷入一次新隔离 R5 候选，官方写入校验通过，独立读回 133892 B 与候选 BIN 逐字节一致，SHA256 `7C8CEDF4876FB78E344CB70F81FAF4EA6023FC3D9EFD90A6D93BC2098DD7C4E8`，匹配 ELF SHA256 `2BB3752770CA9FC2F825998CB33DF362BF2A728D8BA3845F11C9681AE95030F0`。[刷板和软件证据](../../firmware/Exoskeleton_F446/build/s5-elbow-simplify-20261014/)保存在 H 盘；USB 独供时只读确认 `phase=1/output_allowed=0`。
+- 一次带电窗口：操作者确认 24 V 接通后，[只读预检](../../firmware/Exoskeleton_F446/build/s5-elbow-simplify-20261014/bench-once/preflight.jsonl)显示两轴反馈新鲜、输出许可 0、会话空闲。[单次演示记录](../../firmware/Exoskeleton_F446/build/s5-elbow-simplify-20261014/bench-once/s5-r5-dual-follow-20261014-232833.jsonl)中唯一一次 `followprepare` 获接受；接受后约 142–263 ms 从 `phase=2` 进入 `phase=8 FAULT`，未到 READY、未发 `followstart`、未发手动抬肩提示，串口所见输出许可始终为 0。脚本发送 `followstop` 但返回 `ERR fault`，未获正常停止确认；操作者随后确认切断 24 V 并保持承托。本次没有带输出助力或正常渐退验收。
+- 断电无复位取证：用匹配 ELF 与 ST-LINK Hot Plug 只读[肩读取器 RAM](../../firmware/Exoskeleton_F446/build/s5-elbow-simplify-20261014/bench-once/postfault-s3-reader-ram.log)，锁存 `state=4 S3_READER_FAULT/reason=3 S3_READ_TX/requests=21`；`cancellation_failed=0`、`read_arbitration_retries=0`。最后[属性 RAM](../../firmware/Exoskeleton_F446/build/s5-elbow-simplify-20261014/bench-once/postfault-shoulder-property-ram.log)保留位置回复 `160666 ms`，下一笔速度读取提交 `160667 ms`，故障清理后仍无这笔回复记录。肩 SDO **发送链故障类**已定位，但首次发送完成状态、仲裁超时还是其他发送子分支尚未区分。`gate=0/reason=1` 是网关原有 SAFE_OFF／初始化标签，不能误读为配置根因；故障清理会清零 `zero_sh/zero_el`，终态零位标志不能证明故障前从未取零。故障后新鲜 C620 反馈也不能倒推该瞬间。
+- 遗留与下一步：本窗口停止，不再通电重试或改失效门槛。24 V 保持关闭；下一独立无输出取证窗口先用当前匹配 ELF 在 `s3_shoulder_service.c` 的 `S3_READ_TX` 首次失败入口布断点（已离线核对对应地址在[断点地址记录](../../firmware/Exoskeleton_F446/build/s5-elbow-simplify-20261014/bench-once/future-s3-tx-breakpoints.txt)），抓发送结果、CAN1 TSR 和请求关联状态，再决定单点修复。生产构建仍默认禁止输出，双轴功能演示尚未通过。
+
+### 2026-10-14｜S5 R4 单肘 FOLLOW 短时输出复核
+
+- 本次完成：应操作者指定复测 R4 单肘 FOLLOW，先保存板上完整 512 KiB Flash，确认其前 133892 B 与原 R5 BIN 一致，再刷入旧 R4 单肘 2 A 隔离 ELF；官方校验和独立读回 137484 B 均与旧 R4 BIN 一致。一次性静止脚本的成功、准备拒绝、启动拒绝和运行故障四种离线情形通过；现场原始[串口记录](../../firmware/Exoskeleton_F446/build/s5-r4-retest-20261014/r4-static-20261014-234538.jsonl)及[刷板记录](../../firmware/Exoskeleton_F446/build/s5-r4-retest-20261014/)均存 H 盘。无固件源码或接线变化，未提高 2 A 上限。
+- 实际结果：带电预检 C620 `valid=1/online=1/age_ms=1/rpm=0`、输出许可 0。一次 `followprepare` 到 READY，一次 `followstart` 到 RUNNING；约 1.2 秒内 10 次状态查询均显示 `output_allowed=1/cmd_el_mA=2000`，中间 C620 `current_raw=1708`（启动前 `19`），肘会话角 `0→3 mrad`。一次 `followstop` 返回正常渐退，最终 `phase=7/stop=1/stop_failed=0/output_allowed=0`；停止后 C620 `current_raw=19`。这证明该窗口单肘命令、C620 反馈和停止链可运行，不能证明实际关节助力。操作者确认全程没有移动关节，也没有感觉到明显出力；PC 提示音不是电机震动指令。本次不测试肩 CAN1 的 SDO 发送故障。
+- 恢复与供电核查：随后刷回测试前的 R5 双轴 ELF，独立读回 133892 B 逐字节匹配原 BIN，SHA256 `7C8CEDF4876FB78E344CB70F81FAF4EA6023FC3D9EFD90A6D93BC2098DD7C4E8`，串口 `axes=3/phase=1/output_allowed=0`。**操作者最初回复“已断电”时 24 V 电源实际仍开着**：恢复刷板后的两次只读查询仍有 `age_ms=1` 的 C620 新帧；操作者检查开关后发现电源仍开，随后实际关闭。最后只读回报 `age_ms=13471/valid=0/online=0/output_allowed=0`，符合反馈断开。两次刷板开始前只依据口头断电确认，无法把当时 24 V 已物理关闭写成已证实；R5 恢复刷板实际发生在 24 V 仍接通时，停止后没有再发送运动命令。
+- 遗留与下一步：R4 单肘链路本次可发出命令，但没有主观助力证据；R5 双轴准备期肩侧 `S3_READ_TX` 首次发送失败子分支仍待定位。当前 24 V 已实际关闭，下一次调试须先用电源指示和反馈消失共同核实断电，再在无输出窗口抓 CAN1 发送失败条件；不从这次 R4 成功推断双轴故障已解决。
+
+### 2026-10-15｜S5 R5 肘目标与 20 A 命令帽分离（离线候选）
+
+- 本次完成：按功能—开源对应表的 C620 驱动、命令限幅及故障管理行，实际核对 BetaRobot `DJIMotorBroadcast_SetRef/Send`、UICRM `DjiMotorBase::CalcOutput/Motor3508::SetOutput`、GALAXEA `arm_robot.py` 前馈限幅与 ExoKit `AmplifyReaction`，并回查 C620 V1.01、裸 M3508 v1.0 手册。参考实现均不能替本裸电机确定 20 A 工作值；项目 C620 编码原已支持 ±20 A。仅在 R5 隔离配置中将肘最终命令帽从 2 A 提到 20 A，保留本次构建的 2 A 实际目标；将 R5 正常撤力斜率由 20 改为 25 A/s，使 1 s 窗口扣除两次 50 ms 发送余量后仍能覆盖满帽。同步调整构建参数校验、主机断言和固件 README；R4、生产输出许可、报文编码、接线均未改。
+- 软件结果：H 盘主机用 `−1/2000 mA` 配置运行 R5 site、双轴运行/停止、网关成对发送和停止共 4 项通过；另用仅主机 `−1/20000 mA` 边界配置运行 site 和双轴运行/停止 2 项通过，核对目标 CAN 帧及模拟零帧在 1 s 内提交、最终 STOPPED。初版把完整 STOPPED（还含停止确认）误限定 1 s，主机反例后改为精确检查零帧提交时间。隔离 R5 目标 2 A 的 GCC Debug 构建和默认禁用输出的 WindowsDebug 构建均退出 0、未见编译警告；[隔离候选](../../firmware/Exoskeleton_F446/build/s5-r5-cap20-target2-offline-20261014/) ELF SHA256 `8470FC7DE27D512467DEB18792BEDD542F497C643A44F4C53066D72ADBB635C7`，BIN 133892 B、SHA256 `D25F6BB586603C0D12CFAB183426244763AC9284F478CE29A3E5CD0E9745AF91`。本轮没有烧录、通电或实测关节力矩，板上仍是上一轮 2 A 目标/2 A 帽 R5 镜像。
+- 证据边界与下一步：20 A 是 C620 协议满量程，不是裸 M3508 或本机构已验证工作上限。裸机手册给出转矩常数 0.02 N·m/A 和峰转矩 0.33 N·m；只有在 CAN 指令 20 A 等于该常数所适用的电机电流这一未经本机验证的前提下，才可算得 0.4 N·m 目标，不能据此声称实际转矩已超过峰值。R4 4 A 曾在启动约 0.283 s 后故障且操作者报告向伸直方向瞬动，首次分支和物理方向未定；R5 肩 CAN1 `S3_READ_TX` 故障也不受肘帽影响。下一步先在确认 24 V 实际关闭的前提下做 R5 肩发送失败无输出取证，定位故障后再决定是否刷入本候选和如何选择更高的实际目标，不把离线 20 A 边界测试当作带电许可。
+
+### 2026-10-15｜S5 R5 20 A 命令帽／2 A 目标候选刷板及一次准备故障
+
+- 本次完成：操作者确认 24 V 电源开关关闭、肩肘承托、ST-LINK USB 连接；USB 串口只读见 `phase=1/output_allowed=0`、C620 `seen=0/valid=0/online=0`。在 H 盘保存板上完整 512 KiB [备份](../../firmware/Exoskeleton_F446/build/s5-cap20-powered-20261015/preflash-512k.bin)，其前 133892 B 与旧 R5 镜像逐字节一致；只刷一次上一条的隔离候选，官方写入校验成功，独立读回 133892 B 与候选 BIN 逐字节一致、SHA256 `D25F6BB586603C0D12CFAB183426244763AC9284F478CE29A3E5CD0E9745AF91`。刷后 USB 独供仍为 `phase=1/output_allowed=0`、肘反馈离线；未改固件源码、参数或接线。本次脚本 9 个离线情形再次通过。
+- 一次带电窗口：操作者接通 24 V 后，只读见 C620 `valid=1/online=1/age_ms=1`、会话空闲、输出许可 0。唯一一次 `followprepare` 于 13:55:54.539 UTC 回 `OK S5 preparing output_allowed=0`；[原始逐命令记录](../../firmware/Exoskeleton_F446/build/s5-cap20-powered-20261015/window1/s5-r5-dual-follow-20261015-215554.jsonl)首个后续 `followstatus` 于约 21 ms 后已为 `phase=8 FAULT`，没有到 READY、没有发送 `followstart`，无非零目标或手动抬肩提示。`followstop` 返回 `ERR fault`，正常停止未获确认；这只是故障态回复，不是停止命令新造成故障。本次没有检验到实际助力或正常渐退。
+- 断电无复位取证：操作者第一次回复断电后，串口仍见 C620 `age_ms=1`，说明 24 V 实际仍开；再次检查并关闭电源开关、确认指示灯灭后，C620 为 `valid=0/online=0/age_ms=5518/output_allowed=0`。用匹配候选 ELF 的 RAM 地址，经 ST-LINK Hot Plug 只读[肩读取器](../../firmware/Exoskeleton_F446/build/s5-cap20-powered-20261015/s3-reader.bin)及[辅助状态](../../firmware/Exoskeleton_F446/build/s5-cap20-powered-20261015/s3-aux.bin)：`state=4 S3_READER_FAULT/reason=3 S3_READ_TX/requests=1`，`have_cycle=1/cancellation_failed=0/read_arbitration_retries=0`；首个肩位置属性读取已提交，随即在肩 CAN 发送结果／重试链失效。故障前 C620 反馈新鲜，不支持将本次故障归因于肘失效门；事后状态不能区分首次发送失败、仲裁丢失后的重试提交失败或邮箱结果归属问题。
+- 遗留与下一步：板上目前是 20 A 命令帽、2 A 目标的 R5 隔离镜像，24 V 已经用指示灯及反馈过期共同核实关闭。S5 双轴输出演示仍未完成；下一窗口先布置匹配 ELF 的肩发送首次失败断点，只做无非零输出取证，抓 CAN1 TSR 与发送结果的首个子分支，再决定单点修复；不因本次故障提高实际电流目标或重复带输出测试。
+
+### 2026-10-15｜S5 R5 带输出直接重试：READY 后启动被拒
+
+- 本次完成：应操作者要求使用板上同一 R5 隔离镜像直接重试。24 V 关闭时串口确认 C620 `valid=0/online=0/age_ms=622360/output_allowed=0`；通过 ST-LINK 只复位 MCU，复查 `phase=1/output_allowed=0`、肘反馈离线。操作者接通 24 V 后，沿用已通过离线自检的[一次性双轴脚本](../../firmware/Exoskeleton_F446/docs/bench/s5-elbow-once-20261011/dual_follow_once.py)执行唯一窗口，未修改固件、限值或接线。
+- 实际结果：[原始逐命令记录](../../firmware/Exoskeleton_F446/build/s5-cap20-powered-20261015/window2/s5-r5-dual-follow-20261015-220753.jsonl)预检见肩心跳 `hb=1/state=1/error=00000000/fault=0`、肘 `valid=1/online=1/age_ms=1`、输出许可 0；`followprepare` 接受，两轴零位及角度均为 0，`phase=3/gate=5/reason=0/safety=0` 到 READY。脚本等待约 1.2 s 后只尝试一次 `followstart`，回复 `ERR blocked`；同刻仍 `phase=3/gate=5/reason=2/safety=0/output_allowed=0`。`followstop` 回复 `OK S5 session_closed`，最终 `phase=7/stop=1/stop_failed=0/output_allowed=0`。没有进入 RUNNING、没有非零目标或实际助力。操作者报告测试时刚接上肩电机 USB；本记录不能证明它造成拒绝。
+- 判断与下一步：源码中 `reason=2` 是 `OUTPUT_REASON_HEALTH`；在 READY 启动路径，`safety=0` 且状态仍 READY，定位为 `OutputGateway_Arm()` 的 `SafetySupervisor_StopObserved()` 未满足，即两轴静止证明在启动时没有同时成立。现有串口字段不能分辨肩还是肘的证明失效，也不能确定 USB 的因果作用。操作者关闭 24 V 后，串口再次确认 C620 `valid=0/online=0/age_ms=5681`、会话 `phase=7/output_allowed=0`。下一步针对启动瞬间抓两轴静止状态及完整新鲜度，确认失效轴与原因后再做单点修复或重试；本窗口不再启动。
+
+### 2026-10-15｜S5 R5 再次尝试直接启动：未抬肩，静止证明仍阻断
+
+- 本次完成：在操作者要求只明确提示抬肩时机后，保持原镜像及一次性脚本不变。24 V 关闭时复位 MCU，串口核对 `phase=1/output_allowed=0`、C620 尚无反馈；操作者接通 24 V 后运行一次[原始逐命令记录](../../firmware/Exoskeleton_F446/build/s5-cap20-powered-20261015/window3/s5-r5-dual-follow-20261015-221243.jsonl)。无固件、脚本、参数或接线修改。
+- 实际结果：通电预检肩 `hb=1/state=1/error=0/fault=0`，肘 `valid=1/online=1/age_ms=1/rpm=0`；`followprepare` 接受并取得双轴 RAM 零位，`phase=3/gate=5/reason=0/safety=0` 到 READY。约 1.45 秒后唯一一次 `followstart` 返回 `ERR blocked`，随后仍 `phase=3/gate=5/reason=2/safety=0/output_allowed=0`；没有 RUNNING、非零目标或抬肩提示。`followstop` 返回 `OK S5 session_closed`，最终 `phase=7/stop=1/stop_failed=0/output_allowed=0`。操作者说明听到短促响声但**尚未抬肩**，因此这次不能将启动拒绝归因于提前抬肩；记录不能判定响声是 PC 提示音还是驱动器声响，也不构成电机实际助力证据。
+- 断电核查与下一步：首次回复已断电后 C620 仍持续 `age_ms=1`，提示 24 V 实际未断；操作者再次检查电源开关、确认指示灯灭后，串口见 `valid=0/online=0/age_ms=9074/output_allowed=0`，本轮停止。源码把此次 `reason=2/safety=0` 定位到 READY 启动时双轴 `stationary_axes` 未同时具备；现有串口记录不含肩、肘各自证明位，不能分辨反馈瞬态、配对时效或哪一轴触发。下一步只在匹配 ELF 的 `OutputGateway_Arm()` 拒绝入口抓 `stationary_axes` 及两侧观察器原始状态；定位前不再做盲目带输出重试或改门槛。
+
+### 2026-10-15｜S5 R5 双轴 READY 启动静止条件放宽（离线候选）
+
+- 本次完成：应操作者要求按“功能演示优先”放宽已两次阻断启动的检查。功能索引对应双关节协调、动作管理、故障管理行；实际核对本地 ExoKit `CmdReactionRunner::launchReaction/cancelReaction`、`Event::exec/performRunning/cancel`、`AmplifyReaction::startup/runLoop` 的准备、运行和取消职责。项目的现场证据把两次 `followstart ERR blocked` 定位为 `OutputGateway_Arm()` 在 READY 阶段再次要求双轴连续静止，准备阶段此前已通过静止检查并取得 RAM 零位。因此仅在编译开关 `S5_R5_DUAL_FOLLOW` 且双轴监督 FOLLOW 时跳过 **READY→ARMED 的重复静止窗口**；准备取零的静止证明、启动与运行期的反馈新鲜度、驱动就绪、角度／速度、通信状态，以及停止与故障撤权仍保留。默认生产和 R4 单肘路径不变。这是启动条件的功能修订，不能据此断言瞬时静止丢失的物理原因已查明。
+- 软件结果：在新增的主机反例中，旧代码于 READY 后 `stationary_axes=0`、实时反馈健康时拒绝启动；修改后该例可启动，而反馈过期、驱动未就绪、超速和超角仍拒绝。R5 相关主机检查 5 项、默认 profile 相关检查 3 项通过。embeddedskills `gcc` 的生产 `WindowsDebug` 构建与 H 盘隔离 R5 构建均成功，未见编译警告；[新离线候选](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-20261015/)保留肘 `20 A` 命令帽／`2 A` 目标，BIN 133932 B、SHA256 `A9EF99B746CDBA0A5EC1E3B898C4BD24A88362C5F11C03A3ED88226D0A586287`，匹配 ELF SHA256 `7DAC67FF8BB80F6B5DAC07BB5C297E6413CD0B2E648E7D2F54BF12128B51FF4C`。本轮未烧录、接通 24 V 或实测出力；板上仍为上一轮独立读回的 `D25F6BB5…5AF91` 镜像。
+- 遗留与下一步：新候选的真实 READY→RUNNING 和停止表现尚未验证；肩 `S3_READ_TX` 首次子条件、肘角旧 `na` 首次子条件仍未知。下一独立窗口先确认 24 V 真实关闭、备份并刷入新候选且独立读回，再根据当前反馈和输出许可安排一次有人值守的短时功能观察；任何准备期故障或运行异常即停，不连续重试或把命令目标当作实测助力。
+
+### 2026-10-15｜S5 R5 放宽重复静止门镜像刷板及运行期肘速度故障定位
+
+- 本次完成：操作者确认驱动器 24 V 电源关闭、关节承托、USB 接通后，在 H 盘保存[完整板上备份](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-board-20261015/preflash-512k.bin)，其前 133892 B 与旧 BIN `D25F6BB5…5AF91` 逐字节一致；刷入上一条的 R5 隔离候选并[独立读回](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-board-20261015/postflash-133932.bin) 133932 B，与候选 BIN 逐字节一致，SHA256 `A9EF99B746CDBA0A5EC1E3B898C4BD24A88362C5F11C03A3ED88226D0A586287`。USB 独供时 `phase=1/output_allowed=0`、C620 离线；一次性脚本 9 个离线情形通过。本次没有修改固件、目标电流、命令帽或接线；仅刷板、观察和只读故障 RAM。
+- 带电结果：[第一窗口](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-board-20261015/window1/s5-r5-dual-follow-20261015-223533.jsonl)进入 READY 和 RUNNING，肘命令目标为 `−2000 mA`，运行约 4.5 秒后 `followstop` 正常渐退，最终 `output_allowed=0/stop_failed=0`；肩角、肩目标一直为零，操作者说明忘记抬肩，故不能据此宣称双轴助力。[第二窗口](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-board-20261015/window2/s5-r5-dual-follow-20261015-223737.jsonl)和[第四窗口](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-board-20261015/window4/s5-r5-dual-follow-20261015-224216.jsonl)均在 `followstart` 后约 168/167 ms、抬肩提示之前进入 `phase=8/gate=3/reason=2/safety=7`，撤销输出，`followstop` 回 `ERR fault`，未确认正常渐退；第二窗口操作者事后报告碰动肘部。第三窗口预检时肩心跳缺失，未发送 `followprepare` 或 `followstart`。四个窗口均未证明肩非零助力。每轮停止后操作者关闭 24 V；曾有口头断电而 C620 仍更新的情况，最终均以电源实体开关及反馈过期复核。
+- 首次条件与边界：`safety=7` 为 `SAFETY_SPEED`。在第四窗口结束、24 V 关闭且 MCU 未复位时，用匹配 ELF 的 DWARF 定位 `s5_follow.c::status`，只读保存[故障后 96 B RAM](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-board-20261015/window4/fault-s5-status-ram.bin)及[读回记录](../../firmware/Exoskeleton_F446/build/s5-r5-relaxed-start-board-20261015/window4/fault-s5-status-ram-read.log)：`phase=8/axes=3`，肩速度 `0.00899 rad/s`（约 `0.5°/s`），肘速度 `−0.62832 rad/s`（会话方向约 `−36°/s`，对应 C620 原始约 `+6 RPM`），两轴样本有效；肘阈值 `0.34907 rad/s`（`20°/s`）。源码在本次故障路径将检查前的两轴 `JointState` 保留于该静态状态，故可确认**第四窗口由肘速度门触发**。串口故障前后的 C620 `RPM=0` 属于另两个时刻，不能排除中间短峰；尚不能判定 `+6 RPM` 是手动碰动、首次 2 A 输出引起的真实短暂转动，还是反馈瞬态。旧 `q_el=na` 此轮未复现，故障时肘角仍有数值。
+- 当前状态与下一步：操作者已确认 24 V 开关关闭、灯灭，USB 独供只读见 C620 `valid=0/online=0/age_ms=11061/output_allowed=0`。当前 MCU 停留 `phase=8 FAULT`，未复位；不再连续带输出重试或提高速度门。若需区分真实转动与反馈尖峰，下一步在零输出窗口同步采集 C620 原始相邻角度计数、RPM、时间戳及肩速度，再决定是否修改门槛或执行新的短时助力窗口。
+
+### 2026-10-15｜S5 R5 准备判断精简的离线候选
+
+- 本次完成：应操作者要求，在现有 R5 双轴隔离路径简化取零与准备逻辑。对应功能索引的双关节协调、动作管理及故障管理行，复核 ExoKit 的动作启动／取消、BetaRobot 的 CAN 发送结果与在线监督、UICRM 的 M3508 零输出做法及 C620 V1.01 手册。肩部保留两次不同且准备后取得的完整位置／速度配对及近零速判断，移除额外的 20 ms 间隔、细位置跨度和取零后的 200 ms 静止窗口；移动帧会重置首样本，避免一直引用旧锚点。肩读服务仅在 S5 忽略历史 CAN1 丢帧／无效帧／FIFO 溢出计数，准备入口不再要求队列恰好为空，实际 SDO 发送仍等待空槽。R5 双轴网关移除独立 250 ms 目标样本年龄撤权，仍逐次检查两轴原始反馈；正常渐退最长由 1 s 调为 2 s。一次性演示脚本的准备等待上限由 18 s 调为 5 s，READY 后去掉固定 1.2 s 等待，停止观察上限由 3 s 调为 5 s 并继续核对最终停止状态。
+- 参数／接线变化：R5 命令帽仍为肩 `0.040 Nm`、肘 `20 A`，本候选肘实际目标仍为 `2 A`；肩／肘运行速度门 `40°/s`／`20°/s`、反馈时效、10 s 自动会话截止、CAN 上一输出帧 TXOK／失败及 100 ms 待发超时、当前串口故障、两次相异新样本、停止帧提交结果和停止后的肩侧 200 ms 静止观察均保留。理由是 HAL 入邮箱不等于上 CAN 总线，缓存编码器值也不能证明准备后当前位置。无接线变化；R4、S3、S4 与默认生产配置不变。
+- 软件结果：R5 `−1/2000 mA` 相关主机检查 12/12 通过，默认配置主机检查 108/108 通过，R5 `−1/20000 mA` 站点和渐退链两项通过；演示脚本离线 9/9 通过。用 WindowsDebug 工具链在 H 盘独立配置、编译 R5 候选成功，ELF SHA256 `3ACB388B48FE0BCF7EF6594D9ADCEB33C8555238BF5C8C2DCAA9534D6F848AFB`；BIN 133884 B、SHA256 `177A8AD88B1D81DA11C2EB53046B7A7354990902498E3CC1AF2904C6BC657F03`。embeddedskills `gcc` 的默认 `WindowsDebug` 构建也返回零错误、零警告。以上只证明源码与主机模拟，不是板上发送或关节出力。
+- 遗留与下一步：**未烧录、未接通 24 V、未做新候选的带输出测试**；板上仍是读回校验过的旧 R5 `A9EF99B7…586287` 镜像，MCU 上次为 `phase=8 FAULT`。最近一次实际 `SAFETY_SPEED` 的首发数据为肘约 `6 RPM／36°/s`，本次删减不改变 `20°/s` 门，不能宣称已修好该故障。下一步先在零输出条件下同步记录 C620 相邻 tick、RPM、时间戳与肩反馈，辨别真实短转和反馈尖峰，再决定是否刷入此候选进行有界演示；不通过连续带输出重试判断。
+
+### 2026-10-15｜S5 R5 判断精简候选刷板与一次带输出窗口：肩停机观测超时
+
+- 本次完成：操作者目视确认 24 V 实体开关关闭、指示灯灭且两关节承托。重接 NUCLEO USB 后 ST-LINK 与 COM10 枚举恢复；USB 独供串口见 `phase=1/output_allowed=0`、C620 `seen=0/valid=0/online=0`。在 H 盘保存[刷前完整 512 KiB 备份](../../firmware/Exoskeleton_F446/build/s5-r5-fast-gates-board-20261015/preflash-512k.bin)，SHA256 `D4CF17823E3802F135AA81CFE17884C9370665D366AF3821717E8B5C08197FED`，前 133932 B 与旧 R5 `A9EF99B7…586287` BIN 逐字节一致。刷入上一条隔离候选 ELF，厂家工具校验成功，随后[独立读回 133884 B](../../firmware/Exoskeleton_F446/build/s5-r5-fast-gates-board-20261015/postflash-133884.bin)与候选 BIN 逐字节一致，SHA256 `177A8AD88B1D81DA11C2EB53046B7A7354990902498E3CC1AF2904C6BC657F03`。刷后 USB 独供仍为零输出、肘反馈离线。没有修改固件源码、目标电流或接线。
+- 带电结果：操作者接通 24 V 后执行[唯一一次逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-fast-gates-board-20261015/window1/s5-r5-dual-follow-20261015-233707.jsonl)。预检通过，双轴取零并进入 READY；`followstart` 成功，RUNNING 持续约 4.66 s，肘命令目标 `−2000 mA`，肩目标一直为零。操作者确认本轮没有抬肩，因此不能把肩目标为零解释为角度源卡死，也没有证明双轴实际助力。`followstop` 回 `OK S5 ramping_down`，随后 `phase=5→6/output_allowed=0/stop=1/stop_failed=0`；约 1.58 s 后变为 `phase=8 FAULT`，脚本未确认正常 STOPPED。操作者关闭实体 24 V；USB 串口复核 C620 `valid=0/online=0/age_ms=7410/output_allowed=0`。本窗口未重试。
+- 首次故障链：使用与板上读回匹配的 ELF `3ACB388B…48AFB`，在 24 V 已关闭时只读[肩读服务和静止观察 RAM](../../firmware/Exoskeleton_F446/build/s5-r5-fast-gates-board-20261015/window1/fault-stop-reader-decoded.json)。肩读服务 `state=4(S3_READER_FAULT)/reason=4(S3_READ_WINDOW)/stop_observed=0`，窗口始于 MCU `61562 ms`，最后一对位置／速度请求为 `63052/63053 ms`，证明停机后仍有新回读。最后速度为 `0.27084 rotor rev/s`，高于停机观察门槛 `0.02 rotor rev/s`；会话零位 `2.88605 rev` 到最后编码器位置 `3.16193 rev` 的差值按 8:1 映射约为关节 `12.4°`。这是**编码器报告的位移**，缺少外部角度记录，尚不能判定是真实下垂、承托变化或反馈异常。`reason=7` 是取消请求、`safety=0`；网关停止帧提交和输出许可撤销不能替代最终静止或实际助力证明。
+- 遗留与下一步：本轮肘 `SAFETY_SPEED` 未复发，但肩停机观测真实超时，不能靠删除这一门槛宣称已正常停止。操作者事后说明，抬肩提示后尚未动作，听到电机运行声停止**以后**才动肩；这与停机观测期间的编码器位移在时间线上相符，但没有外部角度同步记录，不能当作唯一已证实原因。24 V 保持关闭；若开展下一独立窗口，应在启动提示后及时轻抬肩，并在停止阶段持续承托静止，明确观察最终 `phase=7`，不沿用本轮 `phase=6` 或停止帧提交作为完成证据。
+
+### 2026-10-15｜S5 R5 第二窗口：抬肩提示前速度保护撤权
+
+- 本次完成：沿用已独立读回匹配的 `177A8AD8…57F03` R5 隔离镜像，24 V 关闭且 C620 反馈离线时复位 MCU；串口确认 `phase=1/output_allowed=0`。操作者重新承托两轴并接通 24 V 后，运行一次相同的一次性双轴脚本；[原始逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-fast-gates-board-20261015/window2/s5-r5-dual-follow-20261015-234408.jsonl)保存在 H 盘。无固件源码、参数、接线或脚本修改。
+- 实际结果：`followprepare` 成功取双轴 RAM 零位并达到 READY；唯一一次 `followstart` 于 15:44:09.339 UTC 成功。首次 RUNNING 查询为 `output_allowed=1/q_sh_mrad=0/q_el_mrad=0/cmd_sh_mNm=0/cmd_el_mA=-2000`。约 168 ms 后首次后续状态已为 `phase=8 FAULT/reason=2/safety=7/output_allowed=0/q_el_mrad=-3`；`safety=7` 对应 `SAFETY_SPEED`，但本轮串口快照没有锁存触发轴或瞬间速度，不能断言是肘还是肩的速度样本。脚本尚未发出手动抬肩提示（`manual_cue_sent=false`）；随后 `followstop` 因会话已故障而回复 `ERR fault`，未发生可确认的正常渐退。`stop=1/stop_failed=0` 只表示故障撤权的停止帧提交接口接受，不能证明驱动实际停稳或关节助力。
+- 断电与下一步：操作者回复已关闭电源后，USB 串口只读 C620 `valid=0/online=0/age_ms=20263/output_allowed=0`，确认反馈离线。第二窗口没有观察到抬肩、肩非零目标或双轴真实支撑；既有肩停止观测超时和再次出现的运行期速度门故障应分别处理。保持 24 V 关闭，不在本窗口重试；下一步用无输出的同步反馈记录或首触发 RAM 快照区分速度峰值来自哪一轴及真实转动／反馈瞬态，再决定有依据的单点修复。
+
+### 2026-10-16｜embeddedskills 与 MICU auto-embedded 接入 Claude Code（仅工具安装）
+
+- 本次完成：在 H 盘临时目录 `H:\Temp\skill-install-20261016\` 拉取上游 embeddedskills `536c1f9` 与 MICU-auto-embedded `bfd647b`（auto-embedded 1.1.4），本地编译 aemb CLI，npm 缓存也放在 H 盘，未全局安装。先对固件目录副本试装并比对，再正式安装：embeddedskills 12 个 skill 复制到仓库根 `.claude/skills/<名>/`；对固件目录执行 `aemb init --platforms claude --full --yes`，新建 `firmware/Exoskeleton_F446/.claude/`（29 个 aemb skill、5 个 `/aemb:*` 命令、9 个子 Agent、3 个 Python hook 及 `settings.json` 接线）。`.auto-embedded/` 新增 `profile.json`、`modes/rtos-rtthread.md`、`tools/build-scons/`，同步 4 个参考文档并更新 `.platforms`（codex+claude）、清单、`modes/index.md`、`_detected.md`；`config.yaml`、`spec/`、`tasks/` 及 Codex 的 `.agents/`、`.codex/` 未改。init 写入时把约 160 个内容未变的文件转成 LF，`git diff` 为空，已按原检出恢复，仅留 8 个真实内容更新。
+- 参数/接线变化：无；固件源码、构建配置与硬件均未改。
+- 实际结果：`aemb doctor` 中 Claude 独占文件与 `settings.json` 接线 OK；Codex 报缺 1 个文件 `.agents/skills/aemb-build-scons/SKILL.md`（上游新增的 RT-Thread scons 构建 skill，本项目不用），按约定未改 Codex 侧，所以 doctor 整体退出码为 1。在固件目录手动运行 SessionStart hook 能输出当前任务 `s5-elbow-dual-follow` 的现场。C 盘核对：`~/.claude/skills`、`~/.agents`、`~/.codex/skills`、npm 全局目录与缓存、nodejs 目录均无新增；用户目录其余新文件来自 Claude/Codex/浏览器/OneDrive 等后台程序；`AppData/Local` 全量扫描超时，未完整覆盖。新文件尚未提交 Git。
+- 遗留与下一步：从仓库根启动时，embeddedskills 启动即可用；aemb skill 要在读写固件文件后才加载（带 `firmware/Exoskeleton_F446:` 前缀）；MICU hook 与 `/aemb:*` 命令只在固件目录启动 Claude Code 时生效，hook 注入可用 `AEMB_HOOKS=0` 关闭。`jlink`/`net` 运行时需把 TEMP 设到 H 盘。S5 继续按上一条日志：零输出同步取证区分速度峰值来源。
+
+### 2026-10-16｜S5 卡点根因调研与 R5 速度软限候选（离线）
+
+- 根因调研：汇总 10-11～10-15 的 S5 窗口，失败大多发生在刚出力或肩一动后的 0.1–0.3 s，或卡在要求人手托着的手臂保持静止的判据上。依据源码、ExoKit 与公开资料，分出以下几类原因：
+  - 判据按静态台架设计，被直接搬进了 FOLLOW。肘 1:1 直驱，C620 的 1 RPM = 6°/s，原 20°/s 门槛不到 4 RPM；日常肘速可达约 210°/s（arXiv 2408.14361）。肩静止判据约为关节 0.045°／0.9°/s。
+  - 约 25 处一次性锁存 `fail_follow()` 串联，任何一处瞬态都会结束会话。
+  - 出力量级远小于负载（**估算**，未实测）：肘 2 A 约 0.04 N·m，裸 M3508 峰值约 0.33 N·m；肩上限 0.04 N·m 转子侧，约合关节 0.32 N·m。
+  - 肩 SDO 逐条轮询链路脆弱；周期 0x029 在闭环下是否有效尚未验证。
+  - 流程因素占比大。
+
+  前两项是本轮处理的范围，后几项需另行决策。
+- 本次完成：按功能—开源对应表的动作管理／故障管理行，参考 ExoKit `AmplifyReaction::runLoop()`（超速只撤当轮力矩、之后可恢复），只改 R5 双轴隔离路径：
+  - `s5_site.c/.h`：硬限肩 120°/s、肘 180°/s；软限 60/90°/s，`resume_quiet_ms=100`、`resume_ramp_ms=300`；肩取零静止判据 0.011 rev／0.066 rev/s／100 ms。
+  - `s5_follow.c`：超软限目标置零，不故障；回落后渐升恢复；`S5Follow_Cancel()` 遇速度／范围超限时仍走正常渐退；新增暂停次数与峰值速度记录。
+  - `s3_shoulder_service.c`：R5 停机观察在 IDLE 心跳加新鲜读数到来后结束，静止结果只记入 `stop_observed`。
+  - `console_commands.c`：`followstatus` 新增 `pz=`、`pk=`。
+
+  R4／S3／S4 与默认生产配置未改。原计划中"肘速度改用会话角差分"一项未做：软限已是 15 RPM 量级，1 RPM 量化不再影响判定，保留 RPM 更符合小步修改。
+- 参数／接线变化：仅 R5 隔离 profile 的速度与肩静止阈值，数值见上；接线无变化。
+- 实际结果：
+  - 主机检查：R5 −1/2000 mA 配置 17/17 通过，含新增软限暂停→恢复、超硬限 FAULT、停止期肩持续移动仍正常 STOPPED；默认配置 108/108、R4 3/3、R5 20 A 边界 3/3 通过。新增用例没有先在旧代码上跑出失败。
+  - 演示脚本离线自检 9/9 通过。
+  - 构建：H 盘 WindowsDebug 及隔离 R5 构建退出 0、0 警告；[候选](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-20261016/) ELF SHA256 `F55754C89A1A5A550DE2813C9A96C891BA1A55EBEA87C45A0A5E37479025A9B8`，BIN 135388 B、SHA256 `40D20843574841EAE294EB77A6EAF1EE3C9C3D46C5579E2E458F4C186ED97C7E`。
+  - **未刷写、未通 24 V、未做带电观察**；板上仍为 `177A8AD8…57F03`。
+- 遗留与下一步：确认 24 V 关闭后备份、刷入并读回本候选，做一次有界窗口：启动后缓慢抬肩、小幅屈伸肘、`followstop`，记录 `pz/pk`、是否保持 RUNNING、最终 `phase=7`。软限与硬限是否合适由该窗口的峰值速度决定。出力量级（肘部是否加减速、肩上限是否提高）与肩 0x029 周期反馈另行决策。
+
+### 2026-10-16｜S5 R5 速度软限候选刷板及一次带电窗口：肘向伸直方向越限
+
+- 本次完成：操作者确认 24 V 关闭、两关节承托；USB 只读见 C620 `seen=0`、肩 CAN `rx=0`、`phase=1/output_allowed=0`。
+  - 用 CubeProgrammer 2.23.0（固定 SN 066EFF…2240、SWD 4 MHz）HOTPLUG 读取[完整 512 KiB 备份](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-board-20261016/preflash-512k.bin)，SHA256 `64DE7CFE…32993`；其前 133884 B 与旧镜像 `177A8AD8…57F03` 一致。
+  - NORMAL 模式写入上一条的候选 ELF，工具报 `Download verified successfully` 并软件复位。
+  - [独立读回 135388 B](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-board-20261016/postflash-135388.bin)，SHA256 `40D20843…97C7E`，与候选 BIN 一致。
+  - 刷后 USB 独供为 `phase=1/output_allowed=0`，新字段 `pz=0/0 pk=0/0` 可见。
+
+  未改源码、参数或接线。
+- 带电结果：操作者确认两轴在物理 0° 并承托后接通 24 V。只读预检见 C620 `age_ms=1/rpm=0`、肩 `hb=1/state=1/fault=0`，两路 CAN 已启动。
+  - 一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-board-20261016/window1/s5-r5-dual-follow-20261016-060119.jsonl)：取零、READY、`followstart` 均成功；首个 RUNNING 状态为 `cmd_el_mA=-2000/output_allowed=1`。
+  - 约 140 ms 后状态变为 `phase=8/gate=3/reason=2/safety=6`（`SAFETY_RANGE`），`q_el_mrad=-17`（下限为 −17.45 mrad，即 −1°）。肘 tick 从 3245 增至 3272（+27，约 1.2°，伸直方向）。
+  - 峰值速度肩 1°/s、肘 24°/s，`pz=0/0`，未触发软限暂停；抬肩提示前即故障。
+  - `followstop` 回 `ERR fault`，`stop=1/stop_failed=0`，没有正常渐退。
+  - 操作者断电后，串口确认 C620 `valid=0/online=0/age_ms=116399`；MCU 停在 FAULT、未复位。
+- 判断（推断，未改代码）：肘 0° 为伸直位且无反向空间。R5 构建 `S5_R5_ELBOW_SUPPORT_SIGN=-1` 与关节方向 −1 相乘后，实际 C620 命令为 +2 A。以下四次记录一致表明 C620 正电流驱动肘向伸直方向：
+  - 10-11 手动屈肘时 tick 递减；
+  - 10-11 R4 电机 +4 A 时操作者感到"往伸直方向回一下"；
+  - 10-15 电机 +2 A 后 0.17 s，RAM 记录肘速度 −36°/s（伸直方向）；
+  - 本次 +2 A 后 tick 增加、越过 −1° 下限。
+
+  因此"支撑"一直在把肘推向机械止挡。这可以解释此前启动即 `SAFETY_SPEED`、本次 `SAFETY_RANGE`，以及没有支撑感；唯一相反的证据是 R2 时期"+2 A 更弯曲"的口述。
+- 遗留与下一步：方向修正属于功能语义变更，待用户决定。建议用 `S5_R5_ELBOW_SUPPORT_SIGN=+1` 重建，C620 命令变为 −2 A（屈肘方向）；源码不变，再做一次有界窗口确认肘向屈曲方向运动并正常停止。24 V 保持关闭。
+
+### 2026-10-16｜S5 R5 肘支撑符号改为 +1：一次带电窗口正常运行并正常停止
+
+- 本次完成：经用户同意，源码不变，以 `S5_R5_ELBOW_SUPPORT_SIGN=1`、`MA=2000` 重建隔离 R5。
+  - R5 主机检查 17/17 通过；构建 0 警告。
+  - [候选](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-sign1-20261016/) ELF SHA256 `B1B7FCDC…4001DD`，BIN 135388 B、SHA256 `E9B52B74A83264AFD481A257D91090D9F921899DB6EAAF3C4171A13BDEA85D2D`。与 −1 版只差 1 字节（0xC0→0x40，即 −2.0 变为 +2.0 的符号位）。
+  - 24 V 关闭时经串口确认 C620 离线后，完成以下步骤：
+    - HOTPLUG [备份 512 KiB](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-sign1-board-20261016/preflash-512k.bin)，SHA256 `0E42E43F…48BD78`，前缀与上一候选一致；
+    - NORMAL 写入，工具报 verified，并软件复位；
+    - 独立读回 135388 B，SHA256 与候选一致；
+    - USB 独供下 `phase=1/output_allowed=0`。
+- 参数／接线变化：仅 R5 构建选项中的肘支撑符号由 −1 改为 +1，C620 实际命令由 +2 A 变为 −2 A。接线、限值、源码均未改。
+- 带电结果：两轴物理 0° 承托、接通 24 V 后，预检见 C620 `age_ms=1/rpm=0`、肩 `state=1/fault=0`。一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-sign1-board-20261016/window1/s5-r5-dual-follow-20261016-060800.jsonl)：
+  - 取零、READY、`followstart` 成功；RUNNING 约 4.6 s，35 次状态全部为 `phase=4/output_allowed=1/safety=0`，`pz=0/0`。
+  - 肘目标 `cmd_el_mA=2000`。肘角在约 0.4 s 内 0→76→182→232 mrad（约 13°，屈曲方向），峰值 78°/s，之后稳定在 232–233 mrad 直到停止。
+  - 抬肩提示于启动约 1.2 s 发出；肩角全程 0 mrad，峰值 2°/s，`seq_sh` 45→277 持续更新，说明读数在刷新、肩确实未动。肩目标一直为 0。
+  - `followstop` 回 `ramping_down`，约 0.27 s 后 `phase=7/output_allowed=0/stop=1/stop_failed=0`，**正常停止**。撤力后肘向伸直方向回落（停后 C620 读到 4 RPM），最后静止在约 4° 屈曲。
+  - 操作者断电后，串口确认 C620 `valid=0/age_ms=11775`。
+  - 操作者报告：启动时前臂确实被往弯的方向带了一下。前臂停在约 13° 是手托还是自然停住、是否抬过肩，**操作者未补充**。
+- 结论与边界：
+  - 肘支撑方向修正后，命令方向与运动方向一致（屈曲），四次"推向伸直止挡"的记录得到解释；
+  - 速度软限候选的首次运行与正常停止成立，`followstop` 后手臂回落未再判故障。
+  - 这只是 2 A（约 0.04 N·m，估算）下的方向与功能链证据，不是支撑力或减重验收。
+  - 肩非零助力与双轴随动仍未观察到。
+- 下一步：板上保留本镜像。下一窗口在启动提示后**真正缓慢前抬肩**（约 10°–30°），观察肩目标变为非零、双轴保持 RUNNING 并正常停止；同时记录 `pk` 峰值，用来校核软限与硬限。出力量级是否提高（肩上限、肘减速）另行决策。
+
+### 2026-10-16｜S5 R5 抬肩窗口：肩目标首次非零，随后肘因钟摆效应越过 −1° 下限
+
+- 本次完成：沿用板上 SIGN=+1 镜像 `E9B52B74…85D2D`。24 V 关闭时经串口确认 C620 离线，用 CubeProgrammer HOTPLUG `-rst` 只复位 MCU，回到 `phase=1/output_allowed=0`。操作者在物理 0° 承托、接通 24 V，预检通过后运行一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-soft-speed-sign1-board-20261016/window2/s5-r5-dual-follow-20261016-061141.jsonl)。未改源码、参数或接线。
+- 实际结果：
+  - 启动后肘屈曲到约 132 mrad（7.6°）并保持；提示音后操作者按要求前抬肩。
+  - 肩角 0→24→47→83→90→133→157 mrad（约 9°），肩目标 `cmd_sh_mNm` 0→1→3→6→9，**首次观察到肩目标随角度变为非零**；峰值肩 35°/s、肘 72°/s，`pz=0/0`。
+  - 抬肩过程中肘角 124→117→72→−17 mrad，启动约 2.5 s 后 `phase=8/safety=6`（`SAFETY_RANGE`），`followstop` 回 `ERR fault`，`stop=1/stop_failed=0`，没有正常渐退。
+  - 停后 C620 tick 3444，比本次零位 3319 多 125 tick，约 −5.5°（伸直方向）。
+  - 操作者断电后，串口确认 C620 `valid=0`；MCU 停在 FAULT、未复位。
+- 原因：肘角是前臂相对上臂的夹角。上臂前抬约 9° 时，前臂在重力下近似保持竖直，2 A 约 0.04 N·m（估算）拉不住，于是肘相对角约为 7.6° − 9° ≈ −1.4°，越过 −1° 下限，与 −17 mrad 读数吻合。停后可达 −5.5°，说明 0° 刻度取的零位不在伸直止挡上，止挡还在更伸直的方向，−1° 只留了 1° 余量。助力只推向屈曲，这个下限对电机方向不起保护作用。这次故障与操作无关，属于参数过严。
+- 下一步：经用户同意，R5 肘、肩下限由 −1° 放宽到 −10°（仍作零位／映射异常检测），重建、检查、刷写读回后再做一次抬肩窗口。
+
+### 2026-10-16｜S5 R5 下限 −10° 候选：首次双轴 RUNNING 全程无故障、肩目标非零并正常停止
+
+- 本次完成：经用户同意，只把 R5 隔离 profile 的肩、肘 `lower_rad` 由 −0.01745329（−1°）改为 −0.17453293（−10°），并更新 site 注释和 R5 主机断言；新增主机用例 `s5_r5_dual_elbow_lower_margin`（−5.5° 保持 RUNNING，−10.5° 仍 `SAFETY_RANGE`）。
+  - 主机检查 R5（+1/2000 mA）18/18、默认 108/108 通过；WindowsDebug 与隔离构建均 0 警告。
+  - [候选](../../firmware/Exoskeleton_F446/build/s5-r5-range10-20261016/) ELF SHA256 `173835AF…40746C`，BIN 135388 B、SHA256 `FD8717B1F4E2197C49C1BE7736CBBCCAE53A9039E992E5635B331E8BF7565E6D`。与 SIGN=+1 版相比只有两个下限浮点数共 8 字节不同。
+  - 24 V 关闭时经串口确认 C620 离线后：
+    - HOTPLUG [备份](../../firmware/Exoskeleton_F446/build/s5-r5-range10-board-20261016/preflash-512k.bin)，SHA256 `7DBB104C…992660`，前缀与上一镜像一致；
+    - NORMAL 写入，工具报 verified；
+    - 独立读回与候选一致；
+    - 刷后 `phase=1/output_allowed=0`。
+- 参数／接线变化：仅上述两个下限。接线、速度门、命令帽、目标电流均未改。
+- 带电结果：操作者在物理 0° 承托、接通 24 V，预检通过后运行一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-range10-board-20261016/window1/s5-r5-dual-follow-20261016-061902.jsonl)。
+  - RUNNING 约 4.6 s，35 次状态全部 `phase=4/output_allowed=1/safety=0`，`pz=0/0`。
+  - 肘先屈到约 143 mrad（8.2°）并保持。提示音后约 1.6 s 操作者开始抬肩，肩 0→9→19→59→78→124→176→202→224 mrad（约 12.8°）；**肩目标 1→4→5→9→12→14→15→16 mNm，随角度单调上升**。
+  - 抬肩期间肘相对角 143→119→65→21→0→−32→−44 mrad（约 −2.5°），未越过新下限；峰值肩 43°/s、肘 54°/s。
+  - `followstop` 回 `ramping_down`，约 0.4 s 后 `phase=7/output_allowed=0/stop=1/stop_failed=0`，**正常停止**。渐退中肘随前臂下垂到约 −118 mrad（−6.8°），未判故障；肩停在约 221 mrad（操作者托住）。
+  - 操作者断电后，串口确认 C620 `valid=0/age_ms=8942`。
+- 结论与边界：
+  - 这是 S5 首次在同一窗口内观察到双轴持续 RUNNING、肩目标随抬肩角度变为非零并上升、肘出力方向正确，并以正常渐退结束。
+  - 本轮速度软限／停机放宽、肘符号和下限这三处修订都在真实台架上取得有效证据。
+  - 肩 16 mNm 为转子侧命令（约合关节 0.13 N·m），肘 2 A 约 0.04 N·m（估算）。这些是命令值，不是实测助力，也不是减重效果。
+  - 本轮操作者未报告主观支撑感。
+  - −6.8° 的停后回落离 −10° 仍有余量，但不大，下一窗口继续观察。
+- 下一步：
+  1. 记录操作者对本窗口的支撑感受；
+  2. 出力量级决策：肩软件上限（目前 0.04 N·m 转子侧）是否分档提高，肘裸 M3508 直驱峰值约 0.33 N·m 是否需要减速；
+  3. 肩 0x029 闭环周期反馈的有界对照（见仓库根 `docs-notes-0x029-feasibility.md`）。
+
+  所有改动尚未提交 Git。
+
+### 2026-10-16｜S5 R5 提高助力并延长到 30 s 自测窗口：刷板读回完成，未带电
+
+- 本次完成：用户选定肩方案 A、肘 4 A，并要求安排一次 30 s 自测。复用功能—开源对应表第 18 行已接入的 `GravityCompensation_Compute()` 正弦模型和 `compute_target()` 逐轴限幅，只改 R5 隔离 profile 的参数，不加新逻辑。
+  - `s5_site.c`：肩增益 0.36→0.6；肩转子侧上限 40→80 mNm，约合关节 0.64 N·m，为 rev2.2 额定 5 N·m 的约 13%；`session_ms` 10→30 s；`shoulder_property_window_ms` 35→55 s，须大于准备时间 20 s 加会话时间。
+  - 肘：构建选项 `MA=4000`，约 0.08 N·m（按 0.02 N·m/A 估算）。仍是恒定屈肘偏置，**不是肘部重力补偿**。
+  - `dual_follow_once.py`：新增 `--observe-ms`（500–27000），每 5 s 打印一次已运行时间。
+  - 主机测试断言随参数更新，夹紧用例改为读取 profile 上限。
+- 参数／接线变化：仅上述 R5 参数；速度软／硬限、角度范围、肩升扭斜率 20 mNm/s、撤力斜率和接线均未改。按模型，肩关节侧命令约为 10° 0.17、20° 0.34、30° 0.49 N·m，约 40.6° 起到达上限。这些是命令值，不是实测助力。
+- 实际结果：
+  - 主机检查：默认配置 108/108 通过；R5 +1/4000 相关 19/19 通过。完整列表在 R5 宏下于 `s3_chain_relative_anchor` 失败，HEAD 代码同样复现，属既有情况，与本次改动无关。
+  - 构建：隔离 R5 0 警告，FLASH 135388 B。[候选](../../firmware/Exoskeleton_F446/build/s5-r5-30s-4a-20261016/) ELF SHA256 `9966FE2FC6D6C44F77584C259EB8AC7A117E0BEC2B35C74B001D7AED132D012C`，BIN SHA256 `436DA43736513A5CA7776DF5094B6E6DEEE3C8667217CFC7056BBF4B5689D506`。与 −10° 版相比只有 site 常量中 10 字节不同，与五个参数的预期变化一致。
+  - 刷板：串口确认 C620 `seen=0`、`output_allowed=0` 后，HOTPLUG [备份 512 KiB](../../firmware/Exoskeleton_F446/build/s5-r5-30s-4a-board-20261016/preflash-512k.bin)，SHA256 `2F1949C2…643A58`，前缀与 −10° 版一致；NORMAL 写入报 verified；独立读回 135388 B，与候选一致；刷后 `phase=1/output_allowed=0`。
+  - **未通 24 V，未做带电窗口。**
+- 下一步：用户在物理 0° 承托、接通 24 V，预检通过后运行一次 `--observe-ms 27000` 窗口，自行感受肩、肘支撑，最后 `followstop` 正常停止。记录支撑感受、`pk` 峰值和是否保持 RUNNING。
+
+### 2026-10-16｜S5 R5 30 s／4 A 首窗：肘软限往复振荡，约 6.1 s 后 `TRANSPORT` 故障
+
+- 本次完成：板上镜像 `436DA437…5689D506`，用户接通 24 V 后运行一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-30s-4a-board-20261016/window1/s5-r5-dual-follow-20261016-074537.jsonl)。预检、取零、READY、`followstart` 均成功，`expires_in_ms=30000`。未改源码、参数或接线。
+- 实际结果：
+  - **肘往复振荡**（用户报告"肘电机一直自己往前小幅运动再回来"，记录一致）。0–5 s 内软限暂停 7 次（`pz=…/7`），肘峰值 156°/s，超过 90°/s 软限。每个周期约 0.8 s：
+    1. 4 A 使肘快速屈到约 215–375 mrad；
+    2. 超过软限，两轴目标同时置零；
+    3. 前臂回落到约 0 mrad；
+    4. 100 ms 安静、300 ms 渐升后重新出力。
+
+    软限暂停同时清零肩目标，所以这段时间肩也只有间歇出力。
+  - 约 4 s 起操作者抬肩，肩角 0→373 mrad（约 21.4°），肩目标随之升到 44 mNm（转子侧）；5.4–6.0 s 期间肘稳定在约 20 mrad，4 A 持续。肩峰值 37°/s。
+  - 约 6.1 s 时 `phase=8/gate=3/reason=6`，即 `OUTPUT_REASON_TRANSPORT`，`safety=0`。`followstop` 回 `ERR fault`，`stop=1/stop_failed=0`。
+  - 故障后只读：两路 CAN `err=0/bus_off=0/drop=0`，`canstatus` 正常，`status` 中 `tx_timeouts=0/scheduler_overruns=0`。约 22 s 后两驱动反馈同时停止（`received_ms≈171.1 s`），与断电一致；肩最后心跳 `error=00000040/fault=9`，出现在断电时刻，与 6.1 s 的故障不同时。
+  - 未复位时 HOTPLUG 保存 [128 KiB SRAM](../../firmware/Exoskeleton_F446/build/s5-r5-30s-4a-board-20261016/window1/fault-sram-128k.bin)，SHA256 `78DF3CDE…BD3173`。
+- 判断：
+  - 振荡根因（有记录支持）：肘是恒定 4 A、没有速度或位置相关的阻尼项，加速太快，越过软限后被整段撤力。软限暂停与恒流叠加，形成往复周期。这是参数和控制结构问题，不是通信故障。
+  - `TRANSPORT` 故障的具体分支（发送提交失败、`failed()` 或 100 ms 未排空）**尚未查明**，需从 SRAM 中的网关状态离线定位，未改代码。
+- 下一步：离线解析 SRAM 中 `OutputGateway` 和两路发送状态，确定是哪一条 `TRANSPORT` 分支、哪一路总线。肘振荡的处理方案（降低电流或加速度相关项、软限只撤肘或改为限幅）待用户决定。
+
+### 2026-10-16｜S5 R5 `TRANSPORT` 故障离线定位：推断为肩 CAN1 转矩帧仲裁丢失且不重发
+
+- 本次完成（只读）：用匹配 ELF 解析故障 SRAM 中 s5 `gateway`（`0x200027c0`），并在未复位时 HOTPLUG 读取 CAN1/CAN2 寄存器（`window1/can1-regs.bin`、`can2-regs.bin`）。未改代码。
+- 证据：
+  - 网关：`armed_ms=142959`，最后一次跟随帧提交 `follow_output_submit_ms=last_sent_ms=148959`（提交成功），故障锁存 `last_step_ms=148960`，`reason=6`，`stop_accepted=1/stop_delivery_failed=0`。
+  - 时间点：提交后 1 ms 即失败，不是 100 ms 未排空超时；应是 `follow_output_pending` 检查中 `failed()` 返回真，即邮箱已完成但没有 `TXOK`（`board_can_tx.c` `reconcile_output()`）。
+  - 两路 `MCR=0x00010018`，`NART=1`（不自动重发，`main.c` 中 `AutoRetransmission=DISABLE`）。故障后两路 `ESR=0`、`TEC=REC=0`、`LEC=0`。一次发送错误会使 TEC +8，而故障后只有约 1–2 次成功发送，因此可以排除 `TERR`。故障时刻的邮箱完成位已被后续撤销与停止帧覆盖，无法直接读到。
+  - 帧 ID：CAN2 上 MCU 的 `0x200` 低于 C620 的 `0x201`，MCU 不会输掉仲裁。CAN1 上肩转矩帧 `0x02E`（节点 1，命令 0x0E）高于 GDS 自发的 `0x021` 心跳、`0x029` 编码器周期帧及属性应答，同时起发时 MCU 必输。
+- 判断（推断，未直接抓到故障帧）：在 `NART=1` 下，肩转矩帧与 GDS 自发帧同时竞争，输掉仲裁（`RQCP=1/TXOK=0/ALST=1/TERR=0`）后不重发，于是被当作发送失败锁存 `TRANSPORT`。与 2026-10-07 肩属性读请求的 `ALST` 同属一类；当时只给读请求加了一次补发，输出帧仍是"一次失败即故障"。本窗口会话更长、肩一直在出力，碰撞机会随之增加。
+- 下一步（待用户确认）：仿照 10-07 读请求的做法，只对确认 `ALST` 且无 `TERR` 的输出帧补发一次，再次丢失或其他失败仍故障，不开启全局自动重发；同时肘按用户选择改回 2 A。先补主机用例，再构建、刷写、跑一次窗口。
+
+### 2026-10-16｜S5 R5 输出帧仲裁丢失补发一次、肘改回 2 A：刷板读回完成，未带电
+
+- 本次完成：用户同意上条方案，并选择肘方案 A（2 A）。
+  - 对照功能—开源对应表第 5 行：BetaRobot 的 `bsp/bsp_can/bsp_bxcan.c`（联网读取；本地子模块为空）把 `ALST/TERR` 计为发送失败，其 CubeMX 工程 `AutoRetransmission=ENABLE`，由硬件自动重发。本地 STM32CubeF4 HAL 的 `HAL_CAN_IRQHandler` 用同样的 TXOK/ALST/TERR 分类。
+  - 本项目保留 `NART=1`，复用 10-07 `s3_shoulder_service.c` 读请求的"仅 ALST 补发一次"思路，在 L1 实现。
+  - `board_can_tx.c`：
+    - 提交输出帧时保存该帧；
+    - `reconcile_output()` 遇到邮箱完成且 `RQCP=1/TXOK=0/ALST=1/TERR=0`、本帧尚未补发、总线监听中且有空邮箱时，同帧补发一次，并计入 `output_alst_resends[bus]`；
+    - 再次丢失、`TERR` 或补发提交失败仍按原样判失败。
+    - 原 `send_mailbox()` 的发帧部分抽成 `add_frame()` 供补发复用，行为不变。
+  - 停止帧也走同一路径。
+- 先写失败用例：`s5_gateway_stop` 新增"肩 ALST→补发同 ID 同数据→TXOK 后排空"、"连续两次 ALST→失败"、"TERR→不补发、直接失败"三段。在旧代码上首段按预期失败（第 347 行）。
+- 参数／接线变化：肘构建选项 `MA=2000`；其余同 30 s 版（肩增益 0.6、上限 80 mNm、会话 30 s）。接线未改。
+- 实际结果：
+  - 主机检查：默认 108/108；R5 +1/2000 相关 19/19 通过。
+  - 构建：隔离 R5 0 警告，FLASH 135700 B、RAM 12720 B。[候选](../../firmware/Exoskeleton_F446/build/s5-r5-30s-alst-2a-20261016/) ELF SHA256 `C31FECC00CB9306DD3A8956F966992142EF639329BEEEF4ABBC44463E865CCC4`，BIN SHA256 `C5E890CA949CB1B8B6B0191226D37B58DB1F208279687123DE71AEFCBDF3FBB0`。
+  - 刷板：串口确认 C620 离线（`age_ms=720882`）后，HOTPLUG [备份](../../firmware/Exoskeleton_F446/build/s5-r5-30s-alst-2a-board-20261016/preflash-512k.bin)，SHA256 `50BE1AF7…E3A92A3C`，前缀与 30 s／4 A 版一致；NORMAL 写入报 verified；独立读回一致；刷后 `phase=1/output_allowed=0`。
+  - **未带电。**
+- 另记：本会话较早一次 `git stash push/pop`（用于核对既有 R5 测试失败）使稀疏检出重新生效，删除了工作区中已展开的 `Open-source projects/`（skip-worktree 文件）。已用 `git restore --source=HEAD --ignore-skip-worktree-bits` 恢复，共 969 个文件，状态干净。原目录内若有未提交的本地修改无法确认；因整个目录被移除，推断其中原本没有未跟踪或改动过的文件。`self models/` 在工作区中也不存在，无法确认是否同样受影响，未恢复。
+- 下一步：同一 30 s 窗口复测：观察肘在 2 A 下是否不再振荡、是否保持 RUNNING 到正常停止，以及停后 `output_alst_resends` 的读数，记录支撑感受。
+
+### 2026-10-16｜S5 R5 仲裁补发版 30 s 窗口：全程 RUNNING 并正常停止，肩补发 5 次
+
+- 本次完成：板上 `C5E890CA…E3A92A3C`，用户接通 24 V 后运行一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-30s-alst-2a-board-20261016/window1/s5-r5-dual-follow-20261016-080041.jsonl)。未改源码、参数或接线。
+- 实际结果：
+  - RUNNING 约 27.2 s，209 次状态全部为 `phase=4`。`followstop` 回 `ramping_down`，最终 `phase=7/output_allowed=0/stop=1/stop_failed=0`，**正常停止**，`error=null`。
+  - 停后不复位，SWD 读 `output_alst_resends`：肩 CAN1 **5 次**，肘 CAN2 0 次。这证实运行中肩转矩帧确实会仲裁丢失（约每 6 s 一次，与上一窗口约 6.1 s 故障相符），且每次补发后都发送成功，没有触发故障。上一窗口的 `TRANSPORT` 根因由此得到实物佐证。
+  - 肩：操作者多次抬放，肩角 0→最高 890 mrad（约 51°），肩目标随角度变化 0–80 mNm（转子侧），超过约 40° 后停在 80 mNm 上限。
+  - 肘：2 A 全程无往复振荡。软限暂停只发生 1 次（约 19 s，`pk=61/72`，肩 61°/s 略超 60°/s 软限）。启动后肘先屈到约 206 mrad；抬肩后多数时间停在约 −105 mrad（约 −6°），即前臂下垂、相对上臂伸开，2 A 托不住，未越 −10° 下限。
+- 结论与边界：
+  - 双轴 30 s 持续 RUNNING、肩补偿随姿态变化、正常停止，这三项在本窗口成立。
+  - 肩、肘命令值不等于实测助力；主观支撑感受待用户补充。
+  - 肘 2 A 只是方向正确的小偏置，不构成前臂支撑。
+- 下一步：记录用户对肩、肘支撑的感受。若肩已有支撑感，S5 低姿态主观功能可按"肩有支撑、手动变姿态跟随、正常停止"判定，肘支撑另作后续改进。
+
+### 2026-10-16｜S5 R5 肩助力再提高并加快响应：刷板读回完成，未带电
+
+- 用户反馈：上一窗口肩的支撑"不是特别明显"；用户问需要停住多久才能撑住。
+- 核对：FOLLOW 没有"停住多久才出力"的等待条件，肩目标每轮按当前角度计算。`followstatus` 中的 `cmd_sh_mNm` 是**模型目标**，网关实际下发值受 `motor_slew_per_s=20 mNm/s` 限速。用上一窗口记录按 20 mNm/s 推算实际下发值：50/209 个样本落后目标超过 10 mNm，最大落后约 52 mNm，大幅抬肩后要约 1–2.6 s 才跟上（例如 19 s 抬到约 45°，约 2 s 后才接近 80 mNm）。这就是"停一会儿才撑住"的感受来源。推算值不是实测电流。
+- 本次完成：用户选择肩增益 0.8／上限 120 mNm，力矩变化斜率 100 mNm/s。
+  - `s5_site.c`：`shoulder_gain` 0.6→0.8；肩 `max_motor_command` 0.080→0.120 Nm（转子侧，约合关节 0.96 N·m，约为额定 5 N·m 的 19%）；`motor_slew_per_s` 0.020→0.100 Nm/s（从 0 到 80 mNm 约 0.8 s）。运行中升、降都受这个斜率限制。
+  - 撤力斜率 80 mNm/s × 1.9 s = 152 mNm ≥ 新上限，仍满足网关配置校验。
+  - 主机断言同步更新。
+- 按模型，肩关节侧命令约为 20° 0.45、30° 0.66、40° 0.84 N·m，约 47° 起到达上限。这些是命令值，不是实测助力。
+- 实际结果：
+  - 主机检查：默认 108/108；R5 +1/2000 相关 19/19 通过。
+  - 构建：0 警告，FLASH 135700 B。[候选](../../firmware/Exoskeleton_F446/build/s5-r5-sh08-120-20261016/) ELF SHA256 `77F20935A3D019BCA007311BE8D3D144CBFB45E07D1F347E8E768F88252EC81D`，BIN SHA256 `2B2B170605E6D9E4C4428E7CC8E0AE46269301ABA4BB499983E44E9A29620384`。与上一版只差 10 字节，对应三个参数。
+  - 刷板：串口确认 C620 离线后，HOTPLUG [备份](../../firmware/Exoskeleton_F446/build/s5-r5-sh08-120-board-20261016/preflash-512k.bin)，SHA256 `77B2DEDD…C02CDA11`，前缀与上一版一致；写入报 verified；独立读回一致；刷后 `phase=1/output_allowed=0`。
+  - **未带电。**
+- 下一步：再跑一个 30 s 窗口，记录肩支撑感受和响应快慢；同时注意快速放下手臂时，多余的力矩也要按 100 mNm/s 才降下来。
+
+### 2026-10-16｜S5 R5 肩 0.8／120 mNm／100 mNm/s 窗口：全程 RUNNING 并正常停止
+
+- 本次完成：板上 `2B2B1706…29620384`，运行一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-sh08-120-board-20261016/window1/s5-r5-dual-follow-20261016-080713.jsonl)。未改源码、参数或接线。
+- 实际结果：
+  - RUNNING 约 27.2 s，210 次状态全部为 `phase=4`。`followstop` 后 `phase=7/output_allowed=0/stop=1/stop_failed=0`，**正常停止**，`error=null`。
+  - `output_alst_resends`：肩 5 次，肘 0 次，均补发成功。
+  - 肩：多次抬放，最高约 48.9°，目标 0–120 mNm 随角度变化，约 45° 时 116 mNm。按 100 mNm/s 推算，实际下发落后目标超过 10 mNm 的只有 11/210 个样本（上一窗口为 50/209），最大落后约 38 mNm。推算值不是实测电流。
+  - 软限暂停 2 次，`pk=61/108`（肩 61°/s，肘 108°/s，均低于硬限）。
+  - 肘：2 A 下抬肩时前臂下垂，相对角最低 −156 mrad（约 −8.9°），**离 −10° 下限只剩约 1.1°**。
+- 判断：肩支撑在命令层面比上一窗口更大、跟得更快；主观感受待用户补充。肘相对角接近下限，是前臂下垂造成的（2 A 托不住），再大幅抬肩时可能触发 `SAFETY_RANGE`。
+- 下一步：记录用户感受。若再提高肩助力或扩大抬肩范围，需先处理肘下限余量（例如放宽到约 −20°），或接受该故障作为停止条件。
+
+### 2026-10-16｜S5 R5 同镜像第二窗口：约 16 s 肩属性读取 `S3_READ_TX` 故障；更正"升扭斜率滞后"结论
+
+- 本次完成：24 V 关闭、确认 C620 离线后，HOTPLUG `-rst` 只复位 MCU，回到 `phase=1`。用户接通 24 V 后，以同一镜像 `2B2B1706…29620384` 运行一次[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-sh08-120-board-20261016/window2/s5-r5-dual-follow-20261016-081130.jsonl)。未改源码、参数或接线。
+- 实际结果：
+  - RUNNING 到约 16.1 s，此前肩最高约 962 mrad（约 55°）、目标 120 mNm，肘约 670 mrad；随后操作者放下手臂，两轴约 −24°/s 下降。
+  - 16.16 s 时 `phase=8/gate=3/reason=3`（`OUTPUT_REASON_REQUEST`），`safety=0`。`followstop` 回 `ERR fault`，`stop=1/stop_failed=0`。
+  - 未复位时保存 [SRAM](../../firmware/Exoskeleton_F446/build/s5-r5-sh08-120-board-20261016/window2/fault-sram-128k.bin)，SHA256 `573CE38F…1D2F888A`。
+- RAM 定位：
+  - `reason=3` 来自 `s5_follow.c` `fail_follow()` 调用 `OutputGateway_RejectRequest()`，属于通用标签，本身不说明原因。
+  - 真正的源头是肩属性读取器：`s3_shoulder_service.c` 状态为 `state=4 S3_READER_FAULT/reason=3 S3_READ_TX`，`requests=1703`、`read_arbitration_retries=0`、`cancellation_failed=0`。
+  - 本会话 `output_alst_resends` 肩为 1、肘为 0。
+  - 网关最后接受的肩样本 `70883 ms`、肘样本 `70884 ms`，故障锁存于 `70903 ms`。
+- 分析（推断，未直接抓到故障帧）：本日新加的输出帧补发写在 `reconcile_output()` 里，而该函数在 `BoardCanTx_PurgeOutputAxes()` 和 `OutputAxesFailed/Drained()` 中都先于 `pending_read()` 执行。若肩读请求已完成但还没被 `pending_read()` 结算，这时输出帧仲裁丢失并补发，HAL 可能把读请求刚空出的邮箱分配给补发帧；`add_frame()` 中原有的邮箱复用检查随即把读结果标为 `FAILED`，即 `S3_READ_TX`。这条路径是本日补发改动引入的顺序缺陷。另一种可能是 10-14、10-15 两次未分清子分支的既有 `S3_READ_TX`，同属肩读发送链。现有 RAM 无法区分这两种情况。
+- **更正**：上一条"20 mNm/s 升扭斜率使实际下发落后目标 1–2.6 s"的推算是错的。`output_gateway.c` 在 R5 双轴构建中 `direct_target=true`，运行期直接下发目标，不经过 `motor_slew_per_s`，斜率只在正常停止的撤力阶段使用。所以运行期下发约在下一个 50 ms 发送时隙内就跟上目标；上一版把 `motor_slew_per_s` 改为 100 mNm/s，对运行期没有作用。用户感到的"停一会儿才撑住"另有原因，尚未查明。
+- 下一步（待用户确认）：
+  1. 先写主机失败用例复现"读请求 TXOK 后，输出 ALST 补发占用其邮箱"；
+  2. 修复：补发前先调用 `pending_read()` 结算读请求；
+  3. 给 `S3_READ_TX` 增加子分支记录，下次若再出现可以直接分清；
+  4. 然后重建、刷写并跑窗口。
+- 用户反馈（同日）：肩在 0.8／120 mNm 下"其实有一些助力"。这是主观感受，未定量。
+- 肘支撑核对：
+  - 30 s 窗口中肘是恒定 2 A 屈肘偏置，约 0.04 N·m（按 0.02 N·m/A 估算），不随姿态变化。
+  - 垂臂时只把肘带屈到约 4–12°（72–206 mrad）；抬肩后肘相对角掉到 −6°～−9°，前臂随重力下垂。按记录，肘**没有形成有效支撑**。
+  - 4 A 时出现往复振荡。
+  - 裸 M3508 直驱峰值约 0.33 N·m，即使用满 20 A 命令帽也只有约 0.4 N·m（估算），远小于抬肩后前臂的重力矩（质量、质心未测，量级估计约 1 N·m）。
+  - 肘部要有实际支撑，需要另行决策：硬件上加减速，或改为随姿态变化并带阻尼的模型。后者属新逻辑，需要先查参考实现。
+
+### 2026-10-16｜S5 R5 肩助力给到模型上限、肘下限放宽到 −20°：刷板读回完成，未带电
+
+- 用户决定："先按尽可能大的去给肩部辅助，我们只是辅助而不是完全支撑"。用户选择增益 1.0／上限 205 mNm，以及肘下限放宽到 −20°；本轮**未选**肩读取 `S3_READ_TX` 顺序缺陷的修复。
+- 本次完成（只改 R5 隔离 profile）：
+  - 肩 `shoulder_gain` 0.8→1.0。site 校验要求增益 ≤1.0，所以这是现有代码允许的最大值，即完整的 1.64 N·m 粗估模型。该模型只估了部分负载，因此仍是辅助，不是完全托住。
+  - 肩 `max_motor_command` 0.120→0.205 Nm（转子侧，等于模型峰值，约合关节 1.64 N·m，约为 rev2.2 额定 5 N·m 的 33%），全角度都不封顶。
+  - 肩撤力斜率 80→120 mNm/s：网关要求撤力斜率乘 1.9 s 不小于上限，0.12 × 1.9 = 0.228 ≥ 0.205。
+  - 肘 `lower_rad` −0.17453293→−0.34906585（−20°），依据是上一窗口前臂下垂到 −8.9°。
+- 测试：
+  - 先改 `s5_r5_dual_elbow_lower_margin`：−14.5° 应保持 RUNNING、−20.5° 应 `SAFETY_RANGE`。在旧参数上按预期失败（第 784 行）。
+  - `s5_r5_dual_chain` 的 70° 用例原本要求命令被上限截住；新上限等于模型峰值，不会再截，改为按 profile 计算 `min(上限, 模型值)` 做断言。
+  - `r5_dual_site` 断言同步更新。
+- 按模型，肩关节侧命令约为 20° 0.56、30° 0.82、40° 1.05、50° 1.26 N·m。这些是命令值，不是实测助力。
+- 实际结果：
+  - 主机检查：默认 108/108；R5 +1/2000 相关 19/19 通过。
+  - 构建：0 警告，FLASH 135700 B。[候选](../../firmware/Exoskeleton_F446/build/s5-r5-sh10-205-el20-20261016/) ELF SHA256 `1654E48E40C66AF991DCBBF6A03089E39DAAC149A4FC147119555EDCF2E6768F`，BIN SHA256 `E8D87B98377699F0D2CBAE5CFD3E0D63035E6813FC3919621855FCE2887F4D26`。与上一版相差 12 字节，对应四个参数。
+  - 刷板：串口确认 C620 离线（`age_ms=702405`）后，HOTPLUG [备份](../../firmware/Exoskeleton_F446/build/s5-r5-sh10-205-el20-board-20261016/preflash-512k.bin)，SHA256 `E132E74F…4D59A4BA`，前缀与上一版一致；写入报 verified；独立读回一致；刷后 `phase=1/output_allowed=0`。
+  - **未带电。**
+- 遗留：
+  - 肩读取 `S3_READ_TX` 的疑似顺序缺陷未修，30 s 窗口仍可能中途故障停机。
+  - 助力增大后，若模型高估实际负载，手臂可能被往上推；仍有速度软／硬限和角度范围兜底。
+- 下一步：用户在物理 0° 承托、接通 24 V 后，跑一次 30 s 窗口。
+
+### 2026-10-16｜S5 R5 肩增益 1.0 窗口：约 20.7 s 放臂时肩超硬限 `SAFETY_SPEED`
+
+- 本次完成：板上 `E8D87B98…2887F4D26`。
+  - 第一次运行在预检被拒：`shoulder heartbeat is not idle and fault-free`，未取零、未启动、无输出。紧接着只读查询显示 `state=1/error=0/fault=0/hb=1`，`rx=768`，说明 GDS 刚上电不久；当时那一拍的具体字段未记录。
+  - 随即第二次运行，[逐命令记录](../../firmware/Exoskeleton_F446/build/s5-r5-sh10-205-el20-board-20261016/window1/s5-r5-dual-follow-20261016-082609.jsonl)。未改源码、参数或接线。
+- 实际结果：
+  - RUNNING 约 20.7 s。肩最高约 50°，肩目标最高 157 mNm（转子侧，约合关节 1.26 N·m）。肘相对角最低 −7 mrad，新的 −20° 下限余量充足。
+  - 约 24.25 s（脚本时钟）操作者从约 40° 放下手臂。按记录角度差分，平均下降速度依次为 13→28→40→49°/s；此时肩目标仍有 102–127 mNm。
+  - 随后 `pz` 由 0/0 变为 1/1，软限暂停触发，两轴目标置零；同一拍 `pk` 由 55 变为 127°/s，超过 120°/s 硬限，锁存 `phase=8/gate=3/reason=2/safety=7`（`SAFETY_SPEED`）。`followstop` 回 `ERR fault`，`stop=1/stop_failed=0`。
+  - 故障 RAM（[SRAM](../../firmware/Exoskeleton_F446/build/s5-r5-sh10-205-el20-board-20261016/window1/fault-sram-128k.bin)，SHA256 `5AD1736A…4DDCA5A8`）：肩 `vel=−2.223 rad/s`（−127°/s），`assist_paused=1/speed_pauses=1`；肩读取器 `state=3 STOPPED/reason=0`，**本次没有** `S3_READ_TX`；`output_alst_resends` 肩 2 次、肘 0 次。
+- 判断（推断）：放臂时下降已在加速（平均约 49°/s）；越过 60°/s 软限后，R5 软限暂停把肩的**重力补偿基线**也一并清零，约 1 N·m 的支撑瞬间消失，手臂随即加速下落，在下一个样本前就超过 120°/s 硬限。这与项目约定"暂停只撤增量，不关闭重力基线"（AGENTS 3.1、索引表第 19 行）不一致：R5 的软限暂停是从 ExoKit `AmplifyReaction` 的增量暂停借来的，却作用在了基线补偿上。增益越大，撤掉的支撑越多，这一现象越明显。速度读数尖峰的可能性也不能完全排除。
+- 下一步（待用户决定）：
+  - A：软限暂停只作用于肘、不再清零肩重力补偿，肩仍保留 120°/s 硬限兜底；
+  - B：暂停时肩不清零，改为保持当前值；
+  - C：维持现状，操作上要求慢放。
+
+  不靠单纯放宽硬限来掩盖问题。
+
+### 2026-10-16｜用户决定：软限问题选 C，S4 结束，提交本日工作
+
+- 用户决定：
+  - 放臂软限暂停问题选 C，不改代码，操作上慢放；
+  - S4 阶段结束；
+  - 提交 Git。
+- 本次完成：更新文档顶部结论、S4／S5 阶段行，并将本日 R5 参数、输出帧仲裁补发、主机测试、脚本 `--observe-ms` 与文档整理为一次本地提交。`build/` 下的证据按 `.gitignore` 不入库。未推送。
+- 遗留：
+  - S5 是否判定通过待用户确认；
+  - 肩读取 `S3_READ_TX` 疑似顺序缺陷、软限暂停清零基线两项未修；
+  - 肘支撑需硬件或新模型决策。

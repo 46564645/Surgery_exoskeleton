@@ -53,7 +53,11 @@ static S5SiteProfile elbow_profile(void)
 static void site_and_model(void)
 {
     S5Site_TestUseProfile(NULL);
+#if defined(S5_R4_ELBOW_FOLLOW) || defined(S5_R5_DUAL_FOLLOW)
+    assert(S5Site_ReadReady(S5Site_GetProfile()));
+#else
     assert(!S5Site_ReadReady(S5Site_GetProfile()));
+#endif
     S5SiteProfile p = elbow_profile();
     assert(S5Site_ReadReady(&p));
     assert(!S5Site_ProfileReady(&p));
@@ -68,7 +72,7 @@ static void site_and_model(void)
     p.elbow_support.confirmed = false;
     assert(!S5ElbowSupport_Compute(&p.elbow_support, &q, &a) && a == 0.0f);
 
-    /* Reuse the observed S4 one-sided shoulder sector and unchanged 40 mNm cap. */
+    /* The dual candidate clips a wider model to the unchanged 40 mNm cap. */
     S5SiteProfile one_sided = dual_profile();
     SafetyJointConfig *sh = &one_sided.s3.safety.joint[0];
     sh->mapping.rotor_per_joint = 8.0f;
@@ -81,7 +85,7 @@ static void site_and_model(void)
     one_sided.s3.rotor_reference_confirmed[1] = true;
     assert(S5Site_ProfileReady(&one_sided));
     one_sided.shoulder_gain = 0.40f;
-    assert(!S5Site_ProfileReady(&one_sided)); /* Endpoint exceeds 40 mNm. */
+    assert(S5Site_ProfileReady(&one_sided));
 }
 
 #ifdef S5_R4_ELBOW_FOLLOW
@@ -117,6 +121,8 @@ static void r4_isolated_site(void)
 #endif
 
 #ifdef S5_R5_DUAL_FOLLOW
+static void r5_dual_two_pair_zero(void);
+static void r5_dual_no_post_zero_dwell(void);
 static void r5_dual_site(void)
 {
     S5Site_TestUseProfile(NULL);
@@ -128,38 +134,50 @@ static void r5_dual_site(void)
     const SafetyJointConfig *sh = &p->s3.safety.joint[0];
     const SafetyJointConfig *el = &p->s3.safety.joint[1];
     assert(sh->mapping.rotor_per_joint == 8.0f
-        && sh->lower_rad == 0.34906585f && sh->upper_rad == 0.52359878f
-        && sh->max_speed_rad_s == 0.69813170f
-        && sh->max_motor_command == 0.040f && sh->motor_slew_per_s == 0.020f);
+        && sh->lower_rad == -0.17453293f && sh->upper_rad == 1.83259571f
+        && sh->max_speed_rad_s == 2.09439510f
+        && sh->max_motor_command == 0.205f && sh->motor_slew_per_s == 0.100f);
     assert(el->mapping.rotor_per_joint == 1.0f
-        && el->lower_rad == -0.08726646f && el->upper_rad == 0.08726646f
-        && el->max_speed_rad_s == 0.34906585f
-        && el->max_motor_command == 2.0f && el->motor_slew_per_s == 20.0f);
+        && el->mapping.direction == -1
+        && el->lower_rad == -0.34906585f && el->upper_rad == 1.83259571f
+        && el->max_speed_rad_s == 3.14159265f
+        && el->max_motor_command == 20.0f && el->motor_slew_per_s == 20.0f);
+    /* Soft pause at 60/90 deg/s, below the 120/180 deg/s latched limits. */
+    assert(p->soft_speed_rad_s[0] == 1.04719755f
+        && p->soft_speed_rad_s[1] == 1.57079633f
+        && p->resume_quiet_ms == 100U && p->resume_ramp_ms == 300U);
+    S5SiteProfile soft_bad = *p;
+    soft_bad.soft_speed_rad_s[1] = el->max_speed_rad_s;
+    assert(!S5Site_ReadReady(&soft_bad));
+    soft_bad = *p;
+    soft_bad.resume_ramp_ms = 0U;
+    assert(!S5Site_ReadReady(&soft_bad));
     assert(p->s3.safety.feedback_timeout_ms == 150U
         && p->s3.safety.service_limit_ms == 100U
         && p->s3.safety.max_request_ms == 250U
         && p->s3.prepare_timeout_ms == 20000U
         && p->s3.shoulder_property_reply_ms == 20U
         && p->s3.shoulder_property_period_ms == 20U
-        && p->s3.shoulder_property_window_ms == 35000U
+        && p->s3.shoulder_property_window_ms == 55000U
         && p->s3.shoulder_stop_window_ms == 1500U
-        && p->s3.shoulder_standstill.span_rev == 0.001f
-        && p->s3.shoulder_standstill.max_velocity_rev_s == 0.02f
-        && p->s3.shoulder_standstill.dwell_ms == 200U
+        && p->s3.shoulder_standstill.span_rev == 0.011f
+        && p->s3.shoulder_standstill.max_velocity_rev_s == 0.066f
+        && p->s3.shoulder_standstill.dwell_ms == 100U
         && p->s3.shoulder_standstill.freshness_ms == 150U);
     assert(p->shoulder_gravity.amplitude_nm == 1.64f
-        && p->shoulder_gravity.sign_g == 1 && p->shoulder_gain == 0.36f
-        && p->shoulder_zero_dwell_ms == 20U
-        && p->send_interval_ms == 50U && p->session_ms == 10000U
-        && p->ramp_max_ms == 1000U
-        && p->release_slew_per_s.shoulder_rotor_nm == 0.080f
-        && p->release_slew_per_s.elbow_current_a == 20.0f);
+        && p->shoulder_gravity.sign_g == 1 && p->shoulder_gain == 1.0f
+        && p->shoulder_zero_dwell_ms <= 1U
+        && p->send_interval_ms == 50U && p->session_ms == 30000U
+        && p->ramp_max_ms == 2000U
+        && p->release_slew_per_s.shoulder_rotor_nm == 0.120f
+        && p->release_slew_per_s.elbow_current_a == 25.0f);
     JointState elbow = {el->upper_rad, 0.0f, 1U, true};
     float current_a = 0.0f;
     const float expected = 0.001f * S5_R5_ELBOW_SUPPORT_MA
         * S5_R5_ELBOW_SUPPORT_SIGN;
     assert(S5ElbowSupport_Compute(&p->elbow_support, &elbow, &current_a)
-        && fabsf(current_a - expected) < 0.000001f);
+        && fabsf(current_a - expected) < 0.000001f
+        && fabsf(current_a) <= el->max_motor_command);
     S5SiteProfile active = *p;
     active.s3.rotor_reference_confirmed[0] = true;
     active.s3.rotor_reference_confirmed[1] = true;
@@ -235,6 +253,9 @@ static void elbow_chain(void)
 static uint8_t shoulder_axis_state, shoulder_mode, shoulder_input, life;
 static float shoulder_torque, shoulder_rev;
 static unsigned shoulder_nonzero, shoulder_idle;
+static uint16_t elbow_offset_ticks;
+static bool elbow_reverse;
+static int16_t elbow_rpm;
 
 static uint32_t bits(float value)
 { uint32_t raw; memcpy(&raw, &value, sizeof(raw)); return raw; }
@@ -321,9 +342,12 @@ static void dual_step_with_elbow(bool elbow_feedback)
     shoulder_heartbeat();
     TestCan_Interrupt(BOARD_CAN_SHOULDER);
     if (elbow_feedback) {
-        uint16_t angle = (uint16_t)((8191U + (tick & 1U)) % 8192U);
+        int32_t ticks = 8191 + (int32_t)(tick & 1U)
+            + (elbow_reverse ? -(int32_t)elbow_offset_ticks : (int32_t)elbow_offset_ticks);
+        uint16_t angle = (uint16_t)((ticks + 8192) % 8192);
         uint8_t elbow[8] = {(uint8_t)(angle >> 8), (uint8_t)angle,
-                            0U, 0U, 0U, 0U, 30U, 0U};
+                            (uint8_t)((uint16_t)elbow_rpm >> 8), (uint8_t)elbow_rpm,
+                            0U, 0U, 30U, 0U};
         TestCan_InjectData(BOARD_CAN_ELBOW, 0x201U, 8U, 0U, 0U, elbow);
         TestCan_Interrupt(BOARD_CAN_ELBOW);
     }
@@ -333,6 +357,87 @@ static void dual_step_with_elbow(bool elbow_feedback)
 
 static void dual_step(void) { dual_step_with_elbow(true); }
 
+#ifdef S5_R5_DUAL_FOLLOW
+static void r5_zero_fixture(uint32_t property_period_ms)
+{
+    S5Site_TestUseProfile(NULL);
+    profile = *S5Site_GetProfile();
+    profile.s3.shoulder_property_period_ms = property_period_ms;
+    assert(S5Site_ReadReady(&profile));
+    S5Site_TestUseProfile(&profile);
+    tick = 100U; TestClock_Set(tick);
+    shoulder_axis_state = 1U; shoulder_mode = shoulder_input = 3U;
+    shoulder_torque = 0.0f; shoulder_rev = 0.25f;
+    elbow_offset_ticks = 0U; elbow_reverse = true; elbow_rpm = 0;
+    life = 0U; shoulder_nonzero = shoulder_idle = 0U;
+    App_Init(); TestCanTx_Reset();
+    shoulder_heartbeat(); TestCan_Interrupt(BOARD_CAN_SHOULDER); CanMonitor_Poll();
+    assert(strstr(TestConsole_QueryCached("followprepare\n"), "preparing"));
+}
+
+static uint32_t r5_first_property_pair(void)
+{
+    for (unsigned i = 0U; i < 500U; i++) {
+        dual_step();
+        S5FollowStatus s = {0};
+        S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_PREPARING && !s.shoulder_zero_valid
+            && !s.output_allowed);
+        ShoulderPropertySnapshot pair = {0};
+        if (s.elbow_zero_valid && CanMonitor_GetShoulderProperties(tick,
+                profile.s3.safety.feedback_timeout_ms, &pair)) {
+            assert(pair.sequence != 0U);
+            return pair.sequence;
+        }
+    }
+    assert(!"first complete shoulder pair missing");
+    return 0U;
+}
+
+static void r5_dual_two_pair_zero(void)
+{
+    r5_zero_fixture(1U);
+    uint32_t first_sequence = r5_first_property_pair();
+    uint32_t first_ms = tick;
+    shoulder_rev = 0.30f; /* Changed by 0.05 rotor rev: well beyond the old fine span. */
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 19U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_PREPARING && !s.output_allowed);
+        if (s.shoulder_zero_valid) { break; }
+    }
+    ShoulderPropertySnapshot second = {0};
+    assert(s.shoulder_zero_valid && (uint32_t)(tick - first_ms) < 20U
+        && CanMonitor_GetShoulderProperties(tick,
+            profile.s3.safety.feedback_timeout_ms, &second)
+        && second.sequence != first_sequence);
+}
+
+static void r5_dual_no_post_zero_dwell(void)
+{
+    /* The second shoulder pair arrives after the elbow's 250 ms zero window.
+     * The gateway must prepare on those two pairs, without a third shoulder
+     * pair or another 200 ms stationary window. */
+    r5_zero_fixture(140U);
+    (void)r5_first_property_pair();
+    shoulder_rev = 0.30f;
+    uint32_t both_zero_ms = 0U;
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 500U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase != S5_FOLLOW_FAULT && !s.output_allowed);
+        if (both_zero_ms == 0U && s.shoulder_zero_valid && s.elbow_zero_valid) {
+            both_zero_ms = tick;
+        }
+        if (s.output_state != OUTPUT_SAFE_OFF) {
+            assert(both_zero_ms != 0U && (uint32_t)(tick - both_zero_ms) < 10U);
+            return;
+        }
+    }
+    assert(!"R5 stayed SAFE_OFF after both RAM zeroes");
+}
+#endif
+
 static void dual_chain(void)
 {
     profile = dual_profile();
@@ -341,6 +446,9 @@ static void dual_chain(void)
     tick = 100U; TestClock_Set(tick);
     shoulder_axis_state = 1U; shoulder_mode = shoulder_input = 3U;
     shoulder_torque = 0.0f; shoulder_rev = 0.25f;
+    elbow_offset_ticks = 0U;
+    elbow_reverse = false;
+    elbow_rpm = 0;
     life = 0U; shoulder_nonzero = shoulder_idle = 0U;
     App_Init(); TestCanTx_Reset();
     shoulder_heartbeat(); TestCan_Interrupt(BOARD_CAN_SHOULDER); CanMonitor_Poll();
@@ -377,53 +485,122 @@ static void dual_chain(void)
 }
 
 #ifdef S5_R5_DUAL_FOLLOW
-static void r5_dual_start_running(bool inject_br)
+static void r5_dual_cancel_early(bool pending_read)
 {
-    S5Site_TestUseProfile(NULL); /* Use the actual isolated R5 site. */
+    S5Site_TestUseProfile(NULL);
     tick = 100U; TestClock_Set(tick);
     shoulder_axis_state = 1U; shoulder_mode = shoulder_input = 3U;
     shoulder_torque = 0.0f; shoulder_rev = 0.25f;
+    elbow_offset_ticks = 0U; elbow_reverse = true;
+    elbow_rpm = 0;
     life = 0U; shoulder_nonzero = shoulder_idle = 0U;
     App_Init(); TestCanTx_Reset();
+    shoulder_heartbeat(); TestCan_Interrupt(BOARD_CAN_SHOULDER); CanMonitor_Poll();
+    assert(strstr(TestConsole_QueryCached("followprepare\n"), "preparing"));
+    S5FollowStatus s;
+    S5Follow_GetStatus(&s);
+    assert(s.phase == S5_FOLLOW_PREPARING && s.output_state == OUTPUT_SAFE_OFF);
+    if (pending_read) {
+        dual_step();
+        assert(TestCanTx_Pending(BOARD_CAN_SHOULDER, 0U) != NULL);
+    }
+    (void)TestConsole_QueryCached("followstop\n");
+    S5Follow_GetStatus(&s);
+    assert(s.phase != S5_FOLLOW_FAULT && !s.output_allowed);
+    for (unsigned i = 0U; i < 100U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        if (s.phase == S5_FOLLOW_STOPPED || s.phase == S5_FOLLOW_FAULT) { break; }
+    }
+    assert(s.phase == S5_FOLLOW_STOPPED && !s.output_allowed
+        && !s.shoulder_zero_valid && !s.elbow_zero_valid);
+}
+
+static void r5_inject_shoulder_can_history(void)
+{
+    TestCan_Inject(BOARD_CAN_SHOULDER, 0x7FFU, 9U, 0U, 0U, 0U);
+    TestCan_Interrupt(BOARD_CAN_SHOULDER); /* Invalid DLC is only historical. */
+    for (unsigned i = 0U; i <= S2_CAN_QUEUE_CAPACITY; i++) {
+        TestCan_Inject(BOARD_CAN_SHOULDER, 0x7FFU, 8U, 0U, 0U, 0U);
+        TestCan_Interrupt(BOARD_CAN_SHOULDER);
+    }
+    for (unsigned i = 0U; i < S2_CAN_QUEUE_CAPACITY; i++) { CanMonitor_Poll(); }
+    hcan1.ErrorCode = HAL_CAN_ERROR_RX_FOV0;
+    HAL_CAN_ErrorCallback(&hcan1);
+    BoardCanStats can;
+    assert(BoardCan_GetStats(BOARD_CAN_SHOULDER, &can)
+        && can.dropped != 0U && can.invalid != 0U
+        && can.fifo_overruns != 0U && can.queued == 0U && !can.bus_off);
+}
+
+static void r5_dual_start_running(bool inject_br, bool inject_shoulder_history)
+{
+    S5Site_TestUseProfile(NULL); /* Use the actual isolated R5 site. */
+    const S5SiteProfile *p = S5Site_GetProfile();
+    tick = 100U; TestClock_Set(tick);
+    shoulder_axis_state = 1U; shoulder_mode = shoulder_input = 3U;
+    shoulder_torque = 0.0f; shoulder_rev = 0.25f;
+    elbow_offset_ticks = 0U;
+    elbow_reverse = true;
+    elbow_rpm = 0;
+    life = 0U; shoulder_nonzero = shoulder_idle = 0U;
+    App_Init(); TestCanTx_Reset();
+    if (inject_shoulder_history) { r5_inject_shoulder_can_history(); }
     shoulder_heartbeat(); TestCan_Interrupt(BOARD_CAN_SHOULDER); CanMonitor_Poll();
     assert(S5Follow_IsSelected() && !S4Follow_IsSelected());
     assert(strstr(TestConsole_QueryCached("followprepare\n"), "preparing"));
     S5FollowStatus s = {0};
-    bool moved_to_sector = false;
     bool br_injected = false;
     for (unsigned i = 0U; i < 5000U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
         assert(s.phase != S5_FOLLOW_FAULT);
-        if (!moved_to_sector && s.shoulder_zero_valid) {
-            if (inject_br) {
-                /* HAL_CAN_ERROR_BR is 0x40 in the STM32F4 HAL. A single
-                 * historical CAN error must not strand fresh dual feedback. */
-                const uint32_t br = 0x40U;
-                BoardCanStats can;
-                assert(s.phase == S5_FOLLOW_PREPARING);
-                hcan1.ErrorCode = br;
-                HAL_CAN_ErrorCallback(&hcan1);
-                assert(BoardCan_GetStats(BOARD_CAN_SHOULDER, &can)
-                    && can.errors == 1U && can.last_error == br && !can.bus_off);
-                br_injected = true;
-            }
-            /* 8 rotor turns per joint turn: 0.25 rev origin + 25 joint degrees. */
-            shoulder_rev = 0.25f + 8.0f * 25.0f / 360.0f;
-            moved_to_sector = true;
+        if (!br_injected && inject_br && s.shoulder_zero_valid) {
+            /* One historical CAN bit error cannot strand fresh dual feedback. */
+            const uint32_t br = 0x40U;
+            BoardCanStats can;
+            assert(s.phase == S5_FOLLOW_PREPARING);
+            hcan1.ErrorCode = br;
+            HAL_CAN_ErrorCallback(&hcan1);
+            assert(BoardCan_GetStats(BOARD_CAN_SHOULDER, &can)
+                && can.errors == 1U && can.last_error == br && !can.bus_off);
+            br_injected = true;
         }
         if (s.phase == S5_FOLLOW_READY) { break; }
     }
-    assert((!inject_br || br_injected) && moved_to_sector && s.phase == S5_FOLLOW_READY
+    assert((!inject_br || br_injected) && s.phase == S5_FOLLOW_READY
         && s.shoulder_zero_valid && s.elbow_zero_valid
-        && fabsf(s.joint[0].position_rad - 0.43633231f) < 0.005f);
+        && fabsf(s.joint[0].position_rad) < 0.005f
+        && fabsf(s.joint[1].position_rad) < 0.005f);
+    /* READY at the RAM zero must be startable without a precise pre-start
+     * displacement. At zero, the elbow candidate is nonzero and the shoulder
+     * gravity candidate is zero. */
     assert(strstr(TestConsole_QueryCached("followstart\n"), "axes=3"));
     uint32_t armed_ms = tick;
-    for (unsigned i = 0U; i < 400U; i++) {
+    bool elbow_nonzero = false;
+    for (unsigned i = 0U; i < 200U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
         assert(s.phase != S5_FOLLOW_FAULT);
         const BoardCanFrame *elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
-        if (shoulder_nonzero != 0U && elbow != NULL && elbow->id == 0x200U
-            && (elbow->data[0] != 0U || elbow->data[1] != 0U)) { break; }
+        if (elbow != NULL && elbow->id == 0x200U
+            && (elbow->data[0] != 0U || elbow->data[1] != 0U)) {
+            elbow_nonzero = true;
+            break;
+        }
+    }
+    assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed
+        && elbow_nonzero && shoulder_nonzero == 0U);
+    const BoardCanFrame *first_elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
+    BoardCanFrame expected_elbow = {0};
+    assert(MotorCommand_C620(p->s3.elbow_id,
+        -0.001f * S5_R5_ELBOW_SUPPORT_MA * S5_R5_ELBOW_SUPPORT_SIGN,
+        &expected_elbow));
+    assert(first_elbow != NULL && first_elbow->id == expected_elbow.id
+        && memcmp(first_elbow->data, expected_elbow.data, 8U) == 0);
+    /* Raise only the mock shoulder slowly after Start. No exact angle is
+     * needed to trigger RUNNING; movement only makes shoulder support visible. */
+    for (unsigned i = 0U; i < 600U; i++) {
+        shoulder_rev += 8.0f * 10.0f / (360.0f * 600.0f);
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase != S5_FOLLOW_FAULT);
     }
     assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed
         && shoulder_nonzero != 0U
@@ -437,16 +614,39 @@ static void r5_dual_start_running(bool inject_br)
 
 static void r5_dual_chain(void)
 {
-    r5_dual_start_running(true);
+    r5_dual_start_running(true, false);
+    /* A 70-degree posture: the model target and the actual CAN command must
+     * both equal the model value, clipped to the shoulder cap when it binds. */
+    const S5SiteProfile *site_p = S5Site_GetProfile();
+    const float model = site_p->shoulder_gravity.amplitude_nm * site_p->shoulder_gain
+        * sinf(70.0f * 3.14159265f / 180.0f) / site_p->s3.safety.joint[0].mapping.rotor_per_joint;
+    const float cap = fminf(site_p->s3.safety.joint[0].max_motor_command, model);
+    shoulder_rev = 0.25f + 8.0f * 70.0f / 360.0f;
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 300U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_RUNNING);
+        if (fabsf(s.target.shoulder_rotor_nm - cap) < 0.0001f
+            && fabsf(shoulder_torque - cap) < 0.0001f) { break; }
+    }
+    assert(fabsf(s.target.shoulder_rotor_nm - cap) < 0.0001f
+        && fabsf(shoulder_torque - cap) < 0.0001f);
     TestCanTx_Complete(BOARD_CAN_SHOULDER);
     TestCanTx_Complete(BOARD_CAN_ELBOW);
+    uint32_t stop_start_ms = tick;
+    uint32_t zero_sent_ms = 0U;
     assert(strstr(TestConsole_QueryCached("followstop\n"), "ramping_down"));
-    S5FollowStatus s = {0};
     for (unsigned i = 0U; i < 2000U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
+        const BoardCanFrame *sent = TestCanTx_Last(BOARD_CAN_ELBOW);
+        if (zero_sent_ms == 0U && sent != NULL && sent->id == 0x200U
+            && sent->data[0] == 0U && sent->data[1] == 0U) {
+            zero_sent_ms = (uint32_t)(tick - stop_start_ms);
+        }
         if (s.phase == S5_FOLLOW_STOPPED || s.phase == S5_FOLLOW_FAULT) { break; }
     }
     assert(s.phase == S5_FOLLOW_STOPPED && s.stop_accepted
+        && zero_sent_ms > 0U && zero_sent_ms <= 1000U
         && !s.output_allowed && shoulder_idle == 1U
         && !s.shoulder_zero_valid && !s.elbow_zero_valid);
     const BoardCanFrame *elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
@@ -456,7 +656,7 @@ static void r5_dual_chain(void)
 
 static void r5_dual_elbow_stale(void)
 {
-    r5_dual_start_running(false);
+    r5_dual_start_running(false, false);
     S5FollowStatus s = {0};
     for (unsigned i = 0U; i < 220U; i++) {
         dual_step_with_elbow(false); S5Follow_GetStatus(&s);
@@ -470,6 +670,132 @@ static void r5_dual_elbow_stale(void)
     assert(elbow != NULL && elbow->id == 0x200U);
     for (unsigned i = 0U; i < 8U; i++) { assert(elbow->data[i] == 0U); }
 }
+
+static void r5_dual_elbow_step(void)
+{
+    r5_dual_start_running(false, false);
+    elbow_offset_ticks = 9U; /* A fresh in-range step previously latched FAULT. */
+    dual_step();
+    S5FollowStatus s = {0};
+    S5Follow_GetStatus(&s);
+    assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed
+        && s.joint[1].valid && s.joint[1].position_rad > 0.0f);
+}
+
+static void r5_dual_can_history(void)
+{
+    r5_dual_start_running(false, true);
+    TestCan_Inject(BOARD_CAN_ELBOW, 0x201U, 8U, 1U, 0U, 0U);
+    TestCan_Interrupt(BOARD_CAN_ELBOW);
+    BoardCanStats can;
+    assert(BoardCan_GetStats(BOARD_CAN_ELBOW, &can) && can.invalid == 1U);
+    dual_step(); /* Fresh valid feedback follows the malformed frame. */
+    S5FollowStatus s = {0};
+    S5Follow_GetStatus(&s);
+    assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+}
+
+static void r5_dual_upper_boundary(void)
+{
+    r5_dual_start_running(false, false);
+    /* Measured front motion ended at 110 degrees; the test boundary is 105. */
+    shoulder_rev = 0.25f + 8.0f * 106.0f / 360.0f;
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 220U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        if (s.phase == S5_FOLLOW_FAULT) { break; }
+    }
+    assert(s.phase == S5_FOLLOW_FAULT && s.safety_reason == SAFETY_RANGE
+        && !s.output_allowed && s.stop_attempted);
+    dual_step();
+    const BoardCanFrame *elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
+    assert(elbow != NULL && elbow->id == 0x200U && shoulder_idle == 1U);
+    for (unsigned i = 0U; i < 8U; i++) { assert(elbow->data[i] == 0U); }
+}
+
+static bool elbow_last_zero(void)
+{
+    const BoardCanFrame *e = TestCanTx_Last(BOARD_CAN_ELBOW);
+    return e != NULL && e->id == 0x200U && e->data[0] == 0U && e->data[1] == 0U;
+}
+
+static void r5_dual_soft_pause(void)
+{
+    r5_dual_start_running(false, false);
+    elbow_rpm = 20; /* 120 deg/s: above the 90 deg/s soft pause, below 180. */
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 200U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+        if (s.assist_paused && elbow_last_zero()) { break; }
+    }
+    assert(s.assist_paused && s.speed_pauses == 1U && elbow_last_zero()
+        && s.target.elbow_current_a == 0.0f && s.target.shoulder_rotor_nm == 0.0f
+        && fabsf(s.peak_speed_rad_s[1] - 20.0f * 6.2831853f / 60.0f) < 0.01f);
+    elbow_rpm = 0;
+    bool resumed = false;
+    for (unsigned i = 0U; i < 1000U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+        if (!s.assist_paused && !elbow_last_zero()) { resumed = true; break; }
+    }
+    assert(resumed && s.speed_pauses == 1U);
+}
+
+static void r5_dual_hard_speed(void)
+{
+    r5_dual_start_running(false, false);
+    elbow_rpm = 35; /* 210 deg/s exceeds the latched 180 deg/s elbow limit. */
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 50U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        if (s.phase == S5_FOLLOW_FAULT) { break; }
+    }
+    assert(s.phase == S5_FOLLOW_FAULT && s.safety_reason == SAFETY_SPEED
+        && !s.output_allowed && s.stop_attempted);
+    dual_step(); /* Complete the pending shoulder stop frame. */
+    assert(elbow_last_zero() && shoulder_idle == 1U);
+}
+
+static void r5_dual_stop_settling(void)
+{
+    r5_dual_start_running(false, false);
+    TestCanTx_Complete(BOARD_CAN_SHOULDER);
+    TestCanTx_Complete(BOARD_CAN_ELBOW);
+    assert(strstr(TestConsole_QueryCached("followstop\n"), "ramping_down"));
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 4000U; i++) {
+        shoulder_rev += 0.0002f; /* About 9 deg/s at the joint: never stationary. */
+        dual_step(); S5Follow_GetStatus(&s);
+        if (s.phase == S5_FOLLOW_STOPPED || s.phase == S5_FOLLOW_FAULT) { break; }
+    }
+    assert(s.phase == S5_FOLLOW_STOPPED && s.stop_accepted && !s.output_allowed
+        && shoulder_idle == 1U && !s.reader.stop_observed);
+}
+
+static void r5_dual_elbow_lower_margin(void)
+{
+    r5_dual_start_running(false, false);
+    /* A hanging forearm reached about -8.9 degrees relative to the upper arm
+     * on the bench; about -14.5 degrees must stay RUNNING. Beyond -20 degrees
+     * still faults. */
+    elbow_reverse = false;
+    elbow_offset_ticks = 330U;
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 50U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+    }
+    assert(s.joint[1].valid && s.joint[1].position_rad < -0.24f
+        && s.joint[1].position_rad > -0.26f);
+    elbow_offset_ticks = 467U; /* About -20.5 degrees. */
+    for (unsigned i = 0U; i < 50U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        if (s.phase == S5_FOLLOW_FAULT) { break; }
+    }
+    assert(s.phase == S5_FOLLOW_FAULT && s.safety_reason == SAFETY_RANGE
+        && !s.output_allowed && s.stop_attempted);
+}
 #endif
 
 void TestS5Follow_Run(const char *scenario)
@@ -482,8 +808,19 @@ void TestS5Follow_Run(const char *scenario)
 #endif
 #ifdef S5_R5_DUAL_FOLLOW
     else if (!strcmp(scenario, "s5_r5_site")) { r5_dual_site(); }
+    else if (!strcmp(scenario, "s5_r5_dual_two_pair_zero")) { r5_dual_two_pair_zero(); }
+    else if (!strcmp(scenario, "s5_r5_dual_no_post_zero_dwell")) { r5_dual_no_post_zero_dwell(); }
+    else if (!strcmp(scenario, "s5_r5_dual_cancel_early")) { r5_dual_cancel_early(false); }
+    else if (!strcmp(scenario, "s5_r5_dual_cancel_pending")) { r5_dual_cancel_early(true); }
     else if (!strcmp(scenario, "s5_r5_dual_chain")) { r5_dual_chain(); }
     else if (!strcmp(scenario, "s5_r5_dual_elbow_stale")) { r5_dual_elbow_stale(); }
+    else if (!strcmp(scenario, "s5_r5_dual_elbow_step")) { r5_dual_elbow_step(); }
+    else if (!strcmp(scenario, "s5_r5_dual_can_history")) { r5_dual_can_history(); }
+    else if (!strcmp(scenario, "s5_r5_dual_upper_boundary")) { r5_dual_upper_boundary(); }
+    else if (!strcmp(scenario, "s5_r5_dual_soft_pause")) { r5_dual_soft_pause(); }
+    else if (!strcmp(scenario, "s5_r5_dual_hard_speed")) { r5_dual_hard_speed(); }
+    else if (!strcmp(scenario, "s5_r5_dual_stop_settling")) { r5_dual_stop_settling(); }
+    else if (!strcmp(scenario, "s5_r5_dual_elbow_lower_margin")) { r5_dual_elbow_lower_margin(); }
 #endif
     else { assert(!"unknown S5 scenario"); }
 }

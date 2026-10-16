@@ -9,8 +9,9 @@ typedef struct {
     float origin_rev;
     uint32_t sequence, request_ms, reply_ms, begin_ms;
 } S3RelativeAnchor;
-/* Read-only S4 shoulder evidence. The last published property cycle is copied
- * even when stale, with validity carried separately. No field is a permit. */
+/* Read-only shoulder evidence. S3/S4 publish full property cycles; S5
+ * publishes paired position/velocity after an initial full cycle. The last
+ * snapshot is copied even when stale, with validity carried separately. */
 typedef struct {
     GdsFeedback heartbeat;
     ShoulderPropertySnapshot properties;
@@ -25,6 +26,7 @@ void S3Feedback_EndRelative(void);
 S3RelativeAnchor S3Feedback_GetAnchor(void);
 /* Explicit output-disabled C620 RAM origin for a 1:1 assembled elbow. */
 bool S3Feedback_BeginElbowSession(uint32_t now_ms);
+bool S3Feedback_BeginElbowSessionForDual(uint32_t now_ms);
 void S3Feedback_EndElbowSession(void);
 ElbowSessionPhase S3Feedback_ElbowSessionPhase(void);
 uint32_t S3Feedback_ElbowSessionSequence(void); /* Last mapped, accepted C620 frame. */
@@ -32,7 +34,7 @@ bool S3Feedback_ElbowSessionRotorZeroRad(float *out_zero_rad);
 /* Actual main-loop snapshots. Unavailable reference/readback/stop stays false. */
 bool S3Feedback_Read(const S3SiteProfile *profile, uint32_t now_ms, S3SiteSample *out);
 /* Returns read-channel availability, not model or output readiness. A joint
- * sample requires a fresh complete property cycle and confirmed mapping. */
+ * sample requires fresh paired position/velocity and confirmed mapping. */
 bool S3Feedback_ReadShoulderObservation(const S3SiteProfile *profile, uint32_t now_ms,
                                         S3ShoulderObservation *out);
 #endif

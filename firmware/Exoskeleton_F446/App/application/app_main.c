@@ -34,8 +34,9 @@ void App_Init(void)
     ConsoleCommands_Init();
     (void)BoardConsole_Start(); /* Failure is latched; Poll shows fault heartbeat. */
     CanMonitor_Init(s5_mode ? &s5->s3 : s4_mode ? &s4->s3 : S3Site_GetProfile(),
-                    (s4_mode || (s5_mode && s5->s3.safety.enabled_axes == SAFETY_ALL_AXES))
-                        ? SHOULDER_READER_S4 : SHOULDER_READER_S3);
+                    s5_mode && s5->s3.safety.enabled_axes == SAFETY_ALL_AXES
+                        ? SHOULDER_READER_S5
+                        : s4_mode ? SHOULDER_READER_S4 : SHOULDER_READER_S3);
     S4Follow_Init(s4_mode ? s4 : NULL);
     S5Follow_Init(s5_mode ? s5 : NULL);
 }

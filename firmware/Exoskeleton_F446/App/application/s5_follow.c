@@ -21,6 +21,9 @@ static uint32_t zero_shoulder_sequence, zero_shoulder_request_ms;
 static uint32_t last_sent_sequence[SAFETY_JOINT_COUNT];
 static float first_rev;
 static bool first_seen, preparation_submitted, selected;
+static float assist_scale;
+static bool assist_quiet;
+static uint32_t assist_quiet_ms, assist_scale_ms;
 
 static bool newer(uint32_t value, uint32_t before)
 {
@@ -31,14 +34,68 @@ static bool newer(uint32_t value, uint32_t before)
 static bool dual(void)
 { return site != NULL && site->s3.safety.enabled_axes == SAFETY_ALL_AXES; }
 
+static bool soft_speed_enabled(void)
+{ return dual() && site->soft_speed_rad_s[0] > 0.0f && site->soft_speed_rad_s[1] > 0.0f; }
+
+static void reset_assist_pause(uint32_t now_ms)
+{
+    status.assist_paused = false;
+    status.speed_pauses = 0U;
+    status.peak_speed_rad_s[0] = status.peak_speed_rad_s[1] = 0.0f;
+    assist_scale = 1.0f;
+    assist_quiet = false;
+    assist_quiet_ms = assist_scale_ms = now_ms;
+}
+
+/* ExoKit AmplifyReaction::runLoop(): above its speed limit the joint torque is
+ * switched off for that loop and re-applied once motion conditions return.
+ * Here the candidate becomes zero above any soft speed, is held at zero until
+ * every axis stays below half its soft speed for resume_quiet_ms, then ramps
+ * back over resume_ramp_ms. No FAULT here; SafetySupervisor keeps the hard
+ * limit, feedback, range and transport checks. */
+static float assist_gain(const S3SiteSample *sample, uint32_t now_ms)
+{
+    if (!soft_speed_enabled()) { return 1.0f; }
+    bool over = false, quiet = true;
+    for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
+        float speed = fabsf(sample->joint[axis].velocity_rad_s);
+        if (speed > status.peak_speed_rad_s[axis]) { status.peak_speed_rad_s[axis] = speed; }
+        over = over || speed > site->soft_speed_rad_s[axis];
+        quiet = quiet && speed < 0.5f * site->soft_speed_rad_s[axis];
+    }
+    if (over) {
+        if (!status.assist_paused && status.speed_pauses < UINT16_MAX) { status.speed_pauses++; }
+        status.assist_paused = true;
+        assist_scale = 0.0f;
+        assist_quiet = false;
+        return 0.0f;
+    }
+    if (status.assist_paused) {
+        if (!quiet) { assist_quiet = false; return 0.0f; }
+        if (!assist_quiet) { assist_quiet = true; assist_quiet_ms = now_ms; return 0.0f; }
+        if ((uint32_t)(now_ms - assist_quiet_ms) < site->resume_quiet_ms) { return 0.0f; }
+        status.assist_paused = false;
+        assist_scale_ms = now_ms;
+        return 0.0f; /* Ramp starts from zero on the next poll. */
+    }
+    if (assist_scale < 1.0f) {
+        uint32_t elapsed = now_ms - assist_scale_ms;
+        assist_scale += (float)elapsed / (float)site->resume_ramp_ms;
+        if (assist_scale > 1.0f) { assist_scale = 1.0f; }
+    }
+    assist_scale_ms = now_ms;
+    return assist_scale;
+}
+
 static bool bus_healthy(BoardCanBus bus)
 {
     BoardCanStats can;
-    /* Historical protocol errors are diagnostic; live feedback proves recovery. */
-    return BoardCan_GetStats(bus, &can) && can.started
-        && can.start_error == BOARD_CAN_START_OK && !can.bus_off
-        && can.dropped == 0U
-        && can.fifo_overruns == 0U && can.invalid == 0U;
+    if (!BoardCan_GetStats(bus, &can) || !can.started
+        || can.start_error != BOARD_CAN_START_OK || can.bus_off) { return false; }
+    /* For dual FOLLOW, fresh validated feedback proves recovery from an
+     * earlier queue/protocol error. These cumulative counters remain visible. */
+    return dual() || (can.dropped == 0U
+        && can.fifo_overruns == 0U && can.invalid == 0U);
 }
 
 static bool read_inputs(uint32_t now_ms, uint32_t elapsed_ms,
@@ -54,9 +111,23 @@ static bool read_inputs(uint32_t now_ms, uint32_t elapsed_ms,
     if (CanMonitor_GetElbowStandstill(now_ms).stationary) {
         in->stationary_axes |= SAFETY_ELBOW_AXES;
     }
+#if defined(S5_R5_DUAL_FOLLOW)
+    /* The two quiet position/velocity pairs used for the RAM zero also prove
+     * preparation standstill. Do not start another 200 ms observation window. */
+    if (dual() && status.shoulder_zero_valid && sample->joint[0].valid
+        && (uint32_t)(now_ms - sample->joint[0].received_ms)
+            <= site->s3.safety.feedback_timeout_ms
+        && sample->shoulder_properties.valid
+        && isfinite(sample->shoulder_properties.value[GDS_PROPERTY_VELOCITY].real)
+        && fabsf(sample->shoulder_properties.value[GDS_PROPERTY_VELOCITY].real)
+            <= site->s3.shoulder_standstill.max_velocity_rev_s) {
+        in->stationary_axes |= SAFETY_SHOULDER_AXES;
+    }
+#else
     if (dual() && ShoulderStandstill_Read(&shoulder_still, now_ms).stationary) {
         in->stationary_axes |= SAFETY_SHOULDER_AXES;
     }
+#endif
     in->drivers_ready = OutputGateway_DriverReady(&gateway, sample->driver, now_ms);
     in->transport_healthy = elapsed_ms > 0U
         && elapsed_ms <= site->s3.safety.service_limit_ms
@@ -107,8 +178,9 @@ static bool capture_elbow_zero(void)
     return true;
 }
 
-/* Dual mode needs two distinct complete post-command SDO cycles to establish
- * a quiet shoulder origin. The first cycle is never reused as in-range proof. */
+/* Dual mode needs two distinct post-command position/velocity pairs to
+ * establish a quiet shoulder origin. The initial full read proves the five
+ * static attributes; subsequent pairs need only refresh position and speed. */
 static bool capture_shoulder_zero(const S3SiteSample *sample,
                                   const SafetyInputs *in, uint32_t now_ms)
 {
@@ -123,20 +195,23 @@ static bool capture_shoulder_zero(const S3SiteSample *sample,
     for (unsigned i = 0U; i < GDS_PROPERTY_COUNT; i++) {
         if (!newer(p->requested_ms[i], prepare_started_ms)
             || !newer(p->received_ms[i], prepare_started_ms)) {
-            return false; /* A cycle begun before Prepare is only historical. */
+            return false; /* A field read before Prepare is only historical. */
         }
         if ((uint32_t)(p->received_ms[i] - p->requested_ms[i])
-                > site->s3.shoulder_property_reply_ms
-            || (uint32_t)(now_ms - p->requested_ms[i])
-                > site->s3.safety.feedback_timeout_ms) {
+                > site->s3.shoulder_property_reply_ms) {
             fail_follow(); return false;
         }
     }
+    if ((uint32_t)(now_ms - p->requested_ms[GDS_PROPERTY_POSITION])
+            > site->s3.safety.feedback_timeout_ms
+        || (uint32_t)(now_ms - p->requested_ms[GDS_PROPERTY_VELOCITY])
+            > site->s3.safety.feedback_timeout_ms) { return false; }
     float rev = p->value[GDS_PROPERTY_POSITION].real;
     float speed = p->value[GDS_PROPERTY_VELOCITY].real;
-    if (!isfinite(rev) || !isfinite(speed)
-        || fabsf(speed) > site->s3.shoulder_standstill.max_velocity_rev_s) {
-        fail_follow(); return false;
+    if (!isfinite(rev) || !isfinite(speed)) { fail_follow(); return false; }
+    if (fabsf(speed) > site->s3.shoulder_standstill.max_velocity_rev_s) {
+        first_seen = false;
+        return false; /* Wait for a quiet pair while output is still disabled. */
     }
     uint32_t request_ms = p->requested_ms[GDS_PROPERTY_POSITION];
     if (!first_seen) {
@@ -145,10 +220,14 @@ static bool capture_shoulder_zero(const S3SiteSample *sample,
         return false;
     }
     if (p->sequence == first_sequence) { return false; }
-    if (!newer(p->sequence, first_sequence) || !newer(request_ms, first_request_ms)
-        || fabsf(rev - first_rev) > site->s3.shoulder_standstill.span_rev) {
+    if (!newer(p->sequence, first_sequence) || !newer(request_ms, first_request_ms)) {
         fail_follow(); return false;
     }
+#if !defined(S5_R5_DUAL_FOLLOW)
+    if (fabsf(rev - first_rev) > site->s3.shoulder_standstill.span_rev) {
+        return false; /* Keep the original physical 0-degree anchor. */
+    }
+#endif
     if ((uint32_t)(request_ms - first_request_ms) < site->shoulder_zero_dwell_ms) {
         return false;
     }
@@ -162,7 +241,9 @@ static bool capture_shoulder_zero(const S3SiteSample *sample,
     status.shoulder_zero_valid = true;
     zero_shoulder_sequence = p->sequence;
     zero_shoulder_request_ms = request_ms;
+#if !defined(S5_R5_DUAL_FOLLOW)
     ShoulderStandstill_After(&shoulder_still, now_ms);
+#endif
     return true;
 }
 
@@ -178,8 +259,17 @@ static bool compute_target(const S3SiteSample *sample, S5FollowEffort *effort)
         effort->shoulder_rotor_nm = joint_nm * site->shoulder_gain
             / site->s3.safety.joint[0].mapping.rotor_per_joint;
     }
-    return isfinite(effort->shoulder_rotor_nm)
-        && isfinite(effort->elbow_current_a);
+    if (!isfinite(effort->shoulder_rotor_nm)
+        || !isfinite(effort->elbow_current_a)) { return false; }
+    if (dual()) {
+        const float shoulder_cap = site->s3.safety.joint[0].max_motor_command;
+        const float elbow_cap = site->s3.safety.joint[1].max_motor_command;
+        effort->shoulder_rotor_nm = fmaxf(-shoulder_cap,
+            fminf(shoulder_cap, effort->shoulder_rotor_nm));
+        effort->elbow_current_a = fmaxf(-elbow_cap,
+            fminf(elbow_cap, effort->elbow_current_a));
+    }
+    return true;
 }
 
 void S5Follow_Init(const S5SiteProfile *profile)
@@ -220,7 +310,10 @@ bool S5Follow_Prepare(uint32_t now_ms)
         || (dual() && (S3ShoulderService_Get().state != S3_READER_IDLE
             || !S3ShoulderService_Start(now_ms)))) { return false; }
     CanMonitor_ResetElbowStandstill(now_ms);
-    if (!S3Feedback_BeginElbowSession(now_ms)) { fail_follow(); return false; }
+    if (!(dual() ? S3Feedback_BeginElbowSessionForDual(now_ms)
+                 : S3Feedback_BeginElbowSession(now_ms))) {
+        fail_follow(); return false;
+    }
     prepare_started_ms = now_ms;
     shoulder_sequence_floor = 0U;
     if (dual()) {
@@ -248,6 +341,7 @@ bool S5Follow_Start(uint32_t now_ms)
         || !OutputGateway_Arm(&gateway, &in, now_ms)) { return false; }
     status.phase = S5_FOLLOW_RUNNING;
     last_sent_sequence[0] = last_sent_sequence[1] = 0U;
+    reset_assist_pause(now_ms);
     return true;
 }
 
@@ -278,6 +372,7 @@ void S5Follow_Poll(uint32_t now_ms, uint32_t elapsed_ms)
     }
     SafetyInputs in; S3SiteSample sample;
     bool complete = read_inputs(now_ms, elapsed_ms, &in, &sample);
+#if !defined(S5_R5_DUAL_FOLLOW)
     if (dual() && status.shoulder_zero_valid
         && (status.phase == S5_FOLLOW_PREPARING || status.phase == S5_FOLLOW_READY)) {
         const ShoulderPropertySnapshot *p = &sample.shoulder_properties;
@@ -286,17 +381,20 @@ void S5Follow_Poll(uint32_t now_ms, uint32_t elapsed_ms)
         ShoulderStandstill_Observe(&shoulder_still, after_zero ? p : NULL, now_ms);
         complete = read_inputs(now_ms, elapsed_ms, &in, &sample);
     }
+#endif
     if (!in.transport_healthy) { fail_follow(); return; }
     if (status.phase == S5_FOLLOW_PREPARING && !preparation_submitted) {
         uint32_t elapsed = now_ms - prepare_started_ms;
         if (elapsed >= site->s3.prepare_timeout_ms) { fail_follow(); return; }
         if (!capture_elbow_zero()) { return; }
         if (dual() && !capture_shoulder_zero(&sample, &in, now_ms)) { return; }
-        /* A fresh complete cycle after zero, not the zero cycle, must prove
-         * the chosen low-pose envelope and standstill before 0-output Prepare. */
+        /* R5 uses the two quiet pairs already captured for the RAM zero.
+         * Other paths retain their post-zero observer. */
+#if !defined(S5_R5_DUAL_FOLLOW)
         if (dual() && !ShoulderStandstill_Read(&shoulder_still, now_ms).stationary) {
             return;
         }
+#endif
         complete = read_inputs(now_ms, elapsed_ms, &in, &sample);
         if (!complete || !SafetySupervisor_StopObserved(&session_site.s3.safety, &in)) { return; }
         SafetyReason reason = SafetySupervisor_CheckBeforePrepare(&session_site.s3.safety,
@@ -304,16 +402,23 @@ void S5Follow_Poll(uint32_t now_ms, uint32_t elapsed_ms)
         if (reason == SAFETY_RANGE || reason == SAFETY_SPEED) { return; }
         if (reason != SAFETY_OK || !S5Site_ProfileReady(&session_site)
             || !OutputGateway_ConfigureAxesFollow(&gateway, site->send_interval_ms,
-                site->session_ms, site->ramp_max_ms, site->release_slew_per_s)
-            || !OutputGateway_Prepare(&gateway, &in, sample.driver,
-                site->s3.prepare_timeout_ms - elapsed, now_ms)) {
+                site->session_ms, site->ramp_max_ms, site->release_slew_per_s)) {
+            fail_follow(); return;
+        }
+        if (!OutputGateway_Prepare(&gateway, &in, sample.driver,
+            site->s3.prepare_timeout_ms - elapsed, now_ms)
+            || (dual() && !S3ShoulderService_RequestZeroProof())) {
             fail_follow(); return;
         }
         preparation_submitted = true;
     }
     if (status.phase == S5_FOLLOW_PREPARING || status.phase == S5_FOLLOW_READY) {
+        OutputDriverPhase before = gateway.driver_phase;
         OutputGateway_PollPreparation(&gateway, &in, sample.driver, now_ms);
         if (gateway.state == OUTPUT_FAULT) { fail_follow(); return; }
+        if (dual() && before != DRIVER_WAIT_MODE
+            && gateway.driver_phase == DRIVER_WAIT_MODE
+            && !S3ShoulderService_RequestModeProof()) { fail_follow(); return; }
         if (gateway.state == OUTPUT_READY) { status.phase = S5_FOLLOW_READY; }
         return;
     }
@@ -321,6 +426,9 @@ void S5Follow_Poll(uint32_t now_ms, uint32_t elapsed_ms)
     if (status.phase == S5_FOLLOW_RUNNING) {
         S5FollowEffort effort;
         if (!compute_target(&sample, &effort)) { fail_follow(); return; }
+        float gain = assist_gain(&sample, now_ms);
+        effort.shoulder_rotor_nm *= gain;
+        effort.elbow_current_a *= gain;
         status.target = effort;
         status.model_valid = true;
         S5FollowSample feedback = {0};
@@ -360,8 +468,14 @@ bool S5Follow_Cancel(void)
     uint32_t now_ms = BoardRuntime_NowMs();
     if (status.phase == S5_FOLLOW_RUNNING) {
         SafetyInputs in; S3SiteSample sample;
-        if (!read_inputs(now_ms, last_elapsed_ms, &in, &sample)
-            || SafetySupervisor_Check(&session_site.s3.safety, &in, now_ms) != SAFETY_OK) {
+        bool complete = read_inputs(now_ms, last_elapsed_ms, &in, &sample);
+        SafetyReason reason = complete
+            ? SafetySupervisor_Check(&session_site.s3.safety, &in, now_ms) : SAFETY_FEEDBACK;
+        /* A person moving the arm while asking to stop must still get the
+         * normal ramp. Feedback, transport and driver checks keep their FAULT. */
+        bool motion_only = soft_speed_enabled()
+            && (reason == SAFETY_SPEED || reason == SAFETY_RANGE);
+        if (reason != SAFETY_OK && !motion_only) {
             fail_follow(); return false;
         }
         if (!OutputGateway_BeginNormalStop(&gateway, OUTPUT_REASON_CANCEL, now_ms)) {

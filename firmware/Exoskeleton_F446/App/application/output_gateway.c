@@ -24,6 +24,16 @@ static bool s4_follow(const OutputGateway *g)
 static bool axes_follow(const OutputGateway *g)
 { return g->config.stop_policy == SAFETY_STOP_SUPERVISED_ELBOW_FOLLOW
     || g->config.stop_policy == SAFETY_STOP_SUPERVISED_DUAL_FOLLOW; }
+static bool r5_dual_request_age_relaxed(const OutputGateway *g)
+{
+#if defined(S5_R5_DUAL_FOLLOW)
+    return g->config.stop_policy == SAFETY_STOP_SUPERVISED_DUAL_FOLLOW
+        && g->config.enabled_axes == SAFETY_ALL_AXES;
+#else
+    (void)g;
+    return false;
+#endif
+}
 static bool follow(const OutputGateway *g)
 { return s4_follow(g) || axes_follow(g); }
 
@@ -167,7 +177,6 @@ bool OutputGateway_SetElbowFollowReference(OutputGateway *g, float relative_zero
     g->elbow_reference_set = true;
     return true;
 }
-
 bool OutputGateway_Arm(OutputGateway *g, const SafetyInputs *inputs, uint32_t now_ms)
 {
     if ((g->state != OUTPUT_SAFE_OFF && g->state != OUTPUT_READY)
@@ -193,7 +202,17 @@ bool OutputGateway_Arm(OutputGateway *g, const SafetyInputs *inputs, uint32_t no
         withdraw(g, OUTPUT_REASON_EXPIRED, true);
         return false;
     }
+    bool require_ready_standstill = true;
+#if defined(S5_R5_DUAL_FOLLOW)
+    /* R5 dual FOLLOW proved quiet RAM origins during preparation. At Arm,
+     * check live health, range and speed below without another dwell window. */
+    if (g->config.stop_policy == SAFETY_STOP_SUPERVISED_DUAL_FOLLOW
+        && g->config.enabled_axes == SAFETY_ALL_AXES) {
+        require_ready_standstill = false;
+    }
+#endif
     if (g->state == OUTPUT_READY && SafetySupervisor_AxisEnabled(&g->config, 1U)
+        && require_ready_standstill
         && !SafetySupervisor_StopObserved(&g->config, inputs)) {
         g->reason = OUTPUT_REASON_HEALTH; return false;
     }
@@ -367,10 +386,12 @@ bool OutputGateway_BeginNormalStop(OutputGateway *g, OutputReason reason, uint32
     bool previous_ready;
     if (!follow_delivery_ready(g, now_ms, &previous_ready)) { return false; }
     uint32_t age = now_ms - g->armed_ms;
-    bool sample_expired = !g->request_valid && age >= g->config.max_request_ms;
+    bool sample_expired = !r5_dual_request_age_relaxed(g)
+        && !g->request_valid && age >= g->config.max_request_ms;
     if (g->request_valid && s4_follow(g)) {
         sample_expired = (uint32_t)(now_ms - g->request_ms) >= g->ttl_ms;
-    } else if (g->request_valid && axes_follow(g)) {
+    } else if (g->request_valid && axes_follow(g)
+        && !r5_dual_request_age_relaxed(g)) {
         for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
             if (SafetySupervisor_AxisEnabled(&g->config, axis)
                 && (uint32_t)(now_ms - g->axes_last_sample_ms[axis])
@@ -456,8 +477,9 @@ bool OutputGateway_RefreshAxesFollow(OutputGateway *g, S5FollowEffort effort,
         return false;
     }
     const float value[SAFETY_JOINT_COUNT] = { effort.shoulder_rotor_nm, effort.elbow_current_a };
+    bool relaxed_age = r5_dual_request_age_relaxed(g);
     bool invalid = (uint32_t)(now_ms - g->last_step_ms) > g->config.service_limit_ms
-        || (!g->request_valid && age >= g->config.max_request_ms);
+        || (!relaxed_age && !g->request_valid && age >= g->config.max_request_ms);
     for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
         bool selected = SafetySupervisor_AxisEnabled(&g->config, axis);
         if (!selected) {
@@ -473,10 +495,12 @@ bool OutputGateway_RefreshAxesFollow(OutputGateway *g, S5FollowEffort effort,
             || sample.sequence[axis] == 0U
             || (g->axes_sequence_valid[axis]
                 && (sequence_step == 0U || sequence_step >= UINT32_C(0x80000000)))
-            || sample_age >= g->config.max_request_ms
+            || sample_age >= (relaxed_age ? g->config.feedback_timeout_ms
+                                          : g->config.max_request_ms)
             || sample_age >= UINT32_C(0x80000000)
             || after_arm == 0U || after_arm >= UINT32_C(0x80000000);
-        if (g->request_valid && (uint32_t)(now_ms - g->axes_last_sample_ms[axis])
+        if (!relaxed_age && g->request_valid
+            && (uint32_t)(now_ms - g->axes_last_sample_ms[axis])
             >= g->config.max_request_ms) { invalid = true; }
     }
     if (invalid) { withdraw(g, OUTPUT_REASON_REQUEST, true); return false; }
@@ -542,6 +566,9 @@ static bool submit_axes_follow(OutputGateway *g, S5FollowEffort applied)
 
 static bool axes_samples_fresh(const OutputGateway *g, uint32_t now_ms)
 {
+    /* R5 uses the live joint-feedback timeout instead of a second, 250 ms
+     * command-producer timer. S5Follow still checks both axes every poll. */
+    if (r5_dual_request_age_relaxed(g)) { return true; }
     if (!g->request_valid) {
         return (uint32_t)(now_ms - g->armed_ms) < g->config.max_request_ms;
     }
@@ -595,27 +622,39 @@ static void step_axes_follow(OutputGateway *g, uint32_t now_ms)
         g->axes_release_slew_per_s.shoulder_rotor_nm,
         g->axes_release_slew_per_s.elbow_current_a
     };
+#if defined(S5_R5_DUAL_FOLLOW)
+    /* R5 dual bench reaches each bounded candidate on the next send slot.
+     * Normal stop alone retains the release slope and its deadline. */
+    bool direct_target = !ramp && g->config.stop_policy == SAFETY_STOP_SUPERVISED_DUAL_FOLLOW
+        && g->config.enabled_axes == SAFETY_ALL_AXES;
+#else
+    bool direct_target = false;
+#endif
     float next[SAFETY_JOINT_COUNT] = {0.0f, 0.0f};
     bool all_zero = true;
     for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
         if (!SafetySupervisor_AxisEnabled(&g->config, axis)) { continue; }
-        float slew = ramp ? release[axis] : g->config.joint[axis].motor_slew_per_s;
-        float step = slew * ((float)(ramp ? send_elapsed : g->send_interval_ms) / 1000.0f);
-        if (!isfinite(step) || step <= 0.0f) {
-            withdraw(g, OUTPUT_REASON_CONFIG, true); return;
-        }
-        if (ramp) {
-            float magnitude = fabsf(prior[axis]);
-            float next_magnitude = magnitude > step ? magnitude - step : 0.0f;
-            if (next_magnitude >= magnitude && magnitude > 0.0f) {
+        if (direct_target) {
+            next[axis] = target[axis];
+        } else {
+            float slew = ramp ? release[axis] : g->config.joint[axis].motor_slew_per_s;
+            float step = slew * ((float)(ramp ? send_elapsed : g->send_interval_ms) / 1000.0f);
+            if (!isfinite(step) || step <= 0.0f) {
                 withdraw(g, OUTPUT_REASON_CONFIG, true); return;
             }
-            next[axis] = copysignf(next_magnitude, prior[axis]);
-        } else {
-            float delta = target[axis] - prior[axis];
-            if (delta > step) { delta = step; }
-            if (delta < -step) { delta = -step; }
-            next[axis] = prior[axis] + delta;
+            if (ramp) {
+                float magnitude = fabsf(prior[axis]);
+                float next_magnitude = magnitude > step ? magnitude - step : 0.0f;
+                if (next_magnitude >= magnitude && magnitude > 0.0f) {
+                    withdraw(g, OUTPUT_REASON_CONFIG, true); return;
+                }
+                next[axis] = copysignf(next_magnitude, prior[axis]);
+            } else {
+                float delta = target[axis] - prior[axis];
+                if (delta > step) { delta = step; }
+                if (delta < -step) { delta = -step; }
+                next[axis] = prior[axis] + delta;
+            }
         }
         if (!isfinite(next[axis])
             || fabsf(next[axis]) > g->config.joint[axis].max_motor_command) {

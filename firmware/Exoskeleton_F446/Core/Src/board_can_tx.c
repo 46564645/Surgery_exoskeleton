@@ -15,6 +15,11 @@ static bool output_sent[2];
 static bool output_failed[2];
 static uint32_t output_abort_mask[2];
 static bool output_abort_pending[2];
+static BoardCanFrame output_frame[2];
+static bool output_resent[2];
+static volatile uint32_t output_alst_resends[2]; /* SWD-readable bench evidence. */
+static bool listening(CAN_HandleTypeDef *h);
+static bool add_frame(unsigned bus, const BoardCanFrame *f, uint32_t *mailbox);
 static uint32_t output_txok_bit(uint32_t mailbox)
 {
     if (mailbox == CAN_TX_MAILBOX0) { return CAN_TSR_TXOK0; }
@@ -33,11 +38,25 @@ static void reconcile_output(unsigned bus)
 {
     if (output_mailbox[bus] != 0U
         && HAL_CAN_IsTxMessagePending(handles[bus], output_mailbox[bus]) == 0U) {
-        uint32_t proof = output_rqcp_bit(output_mailbox[bus])
-            | output_txok_bit(output_mailbox[bus]);
-        output_sent[bus] = (handles[bus]->Instance->TSR & proof) == proof;
+        uint32_t rqcp = output_rqcp_bit(output_mailbox[bus]);
+        uint32_t proof = rqcp | output_txok_bit(output_mailbox[bus]);
+        uint32_t alst = rqcp << 2U, terr = rqcp << 3U; /* RQCPx/TXOKx/ALSTx/TERRx */
+        uint32_t tsr = handles[bus]->Instance->TSR;
+        output_sent[bus] = (tsr & proof) == proof;
         output_failed[bus] = !output_sent[bus];
         output_mailbox[bus] = 0U;
+        /* NART stays on. ALST without TERR means the frame never won the bus,
+         * so one same-frame resend is safe, as for shoulder reads (2026-10-07). */
+        uint32_t mailbox;
+        if (!output_sent[bus] && !output_resent[bus] && (tsr & rqcp) != 0U
+            && (tsr & alst) != 0U && (tsr & terr) == 0U && listening(handles[bus])
+            && HAL_CAN_GetTxMailboxesFreeLevel(handles[bus]) != 0U
+            && add_frame(bus, &output_frame[bus], &mailbox)) {
+            output_resent[bus] = true;
+            output_alst_resends[bus]++;
+            output_mailbox[bus] = mailbox;
+            output_failed[bus] = false;
+        }
     }
 }
 static uint32_t pending_read(void)
@@ -105,9 +124,16 @@ bool BoardCanTx_Purge(void)
 
 static bool send_mailbox(unsigned bus, const BoardCanFrame *f, uint32_t *mailbox)
 {
-    CAN_HandleTypeDef *h = handles[bus];
     reconcile_output(bus);
-    if (!listening(h) || HAL_CAN_GetTxMailboxesFreeLevel(h) == 0U) { return false; }
+    if (!listening(handles[bus]) || HAL_CAN_GetTxMailboxesFreeLevel(handles[bus]) == 0U) {
+        return false;
+    }
+    return add_frame(bus, f, mailbox);
+}
+
+static bool add_frame(unsigned bus, const BoardCanFrame *f, uint32_t *mailbox)
+{
+    CAN_HandleTypeDef *h = handles[bus];
     CAN_TxHeaderTypeDef header = {0};
     header.StdId = f->id;
     header.IDE = CAN_ID_STD;
@@ -160,6 +186,8 @@ static bool submit_axes(const BoardCanFrame frames[2], uint8_t axes_mask, bool s
             output_mailbox[i] = mailbox;
             output_sent[i] = false;
             output_failed[i] = false;
+            output_frame[i] = frames[i];
+            output_resent[i] = false;
         }
     }
     return accepted;

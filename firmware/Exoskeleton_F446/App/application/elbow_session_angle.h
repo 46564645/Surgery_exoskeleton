@@ -11,10 +11,12 @@ typedef struct {
     uint32_t begin_ms, last_ms, last_sequence;
     uint16_t zero_ticks, last_ticks;
     JointState joint;
+    bool dual_follow;
 } ElbowSessionAngle;
 
 void ElbowSessionAngle_Reset(ElbowSessionAngle *session);
 bool ElbowSessionAngle_Begin(ElbowSessionAngle *session, uint32_t now_ms);
+bool ElbowSessionAngle_BeginForDual(ElbowSessionAngle *session, uint32_t now_ms);
 /* stationary is a fresh, post-Begin C620 standstill observation. */
 void ElbowSessionAngle_Observe(ElbowSessionAngle *session, const C620Feedback *sample,
                                bool stationary, uint32_t now_ms, uint32_t timeout_ms,

@@ -16,6 +16,7 @@
 #include "s3_console.h"
 #include "s4_follow.h"
 #include "s5_follow.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -260,14 +261,18 @@ static void s5_follow_status_reply(void)
         "OK s5=1 axes=%u phase=%u gate=%u reason=%u safety=%u "
         "q_sh_mrad=%s q_el_mrad=%s cmd_sh_mNm=%s cmd_el_mA=%s "
         "seq_sh=%lu seq_el=%lu zero_sh=%u zero_el=%u remaining_ms=%lu "
-        "output_allowed=%u stop=%u stop_failed=%u\r\n",
+        "output_allowed=%u stop=%u stop_failed=%u pz=%u/%u pk=%lu/%lu\r\n",
         (unsigned)s.axes, (unsigned)s.phase, (unsigned)s.output_state,
         (unsigned)s.output_reason, (unsigned)s.safety_reason,
         shoulder_q, elbow_q, shoulder_nm, elbow_a,
         (unsigned long)s.sample.sequence[0], (unsigned long)s.sample.sequence[1],
         (unsigned)s.shoulder_zero_valid, (unsigned)s.elbow_zero_valid,
         (unsigned long)s.remaining_ms, (unsigned)s.output_allowed,
-        (unsigned)s.stop_accepted, (unsigned)s.stop_delivery_failed);
+        (unsigned)s.stop_accepted, (unsigned)s.stop_delivery_failed,
+        (unsigned)s.assist_paused, (unsigned)s.speed_pauses,
+        /* Shoulder/elbow peak |joint speed| in deg/s since Start, shown <= 9999. */
+        (unsigned long)fminf(s.peak_speed_rad_s[0] * 57.2957795f + 0.5f, 9999.0f),
+        (unsigned long)fminf(s.peak_speed_rad_s[1] * 57.2957795f + 0.5f, 9999.0f));
     if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
     else { reply("ERR format\r\n"); }
 }

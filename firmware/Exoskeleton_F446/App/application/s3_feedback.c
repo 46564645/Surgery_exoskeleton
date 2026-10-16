@@ -15,6 +15,8 @@ void S3Feedback_Init(void)
 }
 bool S3Feedback_BeginElbowSession(uint32_t now_ms)
 { return ElbowSessionAngle_Begin(&elbow_session, now_ms); }
+bool S3Feedback_BeginElbowSessionForDual(uint32_t now_ms)
+{ return ElbowSessionAngle_BeginForDual(&elbow_session, now_ms); }
 void S3Feedback_EndElbowSession(void)
 { ElbowSessionAngle_Reset(&elbow_session); }
 ElbowSessionPhase S3Feedback_ElbowSessionPhase(void)
@@ -146,6 +148,9 @@ bool S3Feedback_Read(const S3SiteProfile *p, uint32_t now_ms, S3SiteSample *out)
         bool heartbeat = s->has_heartbeat && s->life_contiguous && s->axis_error == 0U
             && s->fault_flags == 0U
             && (uint32_t)(now_ms - s->heartbeat_ms) <= p->safety.feedback_timeout_ms;
+        if (S3ShoulderService_S5FastPath()) {
+            heartbeat = heartbeat && (s->axis_state == 1U || s->axis_state == 8U);
+        }
         d->valid = fresh && heartbeat && p->shoulder_node == S2_GDS_NODE
             && p->safety.joint[0].feedback_confirmed && p->safety.joint[0].protocol_confirmed;
         if (fresh) {
@@ -153,8 +158,10 @@ bool S3Feedback_Read(const S3SiteProfile *p, uint32_t now_ms, S3SiteSample *out)
             d->calibration_verified = v[GDS_PROPERTY_MOTOR_CALIBRATED].byte == 1U
                 && v[GDS_PROPERTY_ENCODER_READY].byte == 1U;
             /* Device-reported target/mode only, not actual torque or stop. */
-            d->zero_verified = v[GDS_PROPERTY_INPUT_TORQUE].real == 0.0f;
-            d->mode_verified = v[GDS_PROPERTY_CONTROL_MODE].byte == 1U
+            d->zero_verified = properties->zero_proof_valid
+                && v[GDS_PROPERTY_INPUT_TORQUE].real == 0.0f;
+            d->mode_verified = properties->mode_pair_valid
+                && v[GDS_PROPERTY_CONTROL_MODE].byte == 1U
                 && v[GDS_PROPERTY_INPUT_MODE].byte == 1U;
             d->zero_verified_ms = properties->requested_ms[GDS_PROPERTY_INPUT_TORQUE];
             /* Fixed cycle order makes control_mode the older of the two reads,

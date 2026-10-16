@@ -45,8 +45,9 @@ typedef enum {
 bool SafetySupervisor_AxisEnabled(const SafetyConfig *config, unsigned axis);
 bool SafetySupervisor_ConfigReady(const SafetyConfig *config);
 bool SafetySupervisor_StopObserved(const SafetyConfig *config, const SafetyInputs *inputs);
-/* Preparation still checks BOTH joints/config/stop/transport; only closed-loop
- * driver readiness is deferred until independently observed. */
+/* Preparation checks both joints/config/stop/transport. Closed-loop driver
+ * readiness is deferred until independently observed. The isolated R5 dual
+ * bench defers range/speed checks to Arm and RUNNING, not feedback validity. */
 SafetyReason SafetySupervisor_CheckBeforePrepare(const SafetyConfig *config,
                                                 const SafetyInputs *inputs, uint32_t now_ms);
 SafetyReason SafetySupervisor_Check(const SafetyConfig *config,

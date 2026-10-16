@@ -65,8 +65,8 @@ r5_ma = env.get("S5_R5_HOST_MA")
 r5_defines = []
 if r5_sign is not None or r5_ma is not None:
     if r5_sign not in ("1", "-1") or r5_ma is None or not r5_ma.isdecimal() \
-            or not 1 <= int(r5_ma) <= 2000:
-        raise SystemExit("S5 R5 host profile requires sign=1/-1 and magnitude=1..2000 mA")
+            or not 1 <= int(r5_ma) <= 20000:
+        raise SystemExit("S5 R5 host profile requires sign=1/-1 and target=1..20000 mA")
     r5_defines = ["S5_R5_DUAL_FOLLOW", f"S5_R5_ELBOW_SUPPORT_SIGN={r5_sign}",
                   f"S5_R5_ELBOW_SUPPORT_MA={r5_ma}"]
 if r4_defines and r5_defines:
@@ -145,7 +145,13 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
 if r4_defines:
     cases.append("s5_r4_site")
 if r5_defines:
-    cases += ["s5_r5_site", "s5_r5_dual_chain", "s5_r5_dual_elbow_stale"]
+    cases += ["s5_r5_site", "s5_r5_dual_two_pair_zero", "s5_r5_dual_no_post_zero_dwell",
+               "s5_r5_dual_cancel_early", "s5_r5_dual_cancel_pending",
+               "s5_r5_dual_chain", "s5_r5_dual_elbow_stale", "s5_r5_dual_elbow_step",
+               "s5_r5_dual_can_history",
+               "s5_r5_dual_upper_boundary", "s5_r5_dual_soft_pause",
+               "s5_r5_dual_hard_speed", "s5_r5_dual_stop_settling",
+               "s5_r5_dual_elbow_lower_margin"]
 selected = sys.argv[1:] or cases
 if any(case not in cases for case in selected):
     raise SystemExit("Unknown host scenario")

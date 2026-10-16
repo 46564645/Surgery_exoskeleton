@@ -11,32 +11,56 @@
 #error "R5 dual FOLLOW requires an explicit +1 or -1 elbow-current sign"
 #endif
 #if !defined(S5_R5_ELBOW_SUPPORT_MA) \
-    || (S5_R5_ELBOW_SUPPORT_MA < 1 || S5_R5_ELBOW_SUPPORT_MA > 2000)
-#error "R5 dual FOLLOW requires an explicit 1..2000 mA elbow-current magnitude"
+    || (S5_R5_ELBOW_SUPPORT_MA < 1 || S5_R5_ELBOW_SUPPORT_MA > 20000)
+#error "R5 dual FOLLOW requires an explicit 1..20000 mA elbow-current target"
 #endif
-/* Isolated low-pose dual candidate. Shoulder values match the S4 40 deg/s
- * bench image; its 1.64 Nm model is a partial-load estimate. The elbow uses
- * a bounded current command, not a joint-torque or 3D gravity model. Elbow
- * mapping +1 denotes encoder-positive; support-current sign must be chosen
- * from the separate physical direction observation. Both zeroes are RAM-only. */
+/* Isolated dual candidate. The operator measured 0..110 degrees without
+ * interference on each axis with power off, and will set both RAM zeroes at
+ * the physical 0-degree marks. The -10..105-degree window includes the RAM
+ * zero with mark tolerance; it is a bench anomaly boundary, not a mechanical
+ * or human-use limit. The lower edge was -1 degree until 2026-10-16: lifting
+ * the shoulder let the hanging forearm swing the relative elbow angle past
+ * it, and the elbow reached about -5.5 degrees after release, so the 0-degree
+ * mark is not the extension stop. Assistance only pushes flexion; -10 degrees
+ * still catches a wrong zero or mapping. The 1.64 Nm shoulder model
+ * is a partial-load estimate. The elbow target is build-selected independently
+ * from its 20 A command cap; neither value is measured joint assistance.
+ * Speeds (2026-10-16, unmeasured on this bench): ExoKit AmplifyReaction
+ * withdraws torque above its speed limit and re-applies later, so the soft
+ * limits pause assistance only. Hard limits that latch FAULT are elbow
+ * 180 deg/s and shoulder 120 deg/s, about the reported ADL elbow ceiling
+ * (~210 deg/s, arXiv 2408.14361); soft limits are half of that. The old
+ * 20 deg/s elbow gate was below 4 C620 RPM. Shoulder standstill is only used
+ * for the RAM zero and is now 0.5 deg / 3 deg/s / 100 ms at the joint.
+ * 2026-10-16 user choice for a 30 s self-test: shoulder gain 0.36 -> 0.6 and
+ * rotor cap 40 -> 80 mNm (0.64 Nm joint, ~13% of the 5 Nm rev2.2 rating);
+ * elbow target is a build option (4 A chosen). Unmeasured on this bench.
+ * Second user step after a weak-feeling 30 s window: gain 0.8, cap 120 mNm
+ * (0.96 Nm joint, ~19% of rating), rise slew 20 -> 100 mNm/s because the old
+ * slew left applied torque up to ~2.6 s behind the pose (later corrected:
+ * R5 direct_target bypasses this slew while running).
+ * Third user step, "assist, not full support": gain 1.0 (whole 1.64 Nm
+ * partial-load model), cap 205 mNm = model peak (1.64 Nm joint, ~33% of
+ * rating), release slew 80 -> 120 mNm/s so the 1.9 s ramp still covers the
+ * cap. Elbow lower edge -10 -> -20 deg: the hanging forearm reached -8.9 deg. */
 static const S5SiteProfile site = {
     .s3 = {
         .safety = {
             .joint[0] = {
                 .mapping = {.rotor_per_joint = 8.0f, .rotor_zero_rad = 0.0f,
                             .direction = 1, .confirmed = true},
-                .lower_rad = 0.34906585f, .upper_rad = 0.52359878f,
-                .max_speed_rad_s = 0.69813170f,
-                .max_motor_command = 0.040f, .motor_slew_per_s = 0.020f,
+                .lower_rad = -0.17453293f, .upper_rad = 1.83259571f,
+                .max_speed_rad_s = 2.09439510f,
+                .max_motor_command = 0.205f, .motor_slew_per_s = 0.100f,
                 .limits_confirmed = true, .feedback_confirmed = true,
                 .protocol_confirmed = true
             },
             .joint[1] = {
                 .mapping = {.rotor_per_joint = 1.0f, .rotor_zero_rad = 0.0f,
-                            .direction = 1, .confirmed = true},
-                .lower_rad = -0.08726646f, .upper_rad = 0.08726646f,
-                .max_speed_rad_s = 0.34906585f,
-                .max_motor_command = 2.0f, .motor_slew_per_s = 20.0f,
+                            .direction = -1, .confirmed = true},
+                .lower_rad = -0.34906585f, .upper_rad = 1.83259571f,
+                .max_speed_rad_s = 3.14159265f,
+                .max_motor_command = 20.0f, .motor_slew_per_s = 20.0f,
                 .limits_confirmed = true, .feedback_confirmed = true,
                 .protocol_confirmed = true
             },
@@ -54,10 +78,10 @@ static const S5SiteProfile site = {
         .shoulder_source = S3_SHOULDER_ENCODER_PROPERTIES,
         .shoulder_property_reply_ms = 20U,
         .shoulder_property_period_ms = 20U,
-        .shoulder_property_window_ms = 35000U,
+        .shoulder_property_window_ms = 55000U,
         .shoulder_standstill = {
-            .span_rev = 0.001f, .max_velocity_rev_s = 0.02f,
-            .dwell_ms = 200U, .freshness_ms = 150U
+            .span_rev = 0.011f, .max_velocity_rev_s = 0.066f,
+            .dwell_ms = 100U, .freshness_ms = 150U
         },
         .shoulder_stop_window_ms = 1500U
     },
@@ -65,19 +89,21 @@ static const S5SiteProfile site = {
         .amplitude_nm = 1.64f, .gravity_zero_rad = 0.0f,
         .sign_g = 1, .confirmed = true
     },
-    .shoulder_gain = 0.36f,
+    .shoulder_gain = 1.0f,
     .elbow_support = {
         .current_at_zero_a = 0.001f * S5_R5_ELBOW_SUPPORT_MA
             * S5_R5_ELBOW_SUPPORT_SIGN,
         .slope_a_per_rad = 0.0f,
         .confirmed = true /* Bounded software candidate, not physical efficacy. */
     },
-    .release_slew_per_s = {.shoulder_rotor_nm = 0.080f,
-                           .elbow_current_a = 20.0f},
+    .release_slew_per_s = {.shoulder_rotor_nm = 0.120f,
+                           .elbow_current_a = 25.0f},
     .send_interval_ms = 50U,
-    .session_ms = 10000U,
-    .ramp_max_ms = 1000U,
-    .shoulder_zero_dwell_ms = 20U,
+    .session_ms = 30000U,
+    .ramp_max_ms = 2000U,
+    .shoulder_zero_dwell_ms = 1U,
+    .soft_speed_rad_s = {1.04719755f, 1.57079633f}, /* 60 / 90 deg/s */
+    .resume_quiet_ms = 100U, .resume_ramp_ms = 300U,
     .output_enabled = true
 };
 #elif defined(S5_R4_ELBOW_FOLLOW)
@@ -150,26 +176,21 @@ const S5SiteProfile *S5Site_GetProfile(void) { return &site; }
 static bool duration(uint32_t ms)
 { return ms > 0U && ms < UINT32_C(0x80000000); }
 
-static bool shoulder_peak_within_limit(const S5SiteProfile *p)
+/* Soft speed pause is optional and dual-only; when present each axis must sit
+ * strictly below its latched hard limit. */
+static bool soft_speed_ready(const S5SiteProfile *p, bool dual)
 {
-    const SafetyJointConfig *sh = &p->s3.safety.joint[0];
-    const GravityCompensationConfig *g = &p->shoulder_gravity;
-    double lower = (double)sh->lower_rad - (double)g->gravity_zero_rad;
-    double upper = (double)sh->upper_rad - (double)g->gravity_zero_rad;
-    double peak_fraction = 1.0;
-    const double half_pi = 1.57079632679489661923;
-    /* In a one-sided monotonic sine sector, the endpoint is the peak.
-     * Other sectors retain the conservative full-wave bound. */
-    if (isfinite(lower) && isfinite(upper) && lower >= 0.0 && upper <= half_pi) {
-        peak_fraction = sin(upper);
-    } else if (isfinite(lower) && isfinite(upper)
-               && lower >= -half_pi && upper <= 0.0) {
-        peak_fraction = -sin(lower);
+    bool any = p->soft_speed_rad_s[0] != 0.0f || p->soft_speed_rad_s[1] != 0.0f;
+    if (!any) { return p->resume_quiet_ms == 0U && p->resume_ramp_ms == 0U; }
+    if (!dual || !duration(p->resume_quiet_ms) || !duration(p->resume_ramp_ms)) {
+        return false;
     }
-    double peak_motor_nm = (double)g->amplitude_nm * (double)p->shoulder_gain
-        * peak_fraction / (double)sh->mapping.rotor_per_joint;
-    return isfinite(peak_motor_nm)
-        && peak_motor_nm <= (double)sh->max_motor_command;
+    for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
+        float soft = p->soft_speed_rad_s[axis];
+        if (!isfinite(soft) || soft <= 0.0f
+            || soft >= p->s3.safety.joint[axis].max_speed_rad_s) { return false; }
+    }
+    return true;
 }
 
 static bool base_ready(const S5SiteProfile *p)
@@ -193,11 +214,12 @@ static bool base_ready(const S5SiteProfile *p)
         || p->send_interval_ms >= s->safety.max_request_ms
         || !isfinite(p->release_slew_per_s.elbow_current_a)
         || p->release_slew_per_s.elbow_current_a <= 0.0f
-        || !p->elbow_support.confirmed) { return false; }
+        || !p->elbow_support.confirmed
+        || !soft_speed_ready(p, dual)) { return false; }
     const SafetyJointConfig *e = &s->safety.joint[1];
     if (e->mapping.rotor_per_joint != 1.0f || e->mapping.rotor_zero_rad != 0.0f
         || (e->mapping.direction != 1 && e->mapping.direction != -1)
-        || e->lower_rad >= 0.0f || e->upper_rad <= 0.0f
+        || (!dual && (e->lower_rad >= 0.0f || e->upper_rad <= 0.0f))
         || e->lower_rad <= -3.14159265f || e->upper_rad >= 3.14159265f
         || (double)e->max_speed_rad_s * s->safety.feedback_timeout_ms / 1000.0
             >= 3.14159265) { return false; }
@@ -220,7 +242,6 @@ static bool base_ready(const S5SiteProfile *p)
         && (g->sign_g == 1 || g->sign_g == -1)
         && isfinite(p->shoulder_gain) && p->shoulder_gain > 0.0f
         && p->shoulder_gain <= 1.0f
-        && shoulder_peak_within_limit(p)
         && isfinite(p->release_slew_per_s.shoulder_rotor_nm)
         && p->release_slew_per_s.shoulder_rotor_nm > 0.0f
         && ShoulderStandstill_ConfigValid(&s->shoulder_standstill)

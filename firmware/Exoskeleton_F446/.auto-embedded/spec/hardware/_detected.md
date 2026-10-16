@@ -10,5 +10,5 @@
 ## 证据
 - CMake ← CMakeLists.txt
 - STM32F4XX ← stm32f4xx_hal_conf.h
-- STM32F446XX ← stm32f446xx.h
 - STM32CubeMX ← Exoskeleton_F446.ioc
+- STM32F446XX ← stm32f446xx.h

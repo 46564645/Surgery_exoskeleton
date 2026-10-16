@@ -149,6 +149,13 @@ static void pair_request(void)
     assert(t.count == 1U && t.event[0].axes == SAFETY_ALL_AXES && !t.event[0].stop);
     assert(t.event[0].frames[0].id == 0x02EU && t.event[0].frames[1].id == 0x200U);
     assert(g.axes_applied.shoulder_rotor_nm > 0.0f && g.axes_applied.elbow_current_a > 0.0f);
+#if defined(S5_R5_DUAL_FOLLOW)
+    assert(fabsf(g.axes_applied.shoulder_rotor_nm - 0.08f) < 0.000001f
+        && fabsf(g.axes_applied.elbow_current_a - 0.32f) < 0.000001f);
+#else
+    assert(g.axes_applied.shoulder_rotor_nm < 0.08f
+        && g.axes_applied.elbow_current_a < 0.32f);
+#endif
     /* Independent new sequence permits both frames in the same millisecond. */
     assert(OutputGateway_RefreshAxesFollow(&g, (S5FollowEffort){0.08f, 0.32f},
         sample(SAFETY_ALL_AXES, 1005U, 2U, 2U), 1015U));
@@ -158,6 +165,14 @@ static void pair_request(void)
     assert(t.event[t.count - 1U].stop && t.event[t.count - 1U].axes == SAFETY_ALL_AXES);
     assert(t.event[t.count - 1U].frames[0].id == 0x027U
         && t.event[t.count - 1U].frames[1].id == 0x200U);
+
+#if defined(S5_R5_DUAL_FOLLOW)
+    ready_and_arm(&g, &t, SAFETY_ALL_AXES, 1800U);
+    assert(!OutputGateway_RefreshAxesFollow(&g, (S5FollowEffort){0.101f, 0.32f},
+        sample(SAFETY_ALL_AXES, 1805U, 1U, 1U), 1805U));
+    assert(g.state == OUTPUT_FAULT && g.reason == OUTPUT_REASON_REQUEST
+        && t.count == 1U && t.event[0].stop);
+#endif
 
     ready_and_arm(&g, &t, SAFETY_ELBOW_AXES, 2000U);
     assert(OutputGateway_RefreshAxesFollow(&g, (S5FollowEffort){0.0f, 0.2f},
@@ -169,6 +184,120 @@ static void pair_request(void)
         sample(SAFETY_ELBOW_AXES, 2015U, 0U, 2U), 2015U));
     assert(g.state == OUTPUT_FAULT && t.event[t.count - 1U].stop);
 }
+#if defined(S5_R5_DUAL_FOLLOW)
+static void dual_preparation_motion_deferred(void)
+{
+    SafetyConfig c = config(SAFETY_ALL_AXES);
+    SafetyInputs in = inputs(4000U, SAFETY_ALL_AXES);
+    in.joint[0].position_rad = 1.5f;
+    assert(SafetySupervisor_StopObserved(&c, &in));
+    assert(SafetySupervisor_CheckBeforePrepare(&c, &in, 4000U) == SAFETY_OK);
+    assert(SafetySupervisor_Check(&c, &in, 4000U) == SAFETY_RANGE);
+    in.joint[0].position_rad = 0.0f;
+    in.joint[1].velocity_rad_s = 3.0f;
+    assert(SafetySupervisor_CheckBeforePrepare(&c, &in, 4000U) == SAFETY_OK);
+    assert(SafetySupervisor_Check(&c, &in, 4000U) == SAFETY_SPEED);
+    in.joint[1].valid = false;
+    assert(SafetySupervisor_CheckBeforePrepare(&c, &in, 4000U) == SAFETY_FEEDBACK);
+    in.joint[1].valid = true;
+    in.transport_healthy = false;
+    assert(SafetySupervisor_CheckBeforePrepare(&c, &in, 4000U) == SAFETY_TRANSPORT);
+
+    PairTransport t = {0};
+    OutputTransport port = {purge, submit, &t, drained, failed};
+    OutputGateway g;
+    OutputGateway_Init(&g, &c, &port, 1U, 1U);
+    assert(OutputGateway_SetFollowReference(&g, 0.5f));
+    assert(OutputGateway_SetElbowFollowReference(&g, 0.0f));
+    assert(OutputGateway_ConfigureAxesFollow(&g, 10U, 200U, 80U,
+        (S5FollowEffort){2.0f, 8.0f}));
+    in = inputs(4000U, SAFETY_ALL_AXES);
+    in.joint[0].position_rad = 1.5f;
+    OutputDriverStatus d[2] = {driver(1U, 4000U, 1U), driver(1U, 4000U, 0U)};
+    assert(OutputGateway_Prepare(&g, &in, d, 100U, 4000U));
+    in = inputs(4001U, SAFETY_ALL_AXES); in.joint[0].position_rad = 1.5f;
+    d[0].received_ms = d[1].received_ms = 4001U;
+    d[0].zero_verified = true; d[0].zero_verified_ms = 4001U;
+    OutputGateway_PollPreparation(&g, &in, d, 4001U);
+    in = inputs(4002U, SAFETY_ALL_AXES); in.joint[0].position_rad = 1.5f;
+    d[0].received_ms = d[1].received_ms = 4002U;
+    d[0].mode_verified = true; d[0].mode_verified_ms = 4002U;
+    OutputGateway_PollPreparation(&g, &in, d, 4002U);
+    in = inputs(4003U, SAFETY_ALL_AXES); in.joint[0].position_rad = 1.5f;
+    d[0].received_ms = d[1].received_ms = 4003U; d[0].axis_state = 8U;
+    OutputGateway_PollPreparation(&g, &in, d, 4003U);
+    assert(g.state == OUTPUT_READY && g.safety_reason == SAFETY_OK);
+    in = inputs(4004U, SAFETY_ALL_AXES); in.joint[0].position_rad = 1.5f;
+    assert(!OutputGateway_Arm(&g, &in, 4004U));
+    assert(g.state == OUTPUT_READY && g.safety_reason == SAFETY_RANGE);
+
+    /* A quiet origin was proved before Prepare. At Start, a lost 200/250 ms
+     * standstill window must not veto healthy, in-range live feedback. */
+    in = inputs(4005U, 0U); in.joint[1].received_ms = 3950U;
+    assert(!OutputGateway_Arm(&g, &in, 4005U));
+    assert(g.state == OUTPUT_READY && g.safety_reason == SAFETY_FEEDBACK);
+    in = inputs(4006U, 0U); in.drivers_ready = false;
+    assert(!OutputGateway_Arm(&g, &in, 4006U));
+    assert(g.state == OUTPUT_READY && g.safety_reason == SAFETY_DRIVER_NOT_READY);
+    in = inputs(4007U, 0U); in.joint[1].velocity_rad_s = 3.0f;
+    assert(!OutputGateway_Arm(&g, &in, 4007U));
+    assert(g.state == OUTPUT_READY && g.safety_reason == SAFETY_SPEED);
+    in = inputs(4008U, 0U);
+    assert(OutputGateway_Arm(&g, &in, 4008U));
+    assert(g.state == OUTPUT_ARMED && g.reason == OUTPUT_REASON_NONE);
+}
+
+static void dual_target_age_without_feedback_loss(void)
+{
+    const uint32_t start = 5000U;
+    SafetyConfig c = config(SAFETY_ALL_AXES);
+    c.feedback_timeout_ms = 150U;
+    c.service_limit_ms = 100U;
+    c.max_request_ms = 250U;
+    PairTransport t = {0};
+    OutputTransport port = {purge, submit, &t, drained, failed};
+    OutputGateway g;
+    OutputGateway_Init(&g, &c, &port, 1U, 1U);
+    assert(OutputGateway_SetFollowReference(&g, 0.5f));
+    assert(OutputGateway_SetElbowFollowReference(&g, 0.0f));
+    assert(OutputGateway_ConfigureAxesFollow(&g, 50U, 1000U, 200U,
+        (S5FollowEffort){2.0f, 8.0f}));
+
+    SafetyInputs in = inputs(start, SAFETY_ALL_AXES);
+    OutputDriverStatus d[2] = {driver(1U, start, 1U), driver(1U, start, 0U)};
+    assert(OutputGateway_Prepare(&g, &in, d, 100U, start));
+    in = inputs(start + 1U, SAFETY_ALL_AXES);
+    d[0].received_ms = d[1].received_ms = start + 1U;
+    d[0].zero_verified = true; d[0].zero_verified_ms = start + 1U;
+    OutputGateway_PollPreparation(&g, &in, d, start + 1U);
+    in = inputs(start + 2U, SAFETY_ALL_AXES);
+    d[0].received_ms = d[1].received_ms = start + 2U;
+    d[0].mode_verified = true; d[0].mode_verified_ms = start + 2U;
+    OutputGateway_PollPreparation(&g, &in, d, start + 2U);
+    in = inputs(start + 3U, SAFETY_ALL_AXES);
+    d[0].received_ms = d[1].received_ms = start + 3U;
+    d[0].axis_state = 8U;
+    OutputGateway_PollPreparation(&g, &in, d, start + 3U);
+    assert(g.state == OUTPUT_READY);
+    in = inputs(start + 4U, SAFETY_ALL_AXES);
+    assert(OutputGateway_Arm(&g, &in, start + 4U));
+    t.count = 0U;
+
+    assert(OutputGateway_RefreshAxesFollow(&g, (S5FollowEffort){0.08f, 0.32f},
+        sample(SAFETY_ALL_AXES, start + 5U, 1U, 1U), start + 5U));
+    /* The target is not refreshed, but both measured joints remain current. */
+    step_range(&g, SAFETY_ALL_AXES, start + 5U, start + 270U);
+    assert(g.state == OUTPUT_ACTIVE && g.reason == OUTPUT_REASON_NONE);
+    assert(t.count > 0U && !t.event[t.count - 1U].stop);
+
+    in = inputs(start + 271U, SAFETY_ALL_AXES);
+    in.joint[1].received_ms = start + 120U; /* 151 ms old: feedback, not target age. */
+    OutputGateway_Step(&g, &in, start + 271U);
+    assert(g.state == OUTPUT_FAULT && g.reason == OUTPUT_REASON_HEALTH
+        && g.safety_reason == SAFETY_FEEDBACK);
+    assert(t.event[t.count - 1U].stop);
+}
+#endif
 static void pair_normal_stop(void)
 {
     OutputGateway g; PairTransport t;
@@ -208,6 +337,33 @@ static void pair_normal_stop(void)
     TestCanTx_CompleteFailed(BOARD_CAN_ELBOW);
     assert(BoardCanTx_OutputAxesFailed(SAFETY_ALL_AXES));
     assert(!BoardCanTx_OutputAxesDrained(SAFETY_ALL_AXES));
+    /* 2026-10-16 bench: under NART a shoulder frame lost arbitration to GDS
+     * traffic. ALST without TERR earns one same-frame resend; a second loss
+     * still fails. */
+    TestCanTx_Reset();
+    assert(MotorCommand_GdsV22Torque(1U, 0.04f, &frames[0]));
+    assert(BoardCanTx_SubmitOutputAxes(frames, SAFETY_ALL_AXES, false));
+    TestCanTx_LoseArbitration(BOARD_CAN_SHOULDER);
+    assert(!BoardCanTx_OutputAxesFailed(SAFETY_ALL_AXES));
+    assert(TestCanTx_Sent(BOARD_CAN_SHOULDER) == 2U
+        && TestCanTx_Last(BOARD_CAN_SHOULDER)->id == frames[0].id
+        && memcmp(TestCanTx_Last(BOARD_CAN_SHOULDER)->data, frames[0].data, 8U) == 0);
+    TestCanTx_Complete(BOARD_CAN_SHOULDER);
+    TestCanTx_Complete(BOARD_CAN_ELBOW);
+    assert(BoardCanTx_OutputAxesDrained(SAFETY_ALL_AXES)
+        && !BoardCanTx_OutputAxesFailed(SAFETY_ALL_AXES));
+    TestCanTx_Reset();
+    assert(BoardCanTx_SubmitOutputAxes(frames, SAFETY_ALL_AXES, false));
+    TestCanTx_LoseArbitration(BOARD_CAN_SHOULDER);
+    assert(!BoardCanTx_OutputAxesFailed(SAFETY_ALL_AXES));
+    TestCanTx_LoseArbitration(BOARD_CAN_SHOULDER);
+    assert(BoardCanTx_OutputAxesFailed(SAFETY_ALL_AXES)
+        && TestCanTx_Sent(BOARD_CAN_SHOULDER) == 2U);
+    TestCanTx_Reset();
+    assert(BoardCanTx_SubmitOutputAxes(frames, SAFETY_ALL_AXES, false));
+    TestCanTx_CompleteFailed(BOARD_CAN_SHOULDER); /* TERR: no resend. */
+    assert(BoardCanTx_OutputAxesFailed(SAFETY_ALL_AXES)
+        && TestCanTx_Sent(BOARD_CAN_SHOULDER) == 1U);
     TestCanTx_Reset();
     TestCanTx_FailNext(BOARD_CAN_SHOULDER);
     assert(!BoardCanTx_SubmitOutputAxes(frames, SAFETY_ALL_AXES, true));
@@ -262,7 +418,13 @@ static void dual_read_inflight_stop(void)
 }
 void TestS5Gateway_Run(const char *scenario)
 {
-    if (strcmp(scenario, "s5_gateway_pair") == 0) { pair_request(); }
+    if (strcmp(scenario, "s5_gateway_pair") == 0) {
+        pair_request();
+#if defined(S5_R5_DUAL_FOLLOW)
+        dual_preparation_motion_deferred();
+        dual_target_age_without_feedback_loss();
+#endif
+    }
     else if (strcmp(scenario, "s5_gateway_stop") == 0) {
         pair_normal_stop(); dual_read_inflight_stop();
     }

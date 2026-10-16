@@ -20,6 +20,8 @@ bool CanMonitor_GetShoulderObservation(GdsFeedback *out, bool *wire_valid);
 /* S3 exclusive TX owner arms correlation only after an accepted read. */
 bool CanMonitor_ExpectShoulderProperty(GdsPropertyField field, uint32_t submitted_ms);
 void CanMonitor_InvalidateShoulderProperties(void);
+bool CanMonitor_RequestShoulderZeroProof(void);
+bool CanMonitor_RequestShoulderModeProof(void);
 bool CanMonitor_NextShoulderProperty(GdsPropertyField *field, bool *pending);
 bool CanMonitor_GetShoulderProperties(uint32_t now_ms, uint32_t freshness_ms, ShoulderPropertySnapshot *out);
 #endif

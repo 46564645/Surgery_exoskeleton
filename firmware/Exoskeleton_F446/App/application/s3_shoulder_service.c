@@ -67,12 +67,15 @@ void S3ShoulderService_Init(const S3SiteProfile *p, ShoulderReaderMode mode)
     started_ms = cycle_ms = read_submitted_ms = cancel_started_ms = 0U;
     read_arbitration_retries = 0U;
     status = (S3ReaderStatus){0};
-    bool ready = mode == SHOULDER_READER_S4 ? S3ShoulderService_ReadProfileReady(p)
+    bool ready = (mode == SHOULDER_READER_S4 || mode == SHOULDER_READER_S5)
+        ? S3ShoulderService_ReadProfileReady(p)
         : mode == SHOULDER_READER_S3 && S3ShoulderService_ProfileReady(p);
     status.state = ready ? S3_READER_IDLE : S3_READER_DISABLED;
     ShoulderStandstill_Init(&standstill, p == NULL ? NULL : &p->shoulder_standstill);
 }
 S3ReaderStatus S3ShoulderService_Get(void) { return status; }
+bool S3ShoulderService_S5FastPath(void)
+{ return reader_mode == SHOULDER_READER_S5; }
 uint32_t S3ShoulderService_WindowRemaining(uint32_t now_ms)
 {
     if (profile == NULL || (status.state != S3_READER_ACTIVE && status.state != S3_READER_OBSERVING)) { return 0U; }
@@ -98,7 +101,8 @@ bool S3ShoulderService_Stop(void)
 }
 bool S3ShoulderService_BeginReadOnlyStop(uint32_t now_ms)
 {
-    if (reader_mode != SHOULDER_READER_S4 || status.state != S3_READER_ACTIVE) { return false; }
+    if ((reader_mode != SHOULDER_READER_S4 && reader_mode != SHOULDER_READER_S5)
+        || status.state != S3_READER_ACTIVE) { return false; }
     CanMonitor_InvalidateShoulderProperties();
     status.state = S3_READER_CANCELLING;
     cancel_started_ms = now_ms;
@@ -129,16 +133,19 @@ void S3ShoulderService_AfterOutputStop(bool accepted, uint32_t now_ms)
 }
 static bool healthy(uint32_t now_ms, BoardCanStats *can)
 {
-    /* Historical protocol errors are diagnostic; require a live, valid heartbeat. */
+    /* S5 can recover from historical RX losses once a live heartbeat is valid.
+     * Older S3/S4 paths keep their existing qualification rules. */
     if (profile == NULL || BoardConsole_HasFault()
         || !BoardCan_GetStats(BOARD_CAN_SHOULDER, can) || !can->started
         || can->start_error != BOARD_CAN_START_OK || can->bus_off
-        || can->dropped != 0U || can->invalid != 0U || can->fifo_overruns != 0U) { return false; }
+        || (reader_mode != SHOULDER_READER_S5
+            && (can->dropped != 0U || can->invalid != 0U
+                || can->fifo_overruns != 0U))) { return false; }
     GdsFeedback hb; bool wire;
     if (!CanMonitor_GetShoulderObservation(&hb, &wire) || !hb.has_heartbeat || !hb.life_contiguous
         || hb.axis_error != 0U || hb.fault_flags != 0U || (hb.axis_state != 1U && hb.axis_state != 8U)
         || (uint32_t)(now_ms - hb.heartbeat_ms) > profile->safety.feedback_timeout_ms) { return false; }
-    if (reader_mode == SHOULDER_READER_S4 || bench()) { return true; }
+    if (reader_mode == SHOULDER_READER_S4 || reader_mode == SHOULDER_READER_S5 || bench()) { return true; }
     /* S4 read-only mode has no installed stop GPIO; output stays separate. */
     S3StopObservation stop = S3StopInput_Read(&profile->operator_stop_input, &profile->independent_stop_input);
     return stop.available && stop.operator_stop_clear;
@@ -146,12 +153,23 @@ static bool healthy(uint32_t now_ms, BoardCanStats *can)
 bool S3ShoulderService_Start(uint32_t now_ms)
 {
     BoardCanStats can; GdsFeedback hb; bool wire;
-    if (status.state != S3_READER_IDLE || !healthy(now_ms, &can) || can.queued != 0U
+    if (status.state != S3_READER_IDLE || !healthy(now_ms, &can)
+        || (reader_mode != SHOULDER_READER_S5 && can.queued != 0U)
         || !CanMonitor_GetShoulderObservation(&hb, &wire) || hb.axis_state != 1U
-        || !(reader_mode == SHOULDER_READER_S4
+        || !(reader_mode == SHOULDER_READER_S4 || reader_mode == SHOULDER_READER_S5
              ? ShoulderRead_ClaimS4() : ShoulderRead_ClaimS3())) { return false; }
     status.state = S3_READER_ACTIVE; started_ms = cycle_ms = now_ms;
     have_cycle = false; read_arbitration_retries = 0U; return true;
+}
+bool S3ShoulderService_RequestZeroProof(void)
+{
+    return reader_mode == SHOULDER_READER_S5 && status.state == S3_READER_ACTIVE
+        && CanMonitor_RequestShoulderZeroProof();
+}
+bool S3ShoulderService_RequestModeProof(void)
+{
+    return reader_mode == SHOULDER_READER_S5 && status.state == S3_READER_ACTIVE
+        && CanMonitor_RequestShoulderModeProof();
 }
 void S3ShoulderService_Observe(const BoardCanFrame *f, uint32_t now_ms)
 {
@@ -190,9 +208,18 @@ void S3ShoulderService_Poll(uint32_t now_ms)
         bool idle_after = hb.axis_state == 1U && after != 0U && after < UINT32_C(0x80000000);
         bool fresh = CanMonitor_GetShoulderProperties(now_ms, profile->shoulder_standstill.freshness_ms, &snapshot);
         ShoulderStandstill_Observe(&standstill, idle_after && fresh ? &snapshot : NULL, now_ms);
-        if (ShoulderStandstill_Read(&standstill, now_ms).stationary && !pending) {
+        bool still = ShoulderStandstill_Read(&standstill, now_ms).stationary;
+#if defined(S5_R5_DUAL_FOLLOW)
+        /* R5: once torque is withdrawn a supported arm may still settle under
+         * gravity. A new IDLE heartbeat plus a fresh pair ends the stop; the
+         * standstill result is kept only as stop_observed. */
+        bool done = reader_mode == SHOULDER_READER_S5 ? idle_after && fresh : still;
+#else
+        bool done = still;
+#endif
+        if (done && !pending) {
             if (!S3ShoulderService_Stop()) { return; }
-            status.stop_observed = true; status.observed_ms = now_ms; status.state = S3_READER_COMPLETE;
+            status.stop_observed = still; status.observed_ms = now_ms; status.state = S3_READER_COMPLETE;
             return;
         }
     }

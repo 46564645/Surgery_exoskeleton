@@ -53,7 +53,8 @@ bool SafetySupervisor_ConfigReady(const SafetyConfig *c)
     return !SafetySupervisor_AxisEnabled(c, 1U) || c->joint[1].max_motor_command <= 20.0f;
 }
 
-SafetyReason SafetySupervisor_Check(const SafetyConfig *c, const SafetyInputs *in, uint32_t now_ms)
+static SafetyReason check(const SafetyConfig *c, const SafetyInputs *in,
+                          uint32_t now_ms, bool check_motion)
 {
     if (!SafetySupervisor_ConfigReady(c)) { return SAFETY_UNCONFIGURED; }
     if (in == NULL || !in->transport_healthy) { return SAFETY_TRANSPORT; }
@@ -69,11 +70,16 @@ SafetyReason SafetySupervisor_Check(const SafetyConfig *c, const SafetyInputs *i
             || (uint32_t)(now_ms - s->received_ms) > c->feedback_timeout_ms) {
             return SAFETY_FEEDBACK;
         }
-        if (s->position_rad < j->lower_rad || s->position_rad > j->upper_rad) { return SAFETY_RANGE; }
-        if (fabsf(s->velocity_rad_s) > j->max_speed_rad_s) { return SAFETY_SPEED; }
+        if (check_motion) {
+            if (s->position_rad < j->lower_rad || s->position_rad > j->upper_rad) { return SAFETY_RANGE; }
+            if (fabsf(s->velocity_rad_s) > j->max_speed_rad_s) { return SAFETY_SPEED; }
+        }
     }
     return SAFETY_OK;
 }
+
+SafetyReason SafetySupervisor_Check(const SafetyConfig *c, const SafetyInputs *in, uint32_t now_ms)
+{ return check(c, in, now_ms, true); }
 
 bool SafetySupervisor_StopObserved(const SafetyConfig *c, const SafetyInputs *in)
 {
@@ -97,5 +103,15 @@ SafetyReason SafetySupervisor_CheckBeforePrepare(const SafetyConfig *c, const Sa
     if (in == NULL) { return SAFETY_TRANSPORT; }
     SafetyInputs precheck = *in;
     precheck.drivers_ready = true; /* Skip this one dependency, not an assertion. */
-    return SafetySupervisor_Check(c, &precheck, now_ms);
+#if defined(S5_R5_DUAL_FOLLOW)
+    /* The R5 dual bench may establish its RAM origin before entering its
+     * run envelope. The complete motion check still applies before Arm and
+     * on every RUNNING step. Feedback, transport and stop checks stay live. */
+    bool check_motion = c == NULL
+        || c->stop_policy != SAFETY_STOP_SUPERVISED_DUAL_FOLLOW
+        || c->enabled_axes != SAFETY_ALL_AXES;
+    return check(c, &precheck, now_ms, check_motion);
+#else
+    return check(c, &precheck, now_ms, true);
+#endif
 }

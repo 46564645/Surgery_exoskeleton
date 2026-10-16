@@ -671,6 +671,39 @@ static void test_elbow_session_angle(void)
     f = elbow_frame(201U, 50U, 0.0f);
     ElbowSessionAngle_Observe(&s, &f, false, 212U, 10U, 5.0f, 1);
     assert(s.phase == ELBOW_SESSION_FAULT && !ElbowSessionAngle_Read(&s, 212U, 10U, &joint));
+
+    /* S5 dual waits for a still zero sample. Once zero exists, its session
+     * angle uses fresh encoder positions; running speed is checked outside. */
+    ElbowSessionAngle_Reset(&s);
+    assert(ElbowSessionAngle_BeginForDual(&s, 300U));
+    f = elbow_frame(301U, 50U, 10.0f);
+    ElbowSessionAngle_Observe(&s, &f, true, 301U, 10U, 0.34906585f, 1);
+    assert(s.phase == ELBOW_SESSION_WAITING);
+    f = elbow_frame(302U, 50U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, true, 302U, 10U, 0.34906585f, 1);
+    assert(ElbowSessionAngle_Read(&s, 302U, 10U, &joint));
+    f = elbow_frame(303U, 200U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 303U, 10U, 0.34906585f, 1);
+    assert(s.phase == ELBOW_SESSION_ACTIVE && s.last_ms == 303U
+        && ElbowSessionAngle_Read(&s, 303U, 10U, &joint)
+        && joint.position_rad > 0.1f);
+    f = elbow_frame(304U, 51U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 304U, 10U, 0.34906585f, 1);
+    assert(ElbowSessionAngle_Read(&s, 304U, 10U, &joint)
+        && joint.position_rad > 0.0f && s.last_ms == 304U);
+    f = elbow_frame(305U, 151U, 10.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 305U, 10U, 0.34906585f, 1);
+    assert(s.phase == ELBOW_SESSION_ACTIVE && s.last_ms == 305U
+        && ElbowSessionAngle_Read(&s, 305U, 10U, &joint)
+        && joint.velocity_rad_s == 10.0f);
+    f = elbow_frame(306U, 151U, 0.0f); f.valid = false;
+    ElbowSessionAngle_Observe(&s, &f, false, 306U, 10U, 0.34906585f, 1);
+    assert(s.phase == ELBOW_SESSION_ACTIVE && s.last_ms == 305U);
+    assert(!ElbowSessionAngle_Read(&s, 316U, 10U, &joint));
+    f = elbow_frame(317U, 152U, 0.0f);
+    ElbowSessionAngle_Observe(&s, &f, false, 317U, 10U, 0.34906585f, 1);
+    assert(s.phase == ELBOW_SESSION_ACTIVE && s.last_ms == 317U
+        && ElbowSessionAngle_Read(&s, 317U, 10U, &joint));
 }
 static void elbow_bus_sample(uint32_t now_ms, uint16_t ticks)
 {

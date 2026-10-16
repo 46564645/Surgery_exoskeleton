@@ -1,7 +1,7 @@
 #ifndef S3_SHOULDER_SERVICE_H
 #define S3_SHOULDER_SERVICE_H
 #include "s3_site.h"
-typedef enum { SHOULDER_READER_S3, SHOULDER_READER_S4 } ShoulderReaderMode;
+typedef enum { SHOULDER_READER_S3, SHOULDER_READER_S4, SHOULDER_READER_S5 } ShoulderReaderMode;
 typedef enum { S3_READER_DISABLED, S3_READER_IDLE, S3_READER_ACTIVE,
                S3_READER_STOPPED, S3_READER_FAULT, S3_READER_STOPPING,
                S3_READER_OBSERVING, S3_READER_COMPLETE,
@@ -17,6 +17,10 @@ bool S3ShoulderService_ProfileReady(const S3SiteProfile *profile);
 bool S3ShoulderService_ReadProfileReady(const S3SiteProfile *profile);
 void S3ShoulderService_Init(const S3SiteProfile *profile, ShoulderReaderMode mode);
 bool S3ShoulderService_Start(uint32_t now_ms);
+/* S5-only post-write SDO proofs. Queue now; Poll sends after any in-flight
+ * associated reply. Call immediately after the corresponding gateway write. */
+bool S3ShoulderService_RequestZeroProof(void);
+bool S3ShoulderService_RequestModeProof(void);
 void S3ShoulderService_Poll(uint32_t now_ms);
 void S3ShoulderService_Observe(const BoardCanFrame *frame, uint32_t now_ms);
 /* Hard stop: cancels reads and permanently invalidates association. */
@@ -29,6 +33,7 @@ bool S3ShoulderService_BeforeOutputStop(void);
 void S3ShoulderService_AfterOutputStop(bool accepted, uint32_t now_ms);
 ShoulderStandstillStatus S3ShoulderService_GetStandstill(uint32_t now_ms);
 S3ReaderStatus S3ShoulderService_Get(void);
+bool S3ShoulderService_S5FastPath(void);
 /* Passive budget query; never restarts or extends the reader. */
 uint32_t S3ShoulderService_WindowRemaining(uint32_t now_ms);
 #endif

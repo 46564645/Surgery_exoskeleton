@@ -24,6 +24,10 @@ typedef struct {
     OutputReason output_reason;
     SafetyReason safety_reason;
     uint32_t remaining_ms;
+    /* Soft speed pause record for the current RUNNING session. */
+    bool assist_paused;
+    uint16_t speed_pauses;
+    float peak_speed_rad_s[SAFETY_JOINT_COUNT]; /* |joint velocity| while RUNNING. */
 } S5FollowStatus;
 
 void S5Follow_Init(const S5SiteProfile *profile);

@@ -13,6 +13,12 @@ typedef struct {
     S5FollowEffort release_slew_per_s;          /* Nm/s shoulder, A/s elbow. */
     uint32_t send_interval_ms, session_ms, ramp_max_ms;
     uint32_t shoulder_zero_dwell_ms;            /* Dual mode only. */
+    /* Dual mode only, all zero = off. Above a soft joint speed the candidate
+     * is withdrawn without a fault; it returns after resume_quiet_ms below
+     * half that speed and ramps back over resume_ramp_ms. The latched hard
+     * limit stays SafetyJointConfig.max_speed_rad_s. */
+    float soft_speed_rad_s[SAFETY_JOINT_COUNT];
+    uint32_t resume_quiet_ms, resume_ramp_ms;
     bool output_enabled;                        /* No CLI setter. */
 } S5SiteProfile;
 

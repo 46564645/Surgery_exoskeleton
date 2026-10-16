@@ -26,6 +26,9 @@ void CanMonitor_Init(const S3SiteProfile *site, ShoulderReaderMode mode)
     ShoulderPropertyFeedback_Init(&shoulder_properties,
         site != NULL && site->shoulder_source == S3_SHOULDER_ENCODER_PROPERTIES
             ? site->shoulder_property_reply_ms : 0U);
+    if (mode == SHOULDER_READER_S5) {
+        ShoulderPropertyFeedback_EnableS5FastPath(&shoulder_properties);
+    }
     ShoulderRead_Init();
     ShoulderQualification_Init();
     EncoderStream_Init();
@@ -107,6 +110,10 @@ bool CanMonitor_ExpectShoulderProperty(GdsPropertyField field, uint32_t submitte
 { return ShoulderPropertyFeedback_Expect(&shoulder_properties, field, submitted_ms); }
 void CanMonitor_InvalidateShoulderProperties(void)
 { ShoulderPropertyFeedback_Invalidate(&shoulder_properties); }
+bool CanMonitor_RequestShoulderZeroProof(void)
+{ return ShoulderPropertyFeedback_RequestZeroProof(&shoulder_properties); }
+bool CanMonitor_RequestShoulderModeProof(void)
+{ return ShoulderPropertyFeedback_RequestModeProof(&shoulder_properties); }
 bool CanMonitor_GetShoulderProperties(uint32_t now_ms, uint32_t freshness_ms, ShoulderPropertySnapshot *out)
 { return ShoulderPropertyFeedback_Get(&shoulder_properties, now_ms, freshness_ms, out); }
 
