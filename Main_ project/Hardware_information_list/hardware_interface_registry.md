@@ -64,7 +64,7 @@
 | `PD-24V-MOTOR` | 24 V 动力域 | `PWR-01` 计划向 `ACT-01`、`ESC-01` 供电 | `DESIGN_SELECTED`：两驱动独立支路已选；保护、开关和载流验证待定 |
 | `PD-LOGIC-3V3` | 3.3 V 逻辑域 | `CAN-01/02` 和可能的 MCU 扩展逻辑 | `DESIGN_SELECTED`：CN7-16供3.3V，容量待核验 |
 | `PD-MCU-5V` | MCU 板 5 V 域 | NUCLEO 的 USB 5 V、E5V 或板载 5 V 路径 | `DESIGN_SELECTED`：CN1 USB供电，CN7-18向逻辑模块分线 |
-| `PD-SENSOR-LOW-VOLTAGE` | 传感器低压域 | `ADC-01`、`FORCE-01`；IMU 库存保留 | `DESIGN_SELECTED`：HX711选CN7-18的5V供电；称重桥由HX711激励，IMU停用 |
+| `PD-SENSOR-LOW-VOLTAGE` | 传感器低压域 | `ADC-01`、`FORCE-01`；IMU 库存保留 | `DESIGN_SELECTED`：2026-10-16用户改选方案B，HX711由CN7-16的3.3V供电、数字线直连，模块整板3.3V未验证（原为CN7-18 5V加电平转换）；称重桥由HX711激励，IMU停用 |
 
 ## 4. 设备接口详细编码
 
@@ -125,7 +125,7 @@
 | `MCU-01.LR01` | `SHOULDER_SIDE` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN1 PB9/TX、PB8/RX、AF9；500kbps准备值；bank0/FIFO0，RX0/SCE IRQ 5/0；接GDS前核实速率 |
 | `MCU-01.LR02` | `ELBOW` | 1 路 CAN TX/RX | `DESIGN_SELECTED` | CAN2 PB13/TX、PB12/RX、AF9；1Mbps；bank14/FIFO1，RX1/SCE IRQ 5/0；实物总线待测 |
 | `MCU-01.LR03` | 命令与遥测 | ST-LINK VCP / USART2 | `DESIGN_SELECTED` | PA2/TX、PA3/RX、AF7，115200 8N1无流控；DMA1 Stream5/Channel4 RX循环、Stream6/Channel4 TX普通；S1已生成并构建，实物通信验证另见开发日志 |
-| `MCU-01.LR04` | HX711 | 数字输出 `PD_SCK`、数字输入 `DOUT` | `DESIGN_SELECTED` | PC3/SCK输出、PC2/DOUT输入无上下拉；电平转换，10SPS新样本 |
+| `MCU-01.LR04` | HX711 | 数字输出 `PD_SCK`、数字输入 `DOUT` | `DESIGN_SELECTED` | PC3/SCK输出、PC2/DOUT输入无上下拉；3.3V直连（方案B），10SPS新样本 |
 | `MCU-01.LR05` | 未来 `assist_enable_permission` | 安全定义的数字输入 | `PLANNED` | 硬件、GPIO、电平、去抖 |
 
 S1固件中断配置（2026-09-25）：NVIC GROUP4；USART2、DMA1 Stream5/6抢占优先级5、子优先级0；SysTick抢占优先级0。用户按键EXTI15_10的最终抢占优先级为10：官方BSP初始化会写15，因此由自有`BoardRuntime_FinalizeInterrupts()`在`BSP_PB_Init()`之后重新设置并读回检查。检查失败不启动命令接收。此段记录软件配置，不证明实物焊桥、USB链路或电机安全。
@@ -279,7 +279,7 @@ C620 手册禁止同时接入 CAN 与 PWM，切换方式前必须断电。本项
 | `ADC-01.IF01` | 通道 A 称重桥输入 | `E+`、`E-`、`A+`、`A-` | `REFERENCE_ONLY`：按套装接线图，待实物丝印确认 |
 | `ADC-01.IF02` | 通道 B 输入 | `B+`、`B-` | `INACTIVE`：当前不使用 |
 | `ADC-01.IF03` | MCU 数字接口 | `DT/DOUT`、`SCK/PD_SCK`、`GND` | `REFERENCE_ONLY`：待实物排针确认 |
-| `ADC-01.IF04` | 模块供电 | `VCC`、`GND` | `DESIGN_SELECTED`：CN7-18 +5V，实物板待核对 |
+| `ADC-01.IF04` | 模块供电 | `VCC`、`GND` | `DESIGN_SELECTED`：CN7-16 +3.3V（2026-10-16方案B）；配套原理图模拟稳压目标约4.3V，3.3V下预计饱和、E+约3.0–3.2V，需上电实测 |
 | `ADC-01.CFG01` | HX711 `RATE`硬件配置 | 15脚接`GND`，固定10 SPS | `REFERENCE_ONLY`：套装原理图已确认，实物PCB待核对 |
 
 ADC-01只发布低速辅助力监测值，用于显示、记录、标定观察和后续研究。它不作为快速助力触发、关节主控制反馈、安全触发或高带宽力闭环输入。软件不得把重复读取旧样本描述为高于10 SPS的新测量。
@@ -354,7 +354,7 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 | `NET-M3508-DATA` | M3508 数据链 | `ESC-01.IF01`、`MOTOR-01.IF01`、原厂 7-Pin 线 | `CONFIRMED` | 不拆未公开针位 |
 | `NET-M3508-PHASE` | M3508 三相链 | `ESC-01.IF02`、`MOTOR-01.IF02` | `CONFIRMED` | 实物线色和接头检查 |
 | `NET-FORCE-BRIDGE` | 力传感器桥路 | `FORCE-01.IF01`、`ADC-01.IF01/04` | `PLANNED` | 实物端子、激励、桥阻和方向标定 |
-| `NET-HX711-DIGITAL` | HX711 10 SPS低速数字采集 | `ADC-01.IF03`、`MCU-01.LR04` | `DESIGN_SELECTED` | GPIO见第10节；实物排针、电平转换板、读取超时待落实 |
+| `NET-HX711-DIGITAL` | HX711 10 SPS低速数字采集 | `ADC-01.IF03`、`MCU-01.LR04` | `DESIGN_SELECTED` | GPIO见第10节；方案B 3.3V直连无转换板；实物排针、读取超时待落实 |
 | `NET-DEBUG-VCP` | 调试与遥测 | PC、`MCU-01.IF01/06`、`MCU-01.LR03` | `PLANNED` | USART2 是否占用、波特率、格式 |
 
 ## 6. 无法由型号资料确认的项目
@@ -384,7 +384,7 @@ WitMotion 官方教程确认串口交叉连接，即传感器 TX 对主控 RX、
 ## 8. 尚未完成的设计与验证
 
 - CAN1/CAN2及HX711引脚已分配；CAN ID、实际波特率配置、控制周期、控制限值、DMA/IRQ/滤波器仍由固件设计与设备读取落实。C620要求1Mbps不是另一条GDS68总线已配置的证明。
-- 24V两支路拓扑已选；保险、急停/接触器、浪涌、回生处理、线束载流与电平转换板具体型号未选定。图中占位不代表已安装器件。
+- 24V两支路拓扑已选；保险、急停/接触器、浪涌、回生处理、线束载流具体型号未选定；HX711按方案B 3.3V直连，不再需要电平转换板。图中占位不代表已安装器件。
 - 不把旧款商品参数、参考板针序、规格书数值或开源程序提升为实物已验证结论。IMU保持停用。
 
 ## 9. 资料索引
@@ -420,13 +420,10 @@ flowchart TD
   MCU -->|CN7-18 5V| L5[5V分线]
   L33 --> CAN1[CAN-01]
   L33 --> CAN2[CAN-02]
-  L33 -->|低压侧| LS[电平转换板 型号待定]
-  L5 -->|高压侧| LS
-  L5 --> HX[HX711]
+  L33 --> HX[HX711 3.3V供电 方案B]
   MCU -->|PB9 TX / PB8 RX| CAN1
   MCU -->|PB13 TX / PB12 RX| CAN2
-  MCU <-->|PC3 SCK输出 / PC2 DOUT输入| LS
-  LS <-->|SCK / DOUT| HX
+  MCU <-->|PC3 SCK输出 / PC2 DOUT输入 直连| HX
   HX --> FORCE[称重桥 E+ E- A+ A-]
   CAN1 <-->|CANH/CANL 独立总线| GDS[GDS68 / 肩部]
   CAN2 <-->|CANH/CANL 独立总线| C620[C620 / 肘部]
@@ -484,11 +481,11 @@ flowchart TD
 | 肩部CAN接收 | CAN-01 RX（R） | PB8 / CN10-3 / CAN1_RX AF9 | 3.3V逻辑 |
 | 肘部CAN发送 | PB13 / CN10-30 / CAN2_TX AF9 | CAN-02 TX（D） | TX对TX |
 | 肘部CAN接收 | CAN-02 RX（R） | PB12 / CN10-16 / CAN2_RX AF9 | 3.3V逻辑 |
-| 3.3V | CN7-16 | 两CAN模块3.3V及转换板低压侧 | 通过分线，不接5V |
-| 5V | CN7-18 | HX711 VCC及转换板高压侧 | 不直接进入MCU信号脚 |
-| 逻辑地 | CN7-20 | 两CAN GND、HX711 GND、转换板GND | 分线端子互联建立同一逻辑地 |
-| HX711时钟 | PC3 / CN7-37 | 转换板3.3→5V通道→HX711 SCK | 设计要求上电/复位期间保持低；实现方式待选；高脉冲不超过50µs；当前固件尚未接入 |
-| HX711数据 | HX711 DOUT | 转换板5→3.3V通道→PC2 / CN7-35 | GPIO输入无内部上下拉；不误接桥路B+ |
+| 3.3V | CN7-16 | 两CAN模块3.3V及HX711 VCC（2026-10-16方案B） | 通过分线，不接5V |
+| 5V | CN7-18 | 方案B下暂不使用 | 不直接进入MCU信号脚 |
+| 逻辑地 | CN7-20 | 两CAN GND、HX711 GND | 分线端子互联建立同一逻辑地 |
+| HX711时钟 | PC3 / CN7-37 | HX711 SCK直连，不加下拉（2026-10-16用户决定） | 固件在`MX_GPIO_Init`用户区先置低、再配置为推挽输出。复位到GPIO初始化前的数毫秒内SCK悬空，HX711可能短暂掉电，SCK回低后按手册复位恢复，驱动须等首个DOUT就绪；高脉冲不超过50µs；读取驱动尚未接入 |
+| HX711数据 | HX711 DOUT/DT | PC2 / CN7-35直连 | GPIO输入无内部上下拉；不误接桥路B+ |
 | 肩部CAN高/低 | CAN-01 H/L | GDS68配套线CANH/CANL | 一对双绞线；按触点功能核对线束，不猜颜色 |
 | 肘部CAN高 | CAN-02 H | C620 CAN B红线 | 此红线不是24V |
 | 肘部CAN低 | CAN-02 L | C620 CAN A黑线 | 此黑线不是GND |
@@ -507,10 +504,10 @@ flowchart TD
 
 ### 10.3 供电、终端与线束约束
 
-- USB供电按UM1724第21–23页：JP5选U5V（1–2），JP6接通，JP1按相应USB枚举方案核对；JP1 OFF枚举方案总板及扩展负载上限300mA，不能把该值当扩展余量。还须计入NUCLEO、两收发器、HX711和转换板；3.3V稳压器额定值不替代USB总预算。
+- USB供电按UM1724第21–23页：JP5选U5V（1–2），JP6接通，JP1按相应USB枚举方案核对；JP1 OFF枚举方案总板及扩展负载上限300mA，不能把该值当扩展余量。还须计入NUCLEO、两收发器和HX711（含约1000Ω称重桥，3.3V下约3mA）；3.3V稳压器额定值不替代USB总预算。
 - 每条CAN总线设计为两个末端各120Ω：收发器参考板固定120Ω，远端GDS68软件使能/C620开关接入。实物确认后全系统断电测H/L约60Ω；不是用万用表验证线缆特性阻抗。GDS68参数与板版本对应后再设置，不盲目加第三只120Ω。
 - Waveshare参考原理图P1针号为1TX/2RX/3GND/4(3.3V)；商品图从上到下显示3.3V/GND/RX/TX，方向相反，不能据此给到货模块直接编号。接线以实物信号丝印和电路一致性为准。黄色双针为H/L并行接口，不是终端开关。
-- HX711参考板VCC连DVDD，选5V供电并做双向相反通道的电平转换。具体板及端子编号TBD，不直接采购仅写“自动双向”的板；须满足DOUT输入负载及SCK默认低的要求。
+- HX711参考板VCC连DVDD及VSUP。原设计为5V供电并做双向相反通道的电平转换，不采购仅写"自动双向"的板（两侧上拉使SCK默认为高）。2026-10-16用户改选方案B：VCC接3.3V，SCK/DOUT与MCU直连，按HX711手册DVDD 2.6–5.5V、VIH=0.7·DVDD≈2.3V。配套原理图模拟稳压目标约4.3V，在3.3V下会饱和，E+预计约3.0–3.2V（传感器推荐激励3–12V的下沿），属于未验证的整板配置；首次上电先测E+−E−电压。
 - RV2.5mm²红/黑各2m是固定台架主干采购建议，不是厂家规定或已验证载流能力；关节活动段另核验柔性、弯折和应力释放。CAN建议2×0.3mm²双绞线，特性阻抗向供应商核实。
 - WAGO221-415六个仅为分线用量预估（动力两组、3.3V、5V、逻辑地两组）；221-412四个仅在两路CAN都需延长时使用。一只端子各孔同电位，不能将正负或H/L插入同一只。需确认实际产品适用细绞线截面积；0.14mm²下限不适合常见26/28AWG细线，优先匹配0.2–0.3mm²逻辑线。不得把杜邦金属接头当裸线夹入。数量及品牌不作为已采购事实。
 

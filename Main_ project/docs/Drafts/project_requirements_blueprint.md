@@ -4,11 +4,13 @@
 > This document states what the project should demonstrate and what is out of scope.
 > It intentionally does not choose the final technical route. Open-source reuse and implementation choices should be decided later through `wayfinder`.
 
+> Scope decision, 2026-10-16: the user canceled Lock position holding. The current required outcome is reduced holding effort with free repositioning. Lock is excluded from implementation and acceptance; Amplify is an optional later extension and is not a prerequisite for the current demonstration.
+
 ## 1. Project Intent
 
 This project is a student prototype of an upper-limb assistive exoskeleton for orthopedic-operation-style upper-limb workload scenarios.
 
-The system should demonstrate that an arm or arm-like linkage can receive posture-dependent assistance, remain repositionable by the user, and later receive extra assistance when the user applies additional force.
+The system should demonstrate that an arm or arm-like linkage receives posture-dependent assistance that reduces holding effort while remaining freely repositionable by the user. Extra assistance based on motion trends may be added later if needed.
 
 The project is not a commercial medical device and does not claim clinical readiness.
 
@@ -19,7 +21,7 @@ The full project concept serves two user groups:
 - Surgical-assistant-type users who need help holding posture for long periods, such as holding retractors, scopes, or tools.
 - Surgeon/operator-type users who may need short bursts of extra help during forceful actions such as pushing, prying, drilling, or similar operations.
 
-The first version should not become two separate systems. It should focus on posture holding and reduced effort as the primary demonstration. Active force assistance remains part of the same system concept, but is a later extension on top of the posture-support behavior.
+The first version should not become two separate systems. It should focus on reduced effort and free repositioning as the primary demonstration. Supporting a posture means sharing the load while the user retains control; it does not require recording a fixed angle and actively returning to it. Active force assistance remains an optional later extension on top of baseline support.
 
 ## 3. First-Version Demonstration Platform
 
@@ -43,7 +45,7 @@ The first version does not need to prove an exact compensation percentage such a
 
 The user must be able to push or reposition the fake arm/linkage without the system obviously fighting normal movement.
 
-The first version does not need commercial-grade smoothness. It may lag or feel prototype-like, but it should not behave as a rigid lock that prevents repositioning. After the user stops repositioning, the system should return to providing support.
+The first version does not need commercial-grade smoothness. It may lag or feel prototype-like, but it should not behave as a rigid lock that prevents repositioning. After the user stops repositioning, the system should provide support at the new posture. Exact angle retention after the user completely lets go is not an acceptance requirement.
 
 #### P0.3 Hardware Protection
 
@@ -70,11 +72,13 @@ Possible P1 items:
 - Stronger calibration workflow for the fake arm/linkage.
 - More repeatable measurement setup for assisted versus unassisted holding effort.
 
-### P2: Later First-Version Extension
+### P2: Optional Later Extension
 
 #### P2.1 Active Assist
 
 Active assist is extra assistance added on top of always-on baseline gravity compensation when the user applies additional force.
+
+It is not required to complete the current reduced-effort and free-following demonstration, and it does not depend on implementing Lock. Basic start, cancellation, stop, and fault-exit behavior remains required for any implemented output mode.
 
 The current architecture detects the intended assist direction and entry/exit trend from each actuator's joint-position and joint-velocity feedback. In the first version, active assist may be fixed extra assistance rather than continuously proportional to a measured external force.
 
@@ -110,12 +114,14 @@ Active assist evidence is not the first P0 gate. When implemented, it should sho
 
 ## 6. Final Project Endpoint
 
-The overall project endpoint is a wearable arm demonstration that shows:
+The current required endpoint is a repeatable bench demonstration that shows:
 
-- Baseline gravity compensation.
-- Active assist added on top of baseline gravity compensation.
+- Posture-dependent baseline assistance that reduces required holding effort.
+- Free repositioning without obvious opposing resistance, continued support at the new posture, and normal stopping.
 - A reasonable explanation of how joint posture and motion feedback relate to assistance output, with force sensing retained as auxiliary observation.
-- Bench validation evidence before wearable demonstration.
+- A simple assisted-versus-unassisted effort comparison at the same posture, using force measurement where practical.
+
+Active assist is an optional later extension. A wearable demonstration remains a later direction after bench validation. Neither extension requires Lock or blocks the current bench demonstration.
 
 This endpoint is still a student prototype demonstration. It is not real surgery validation, medical-device validation, or clinical proof.
 
@@ -123,6 +129,7 @@ This endpoint is still a student prototype demonstration. It is not real surgery
 
 The first version does not include:
 
+- Lock / fixed-angle position holding; this function was canceled by the user on 2026-10-16 rather than completed or merely postponed.
 - Real surgery environment validation.
 - Medical-device-grade safety, certification, or regulatory work.
 - Full human-wear safety validation.
@@ -147,7 +154,7 @@ This rule applies especially to gravity compensation, actuator control, joint-fe
 
 ## 9. Relationship To Existing Technical Documentation
 
-The existing technical document contains useful project background and functional intent, but its concrete technical route, algorithm, and architecture descriptions are not authoritative. The current technical route and architecture are defined by [`system_architecture_blueprint.md`](system_architecture_blueprint.md).
+The existing technical document contains useful project background and functional intent, but its concrete technical route, algorithm, and architecture descriptions are not authoritative. The current technical route and architecture are defined by [`system_architecture_blueprint.md`](../system_architecture_blueprint.md).
 
 This requirements blueprint should be treated as the current source of truth for:
 

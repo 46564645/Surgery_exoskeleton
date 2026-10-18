@@ -1,5 +1,15 @@
 # Exoskeleton_F446 固件入口
 
+## HX711 临时力值与去皮（2026-10-17）
+
+当前板上为 [R5 + HX711 力值候选](build/s5-r5-hx711-force-20261017/Exoskeleton_F446.elf)，BIN SHA256 `CDB40497A22045BDEBB09E95EC1143C1629AEBF3FE16D278E9A604A54ED7D006`，已刷写并独立读回一致，USB查询确认待机、输出许可为0。R5构建选项仍为 `SIGN=1/MA=2000`。
+
+- `hx711`：保留 `seen/seq/raw/sat/age_ms`，增加 `valid/force_N/zero_raw/cal=temporary`。`force_N` 单位为牛顿，保留三位小数只是显示分辨率，不代表测量精度；`zero_raw` 显示四舍五入的计数。
+- `hxtare`：仅在无外加载荷时调用，立即将最新新鲜且未饱和的样本设为零点，返回 `OK hx711 tared ram_only=1`。只存在RAM，重启恢复标定零点；程序不会自动判断是否空载。
+- 无样本、饱和或样本年龄≥500 ms：`valid=0 force_N=na`，去皮返回 `ERR hx711 no_fresh_unsaturated_sample`，原零点保持不变。
+- 临时系数集中于 `App/devices/hx711.c`：空载均值144811.46、452 g均值−55221.87，`F_N=(zero_raw-raw)/45127.7057`。用户接受本次一点标定，不追加回零或多点挂载验证；不使用此前的34 g系数。改变固定方式或加载点后，原系数不自动适用。
+- 保持10 SPS辅助测量用途。该力值不用于电机控制或故障保护。去皮、超时和符号换算已由主机测试验证；本轮板上只查询力值，未执行去皮、未追加挂载或启动电机。
+
 当前唯一开发目录：本文件所在目录，即仓库内的 `firmware/Exoskeleton_F446/`。旧 Mac 桌面 STM32Projects 中的原工程为历史备份，不继续并行修改。
 
 ## Windows 工具准备

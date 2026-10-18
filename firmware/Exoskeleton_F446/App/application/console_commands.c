@@ -16,6 +16,7 @@
 #include "s3_console.h"
 #include "s4_follow.h"
 #include "s5_follow.h"
+#include "hx711.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,8 +25,8 @@ static char line[S1_LINE_MAX + 1U];
 static size_t used;
 static bool saw_cr, invalid_line, long_line;
 static const char help_text[] = "OK commands=ping,status,help,?,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,shoulderreadpos,shoulderreadvel,shoulderreadstatus,encstart,encstop,encfeedback,outputstatus,stopstatus,prepare,arm,cancel,ackfault,shoulderpulse,elbowpulse,s3help\r\n";
-static const char s4_help_text[] = "OK commands=ping,status,canstatus,shoulder,shoulderfeedback,shoulderreadstatus,followobserve,followprepare,followstart,followstop,followstatus,followangle,cancel,help\r\n";
-static const char s5_help_text[] = "OK commands=ping,status,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,followprepare,followstart,followstop,followstatus,followangle,cancel,help\r\n";
+static const char s4_help_text[] = "OK commands=ping,status,canstatus,shoulder,shoulderfeedback,shoulderreadstatus,followobserve,followprepare,followstart,followstop,followstatus,followangle,hx711,hxtare,cancel,help\r\n";
+static const char s5_help_text[] = "OK commands=ping,status,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,followprepare,followstart,followstop,followstatus,followangle,hx711,hxtare,cancel,help\r\n";
 _Static_assert(sizeof(help_text) <= S1_REPLY_SIZE, "help must fit reserved reply slot");
 _Static_assert(sizeof(s4_help_text) <= S1_REPLY_SIZE, "S4 help must fit reserved reply slot");
 _Static_assert(sizeof(s5_help_text) <= S1_REPLY_SIZE, "S5 help must fit reserved reply slot");
@@ -527,6 +528,30 @@ static void command_reply(const struct clip *self, const struct clip_command *cm
         encoder_stream_reply(cmd->name);
     } else if (strcmp(cmd->name, "elbowfeedback") == 0) {
         elbow_feedback_reply();
+    } else if (strcmp(cmd->name, "hx711") == 0) {
+        Hx711Sample s; Hx711_Get(&s);
+        char out[S1_REPLY_SIZE], age[12] = "na", force[20] = "na";
+        uint32_t now = ((const CommandContext *)context)->now_ms;
+        float force_n;
+        bool valid = Hx711_GetForce(now, &force_n);
+        if (valid) {
+            /* Fixed-point formatting avoids printf float support. Resolution
+             * is 0.001 N for readability, not a claim of measurement accuracy. */
+            long milli_n = lroundf(force_n * 1000.0f);
+            unsigned long magnitude = (unsigned long)(milli_n < 0 ? -milli_n : milli_n);
+            (void)snprintf(force, sizeof(force), "%s%lu.%03lu",
+                milli_n < 0 ? "-" : "", magnitude / 1000UL, magnitude % 1000UL);
+        }
+        if (s.has_sample) { (void)snprintf(age, sizeof(age), "%lu", (unsigned long)(now - s.received_ms)); }
+        int n = snprintf(out, sizeof(out),
+            "OK hx711 seen=%u seq=%lu raw=%ld sat=%u age_ms=%s valid=%u force_N=%s zero_raw=%ld cal=temporary\r\n",
+            (unsigned)s.has_sample, (unsigned long)s.sequence, (long)s.raw,
+            (unsigned)s.saturated, age, (unsigned)valid, force, lroundf(Hx711_GetZero()));
+        reply(n > 0 && (size_t)n < sizeof(out) ? out : "ERR format\r\n");
+    } else if (strcmp(cmd->name, "hxtare") == 0) {
+        reply(Hx711_Tare(((const CommandContext *)context)->now_ms)
+            ? "OK hx711 tared ram_only=1\r\n"
+            : "ERR hx711 no_fresh_unsaturated_sample\r\n");
     } else if (S5Follow_IsSelected()) {
         reply(s5_help_text);
     } else if (!S3Console_Command(cmd->name, ((const CommandContext *)context)->now_ms)) {
@@ -579,6 +604,10 @@ CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(encfeedback_cmd, "encfeedback", "native encoder pair freshness and bounded session", command_reply)
 CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(stopstatus_cmd, "stopstatus", "receive standstill and stop submission evidence", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(hx711_cmd, "hx711", "latest raw HX711 code, 10 SPS auxiliary", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(hxtare_cmd, "hxtare", "tare unloaded HX711 from latest fresh sample (RAM only)", command_reply)
 CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(prepare_cmd, "prepare", "verified zero/mode/closed-loop preparation", command_reply)
 CLIP_DEF_ROOT_COMMAND_END()
@@ -640,6 +669,8 @@ static CLIP_DEF_ROOT(commands, NULL, command_event)
     CLIP_DEF_ADD_ROOT_COMMAND(&encfeedback_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&outputstatus_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&stopstatus_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&hx711_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&hxtare_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&prepare_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&arm_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&cancel_cmd)

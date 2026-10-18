@@ -514,26 +514,24 @@
       "to": [
         "CAN-01.GND",
         "CAN-02.GND",
-        "HX711.GND",
-        "电平转换板.GND"
+        "HX711.GND"
       ],
       "status": "DESIGN_SELECTED",
       "note": "电机负载回流不能经过开发板。"
     },
     {
       "role": "HX711 供电",
-      "from": "CN7-18 / +5V",
+      "from": "CN7-16 / +3V3",
       "to": [
-        "HX711.VCC",
-        "电平转换板高压侧"
+        "HX711.VCC"
       ],
       "status": "DESIGN_SELECTED",
-      "note": "电平转换板尚未选定，未据此认定已接通。"
+      "note": "2026-10-16 用户改选方案B：3.3V供电、数字线直连，原为CN7-18 +5V加电平转换。模块整板3.3V未验证，E+预计约3.0–3.2V，首次上电实测。"
     },
     {
       "role": "HX711 数据",
       "from": "HX711.DOUT",
-      "via": "5V→3.3V 电平转换",
+      "via": "直连（方案B）",
       "to": "CN7-35 / PC2",
       "direction": "input_to_mcu",
       "status": "DESIGN_SELECTED",
@@ -542,12 +540,12 @@
     {
       "role": "HX711 时钟",
       "from": "CN7-37 / PC3",
-      "via": "3.3V→5V 电平转换",
+      "via": "直连（方案B），不加下拉",
       "to": "HX711.SCK",
       "direction": "output_from_mcu",
       "status": "DESIGN_SELECTED",
-      "implementation_status": "not_implemented",
-      "note": "设计要求上电/复位期间 SCK 保持低；实现方式及电平转换板尚未选定。当前固件未配置 PC3 为 HX711 时钟输出，不能据此认定已实现或实测。"
+      "implementation_status": "flashed_raw_read_observed",
+      "note": "2026-10-16：固件在 MX_GPIO_Init 用户区先置低、再将 PC3 配为推挽输出，代替下拉电阻；复位到初始化前数毫秒悬空，HX711 可能短暂掉电后复位恢复。已上板：E+−E− 实测 2.74 V，hx711 命令空载约 10 SPS 读到原始码；未标定。"
     }
   ],
   "unresolved_physical_facts": [

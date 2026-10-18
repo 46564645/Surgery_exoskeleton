@@ -323,7 +323,19 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-
+  /* HX711 (registry MCU-01.LR04, 3.3 V direct): PD_SCK high >60 us powers the
+   * chip down, so PC3 is latched low before it becomes an output. DOUT on PC2
+   * has no internal pull, per the HX711 datasheet. */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+  GPIO_InitTypeDef hx711 = {0};
+  hx711.Pin = GPIO_PIN_3;
+  hx711.Mode = GPIO_MODE_OUTPUT_PP;
+  hx711.Pull = GPIO_NOPULL;
+  hx711.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &hx711);
+  hx711.Pin = GPIO_PIN_2;
+  hx711.Mode = GPIO_MODE_INPUT;
+  HAL_GPIO_Init(GPIOC, &hx711);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 

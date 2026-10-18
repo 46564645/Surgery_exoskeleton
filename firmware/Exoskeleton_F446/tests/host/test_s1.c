@@ -10,6 +10,7 @@
 #include "can_mock.h"
 #include "can_monitor.h"
 #include "test_c620.h"
+#include "test_hx711.h"
 #include "test_sdo.h"
 #include "test_encoder_stream.h"
 #include "encoder_stream.h"
@@ -751,6 +752,7 @@ int main(int argc, char **argv)
     else if (!strncmp(argv[1], "s3_properties_", 14)) { TestShoulderProperties_Run(argv[1]); }
     else if (!strncmp(argv[1], "s3_", 3)) { TestS3_Run(argv[1]); }
     else if (!strncmp(argv[1], "c620_", 5)) { TestC620_Run(argv[1]); }
+    else if (!strncmp(argv[1], "hx711_", 6)) { TestHx711_Run(argv[1]); }
     else if (!strncmp(argv[1], "can_", 4)) { TestCan_Run(argv[1]); }
     else if (!strcmp(argv[1], "rx_positions")) { test_rx_positions(); }
     else if (!strcmp(argv[1], "tx_queue")) { test_tx_queue(); }

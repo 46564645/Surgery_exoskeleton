@@ -49,6 +49,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/board_can.c
     Core/Src/board_can_tx.c
     Core/Src/board_stop_input.c
+    Core/Src/board_hx711.c
+    App/devices/hx711.c
     App/application/app_main.c
     App/application/console_commands.c
     App/application/s3_console.c

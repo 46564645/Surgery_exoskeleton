@@ -11,6 +11,7 @@
 #include "s4_site.h"
 #include "s5_follow.h"
 #include "s5_site.h"
+#include "hx711.h"
 #include <stdint.h>
 
 static uint32_t last_service, last_led, overruns;
@@ -31,6 +32,7 @@ void App_Init(void)
     s4_mode = !s5_mode && S4Site_ReadReady(s4);
 #endif
     if (!s4_mode && !s5_mode) { S3Bench_Init(); }
+    Hx711_Init();
     ConsoleCommands_Init();
     (void)BoardConsole_Start(); /* Failure is latched; Poll shows fault heartbeat. */
     CanMonitor_Init(s5_mode ? &s5->s3 : s4_mode ? &s4->s3 : S3Site_GetProfile(),
@@ -50,6 +52,7 @@ void App_Poll(void)
         last_service = now; /* Skip missed slots, never replay a backlog. */
         BoardConsole_Poll(now);
         CanMonitor_Poll();
+        Hx711_Poll(now);
         if (s5_mode) { S5Follow_Poll(BoardRuntime_NowMs(), elapsed); }
         else if (s4_mode) { S4Follow_Poll(BoardRuntime_NowMs(), elapsed); }
         else { S3Bench_Poll(BoardRuntime_NowMs(), elapsed); }

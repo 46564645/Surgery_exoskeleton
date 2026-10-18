@@ -8,6 +8,7 @@
 - 唯一活动固件为 `firmware/Exoskeleton_F446/`。工具准备、Windows 预设、构建、软件检查及串口检查见[固件 README](firmware/Exoskeleton_F446/README.md)。
 - CubeMX：打开活动固件目录内的 `Exoskeleton_F446.ioc`，生成位置也必须指向该目录。
 - 当前阶段和实测结果见[开发排期与唯一日志](<Main_ project/docs/development_schedule.md>)；Mac 的历史记录保留，现行 Mac 构建方式见固件 README 的兼容说明。
+- 当前功能范围（2026-10-16）：以省力和自由跟随为主，取消 Lock 位置保持；S5 后续优先做测力、支撑效果与跟随平顺性，Amplify 为可选扩展，演示不以它为前置。此为计划调整，未改变固件或补齐实测证据。
 
 ## 项目资料
 

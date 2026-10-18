@@ -10,7 +10,8 @@
 - 关节统一使用 ExoKit 语义名：`RIGHT/SHOULDER_SIDE`和`RIGHT/ELBOW`；机械、电气图使用`SHOULDER_SIDE`和`ELBOW`。
 - `SHOULDER_SIDE`使用 GIM6010-8/GDS68；`ELBOW`使用裸 M3508/C620，不采用 P19 总成参数。
 - 本系统不配置`SHOULDER_BACK`。台架固定座直接连接`SHOULDER_SIDE`固定侧；从该关节向下继续采用 ExoKit 的上臂刚性连接、`ELBOW`、前臂柔性链节和臂箍关系。
-- 持续重力补偿是正常运行基础；Amplify 根据关节编码器方向与速度叠加增量助力；HX711 只作固定 10 SPS 的低速辅助监测；IMU 当前停用。
+- 当前主线是省力与自由跟随：姿态相关重力补偿分担负载，用户可手动改变姿态，不要求完全松手后固定原角度。Lock 位置保持已按用户 2026-10-16 决定取消，不进入控制链、状态机或验收范围。
+- Amplify 保留为可选后续扩展，根据关节编码器方向与速度叠加增量助力，不作为当前演示前置；HX711 只作固定 10 SPS 的低速辅助监测；IMU 当前停用。
 - 关系状态使用：`CONFIRMED`表示文档层架构决定，`PLANNED`表示已选路线但尚未实物验证，`TBD`表示必须经资料、接线门禁或台架试验确定。
 - 图形颜色只作辅助。每条线均带方向、关系编号或文字标签，图后的 Markdown 表是无图形渲染时的完整等价表达。
 
@@ -238,7 +239,7 @@ flowchart TB
 
 ## 5. 功能、控制与安全权限
 
-本图回答：状态如何形成候选控制量，谁拥有最终输出许可，以及异常如何覆盖正常动作？
+本图回答：状态如何形成候选控制量，谁拥有最终输出许可，以及异常如何覆盖正常动作？Amplify 分支表示可选扩展；当前必需路径为 FOLLOW 重力补偿、限制和停止。
 
 ![功能、控制与安全权限](architecture_diagrams/functional_control_architecture.svg)
 
@@ -250,8 +251,7 @@ flowchart TB
     JSTATE["JointState<br/>单位/方向/零位/有效性/时间戳"]
     ACTION["动作管理器 + RightArm<br/>Condition / Event / Reaction"]
     GRAV["持续重力补偿"]
-    AMP["AmplifyReaction<br/>方向与速度判断"]
-    LOCK["LockReaction<br/>位置保持"]
+    AMP["可选 AmplifyReaction<br/>方向与速度判断"]
     COMPOSE["关节命令合成器"]
     LIMIT["角度 / 速度 / 输出限制"]
     PERMIT["系统状态许可<br/>assist_enable_permission"]
@@ -263,13 +263,10 @@ flowchart TB
     RAW -.->|"XDOM-INFO-03 统一状态"| JSTATE
     JSTATE -->|"XDOM-CTRL-03"| GRAV
     JSTATE -->|"XDOM-CTRL-03"| AMP
-    JSTATE -->|"XDOM-CTRL-03"| LOCK
     EXT -->|"XDOM-CTRL-01 动作请求"| ACTION
     ACTION -->|"XDOM-CTRL-02 启动/取消"| AMP
-    ACTION -->|"XDOM-CTRL-02 启动/取消"| LOCK
     GRAV -->|"XDOM-CTRL-04 补偿力矩 Nm"| COMPOSE
     AMP -->|"XDOM-CTRL-04 增量请求 / 数值合同 TBD"| COMPOSE
-    LOCK -->|"XDOM-CTRL-04 保持角度 rad"| COMPOSE
     COMPOSE -->|"XDOM-CTRL-05 候选命令"| LIMIT
     PERMIT ==>|"XDOM-CTRL-06 状态许可"| SAFE
     LIMIT ==>|"XDOM-CTRL-07 受限候选"| SAFE
@@ -283,7 +280,7 @@ flowchart TB
     classDef control fill:#e5f4ef,stroke:#24735a,stroke-width:2px,color:#17202a;
     classDef safety fill:#fde8e7,stroke:#a93226,stroke-width:3px,color:#17202a;
     class EXT,RAW,FORCE,JSTATE,HEALTH,TELE info;
-    class ACTION,GRAV,AMP,LOCK,COMPOSE,LIMIT,PERMIT,ADAPTER control;
+    class ACTION,GRAV,AMP,COMPOSE,LIMIT,PERMIT,ADAPTER control;
     class SAFE safety;
 ```
 
@@ -291,7 +288,7 @@ flowchart TB
 
 实现查阅：[动作入口 REF-EXO-01](#ref-exo-01)、[Event REF-EXO-02](#ref-exo-02)、[生命周期 REF-EXO-03](#ref-exo-03)；完整路线见[实现索引](#implementation-reference)。
 
-正常控制链：`执行器反馈 -> 原始解析与有效性 -> JointState -> 重力补偿/Amplify/Lock -> 命令合成 -> 关节限制 -> 唯一最终输出入口（SafetySupervisor 检查） -> 执行器适配器 -> CAN`。
+正常控制链：`执行器反馈 -> 原始解析与有效性 -> JointState -> 重力补偿（可选叠加Amplify） -> 命令合成 -> 关节限制 -> 唯一最终输出入口（SafetySupervisor 检查） -> 执行器适配器 -> CAN`。
 
 控制权固定为：`SafetySupervisor > 系统状态许可 > 关节限制 > 命令合成器 > Reaction > 外部命令`。任何 Reaction 都只能形成候选请求，不能直接发送 CAN 命令。
 
@@ -308,10 +305,10 @@ flowchart TB
 
 | 接口 | 来源 | 目标 | 方向与交换内容 | 失效处理 | 验证状态 |
 |---|---|---|---|---|---|
-| `XDOM-CTRL-01` | 外部文本命令 | 动作管理器 | 请求Amplify、Lock、Cancel、校准或调试动作 | 外部请求不能直接写执行器 | `CONFIRMED` |
+| `XDOM-CTRL-01` | 外部文本命令 | 动作管理器 | 请求FOLLOW会话、停止、Cancel、校准或调试；Amplify为可选扩展 | 外部请求不能直接写执行器 | `CONFIRMED` |
 | `XDOM-CTRL-02` | 动作管理器/RightArm | 两个关节Reaction | 启动、取消和协调动作生命周期 | 新动作先取消并清理旧动作 | `CONFIRMED` |
-| `XDOM-CTRL-03` | JointState | 重力补偿、Amplify、Lock | 提供当前有效关节状态 | 状态无效时不计算正常候选量 | `CONFIRMED` |
-| `XDOM-CTRL-04` | 重力补偿与Reaction | 命令合成器 | 关节侧补偿力矩、带类型的增量请求或保持角度；见5.7 | 普通Cancel只移除当前动作；健康且有许可才保留基线 | 行为`CONFIRMED`；增量数值合同`TBD` |
+| `XDOM-CTRL-03` | JointState | 重力补偿、可选Amplify | 提供当前有效关节状态 | 状态无效时不计算正常候选量 | `CONFIRMED` |
+| `XDOM-CTRL-04` | 重力补偿与Reaction | 命令合成器 | 关节侧补偿力矩及可选的带类型增量请求；见5.7 | 普通Cancel只移除当前附加动作；健康且有许可才保留基线 | 行为`CONFIRMED`；增量数值合同`TBD` |
 | `XDOM-CTRL-05` | 命令合成器 | 关节限制层 | 提交各关节候选命令 | 超界候选被限制或拒绝 | `CONFIRMED`，阈值`TBD` |
 | `XDOM-CTRL-06` | 系统状态和许可 | `SafetySupervisor` | 表示是否允许主动输出 | 无许可不得进入或保持主动状态 | `CONFIRMED` |
 | `XDOM-CTRL-07` | 受限候选命令 | `SafetySupervisor` | 请求最终发送许可 | 安全门可以拒绝、替换或撤销 | `CONFIRMED` |
@@ -319,14 +316,15 @@ flowchart TB
 
 ### 5.4 系统状态与转换
 
+以下为目标状态语义；`ASSIST`仅在实现可选Amplify后使用。已取消`LOCK`及相关转换，不影响FOLLOW的启动、正常停止、撤权和故障退出。
+
 | 当前状态 | 进入条件 | 允许行为 | 主要退出方向 |
 |---|---|---|---|
 | `STARTUP_CHECK` | 上电或复位 | 先保持输出未许可，再检查复位原因、配置与关键反馈；不恢复旧动作 | 有效零位到`SAFE_OFF`；无有效零位到`CALIBRATION`；异常到`FAULT`；故障恢复限制不能因重启清除 |
-| `CALIBRATION` | 强制标定或零位无效 | 逐关节tare；主动助力与保持关闭 | 标定成功到`SAFE_OFF`；异常到`FAULT` |
+| `CALIBRATION` | 强制标定或零位无效 | 逐关节tare；主动输出关闭 | 标定成功到`SAFE_OFF`；异常到`FAULT` |
 | `SAFE_OFF` | 启动检查后安全等待、人工停止或恢复检查 | 主动输出未许可 | 启动/恢复规则满足且`assist_enable_permission`成立到`FOLLOW`；异常到`FAULT`；规则见5.9 |
-| `FOLLOW` | 正常许可且无额外动作 | 持续重力补偿 | Amplify请求到`ASSIST`；Lock请求到`LOCK`；S4会话正常取消/到期先经输出层有界撤力再到`SAFE_OFF`；严重故障到`FAULT` |
-| `ASSIST` | Amplify动作有效 | 有许可的重力补偿，加当前助推条件允许的增量；暂停时增量为零 | 暂停不结束动作，仍留在`ASSIST`；Cancel回`FOLLOW`；Lock替换到`LOCK`；许可撤销到`SAFE_OFF`；严重故障到`FAULT` |
-| `LOCK` | Lock动作有效 | 重力补偿加当前位置保持 | Cancel回`FOLLOW`；Amplify请求按动作替换规则进入`ASSIST`；许可撤销到`SAFE_OFF`；严重故障到`FAULT` |
+| `FOLLOW` | 正常许可且无额外动作 | 持续重力补偿，允许手动改变姿态 | 可选Amplify请求到`ASSIST`；会话正常停止/取消/到期先经输出层有界撤力再到`SAFE_OFF`；严重故障到`FAULT` |
+| `ASSIST`（可选） | Amplify动作有效 | 有许可的重力补偿，加当前助推条件允许的增量；暂停时增量为零 | 暂停不结束动作，仍留在`ASSIST`；取消附加动作回`FOLLOW`；结束整个会话按正常停止处理；许可撤销到`SAFE_OFF`；严重故障到`FAULT` |
 | `FAULT` | 关键反馈、状态、任务、驱动或急停故障 | 锁存原因、取消动作、撤销两个关节主动输出许可；实际停止待确认 | 原因解除并检查后到`SAFE_OFF`等待重新确认；重启走`STARTUP_CHECK`，不得自动恢复出力 |
 
 ### 5.5 安全覆盖规则
@@ -342,7 +340,7 @@ flowchart TB
 | 控制或安全任务失期 | 能执行时先撤销输出，并停止喂狗 | 是或看门狗复位 |
 | 紧急停止 | 最高优先级取消动作并请求关闭主动输出 | 是，普通Cancel不能清除 |
 
-S4 的 `followstop` 或 S4 会话 `cancel` 是结束整个 FOLLOW 输出会话，不是取消 Lock/Amplify Reaction：健康时立即禁止新助力目标，输出层只保留限时、只减不增的撤力授权，零力后请求 IDLE；到期前提示人扶稳承托。此输出层子状态不等同 Lock 保持，也不能让 `output_allowed=0` 被解读为电机力矩已归零。反馈、范围、调度、通信等故障不等待斜坡，立即撤权并尽力提交停止；实际断线停机仍待设备证据。S4 已在限定低姿态台架观察到非零目标、主观支撑感和主动停止；具体支撑力与手动重定位仍未测，生产输出配置保持禁用。
+S4 的 `followstop` 或 S4 会话 `cancel` 是结束整个 FOLLOW 输出会话，与仅取消可选Amplify增量动作分开：健康时立即禁止新助力目标，输出层只保留限时、只减不增的撤力授权，零力后请求 IDLE；到期前提示人扶稳承托。这个撤力过程不提供固定角度保持，也不能让 `output_allowed=0` 被解读为电机力矩已归零。反馈、范围、调度、通信等故障不等待斜坡，立即撤权并尽力提交停止；实际断线停机仍待设备证据。S4 已在限定低姿态台架观察到非零目标、主观支撑感和主动停止；具体支撑力与手动重定位仍未测，生产输出配置保持禁用。
 
 S4 台架会话零点仅在单次显式 `followprepare` 后建立：独占 reader 取得两组新的完整七属性，确认驱动 IDLE、零目标、校准/编码器就绪和位置/速度稳定，再把当时已知的垂臂姿态转子读数记入 RAM，同时更新关节换算与输出安全门使用的零偏。两组位置请求的最小间隔由 `session_zero_dwell_ms` 单独配置，首组到第二组完成仍须在 `feedback_timeout_ms` 内；停止后站稳的 `shoulder_standstill.dwell_ms` 是另一时限，二者不能混用。若垂臂位只留有前方余量，取零后保持 `SAFE_OFF`，等待新的反馈表明手臂已进入留有停机余量的小区间且速度合格，才发零力/模式准备帧；等待有界，到期锁存故障。之后仍须单独 `followstart`。取消、停止、故障或复位使本次零点失效，不写入驱动器或 Flash；它不能代替关节方向、传动比、实际重力幅值及活动范围的本机确认。
 
@@ -350,35 +348,34 @@ S5 小范围功能演示沿用该会话思路：肘部 C620 编码器取一次 R
 
 ### 5.6 边界与 TBD
 
-- 已确认：健康且有许可时重力补偿是基线；Amplify只增加增量；Lock保留基线；安全监督可通过唯一输出入口否决所有正常输出。这里的确认仅指文档规则，不是实现或台架验证。
+- 已确认：健康且有许可时重力补偿是基线；可选Amplify只增加增量；安全监督可通过唯一输出入口否决所有正常输出。这里的确认仅指文档规则，不是实现或台架验证。当前R5软限暂停清零肩基线的问题仍按开发日志保留，取消Lock不代表它已修复。
 - `TBD`：控制周期、滤波参数、角度/速度/输出阈值、增量数值合同、控制环部署、两个驱动器控制能力与换算、故障撤销时序、独立停止手段与负载承托、复位原因识别及恢复限制的保留机制。
 
 ### 5.7 功能输出类型与合成边界
 
-实现查阅：[Amplify REF-EXO-04](#ref-exo-04)、[Lock REF-EXO-06](#ref-exo-06)、[GALAXEA合成 REF-GAL-01](#ref-gal-01)、[M3508外环 REF-BETA-02](#ref-beta-02)、[GIM适配 REF-GIM-01](#ref-gim-01)。
+实现查阅：[可选Amplify REF-EXO-04](#ref-exo-04)、[GALAXEA合成 REF-GAL-01](#ref-gal-01)、[M3508外环 REF-BETA-02](#ref-beta-02)、[GIM适配 REF-GIM-01](#ref-gim-01)。[REF-EXO-06](#ref-exo-06)仅保留为已取消Lock的历史源码入口。
 
 | 功能 | 候选请求及单位 | 合成要求 | 当前结论 |
 |---|---|---|---|
 | 持续重力补偿 | 关节侧补偿力矩，Nm | 仅与同坐标、同单位的力矩项相加 | 接口语义已定；模型、参数、符号与有效范围`TBD` |
-| Amplify | 有方向的增量助力请求 | 与Lock互斥；若输出力矩，应先统一到关节侧Nm再叠加基线 | 最终数值合同`TBD`；不得把ExoKit电流百分比直接当Nm或C620命令 |
-| Lock | 进入时记录的关节保持角度，rad | 保持目标与重力前馈同时存在；位置值不能与电流或力矩直接相加 | 位置控制环在STM32还是驱动器内为`TBD` |
+| Amplify（可选） | 有方向的增量助力请求 | 若输出力矩，应先统一到关节侧Nm再叠加基线；不依赖Lock | 最终数值合同`TBD`；不得把ExoKit电流百分比直接当Nm或C620命令 |
 | 命令合成器 | 带模式和单位的关节候选命令 | 先处理动作互斥与量纲，再执行限制；不是把所有输入数值相加 | 最终字段与各执行器映射`TBD` |
 
-文字关系：`重力力矩 + 同单位的附加力矩 -> 力矩前馈`；`保持角度 -> 位置控制目标`。两者如何形成设备命令，取决于已核实的驱动模式。
+文字关系：`姿态 -> 重力补偿候选 + 可选的同单位附加力矩 -> 逐轴换算与限幅 -> 输出许可 -> 设备命令`。取消Lock后，不建立进入时的固定保持角度，也不增加回到该角度的位置控制目标。
 
-两条路线均仅为候选：在STM32计算保持控制项后与重力力矩合成；或将位置/速度/增益与前馈分别交给支持该模式的驱动器。不得预先假定GDS68和C620具有相同能力，也不强制两个关节采用同一种底层控制方式。确认协议、单位、符号、传动关系及控制环分工后，才能冻结实现合同。不能照搬Dynamixel工作模式或参考项目参数。
+后续控制完善围绕省力效果、姿态变化时的平顺跟随及正常停止。新增控制项前仍须核对对应参考实现、两驱动的能力与命令单位；不得因取消Lock而旁路限幅、反馈时效或统一输出许可。GDS68和C620的底层模式分别适配，不照搬Dynamixel工作模式或参考参数。
 
 ### 5.8 暂时不助推与取消动作
 
 实现查阅：[Amplify生命周期 REF-EXO-04](#ref-exo-04)、[命令参数 REF-EXO-05](#ref-exo-05)、[取消入口 REF-EXO-01](#ref-exo-01)。
 
-本项目用`ASSIST`表示Amplify动作有效，另行记录“当前是否助推”，不新增顶层状态。这是本项目的状态表达选择，不是ExoKit已有的七状态实现。
+若实现可选Amplify，本项目用`ASSIST`表示动作有效，另行记录“当前是否助推”，不为暂停再增设顶层状态。这是本项目的状态表达选择，不是ExoKit现成的系统状态机。
 
 | 情况 | Amplify生命周期 | 增量输出 | 重力补偿 |
 |---|---|---|---|
 | 低速、停止、反向暂停或助推速度上限触发 | 动作保留，继续检查条件 | 撤掉增量 | 健康且有许可时保留 |
 | 再次满足方向、速度及暂停结束条件 | 同一动作继续，无需新命令 | 按经验证的进入规则恢复 | 健康且有许可时保留 |
-| Cancel或被Lock替换 | 取消并清理，不自行重启 | 撤掉增量 | 健康且有许可时保留 |
+| Cancel或被新附加动作替换 | 取消并清理，不自行重启 | 撤掉增量 | 健康且有许可时保留 |
 | 严重故障或安全许可撤销 | 取消动作，不自行恢复 | 禁止 | 同样撤销，不承诺电机已物理停止 |
 
 正常退出只指退出当前助推，不等于取消Amplify。起步速度、低速处理时序、反向暂停和有效最高助推速度优先适配ExoKit逻辑，数值通过台架调整；系统安全速度限制独立于助推条件，不能因暂停助推而忽略故障。
@@ -417,7 +414,7 @@ S5 小范围功能演示沿用该会话思路：肘部 C620 编码器取一次 R
 |---|---|---|
 | ExoKit `CmdReactionRunner.cpp` | 启动新动作前取消旧动作 | 保留生命周期；新增唯一输出入口，不照搬Reaction直接操作执行器 |
 | ExoKit `AmplifyReaction.cpp` | 方向/速度判断、反向暂停、条件不满足时关闭扭矩；`finishCondition()`返回false | 保留判断思路；改为正常暂停仅撤增量，不关闭获许可的重力基线 |
-| ExoKit `JointLockReaction.cpp` | 切位置模式、记录当前位置；退出恢复原状态 | 保留保持语义；故障时禁止清理流程恢复旧输出，控制模式另行适配 |
+| ExoKit `JointLockReaction.cpp`（历史参考） | 切位置模式、记录当前位置；退出恢复原状态 | Lock已于2026-10-16取消，不移植；保留来源供追溯 |
 | GALAXEA-A1Z `a1z/robots/arm_robot.py` | 合成动力学前馈与附加力矩，同时发送位置、速度、kp、kd和力矩字段 | 借鉴类型分离与输出顺序；不能据此认定所有保持控制都在主机转成力矩；其角度越界检查部分仅告警，不照搬为本项目安全保证 |
 | BetaRobot `drv/drv_daemon/drv_daemon.c` | 在线/超时检测及回调 | 借鉴健康监测，不等同于不可绕过的安全门或断线后的硬件停机保证 |
 
@@ -434,7 +431,7 @@ S5 小范围功能演示沿用该会话思路：肘部 C620 编码器取一次 R
 | 要实现的规则 | 先读ExoKit | 再读其他reference | 本项目需补齐与验证 |
 |---|---|---|---|
 | 唯一最终输出入口（5.1、6.1） | [REF-EXO-01](#ref-exo-01)、[REF-EXO-02](#ref-exo-02)、[REF-EXO-03](#ref-exo-03) | [REF-GAL-01](#ref-gal-01)、[REF-BETA-02](#ref-beta-02) | 新增统一提交权限；验证Reaction、Cancel、调试和故障清理都不能旁路，撤销后不重放旧命令 |
-| 功能输出类型与合成（5.7） | [REF-EXO-04](#ref-exo-04)、[REF-EXO-06](#ref-exo-06) | [REF-GAL-01](#ref-gal-01)、[REF-GAL-02](#ref-gal-02)、[REF-BETA-02](#ref-beta-02)、[REF-GIM-01](#ref-gim-01) | 确认驱动能力、单位、符号、控制环部署；验证互斥、量纲和限幅，不照搬参数 |
+| 功能输出类型与合成（5.7） | 可选增量见[REF-EXO-04](#ref-exo-04) | [REF-GAL-01](#ref-gal-01)、[REF-GAL-02](#ref-gal-02)、[REF-BETA-02](#ref-beta-02)、[REF-GIM-01](#ref-gim-01) | 确认驱动能力、单位、符号与换算；验证量纲、限幅和基线/增量边界，不照搬参数 |
 | 断线或卡死后的停止（5.10） | [REF-EXO-07](#ref-exo-07) | [REF-BETA-01](#ref-beta-01)、[REF-GAL-01](#ref-gal-01)、[REF-GIM-01](#ref-gim-01) | 软件请求与实际停止分开；查证两驱动超时行为，再进行有承托的台架故障验证；本轮未执行 |
 | 故障重启不自动出力（5.9） | [REF-EXO-08](#ref-exo-08) | 以上参考没有提供已确认适配本项目的完整实现 | 本项目新增复位分类、恢复限制与重新确认；正常开机策略仍TBD；验证旧动作/旧许可不能恢复 |
 | 暂停助推与取消（5.8） | [REF-EXO-04](#ref-exo-04)、[REF-EXO-05](#ref-exo-05)，再看[REF-EXO-01](#ref-exo-01) | 不需要另造动作框架 | 测试停止、反向、重新起步、Cancel、替换、故障；正常暂停留基线，故障全部撤销 |
@@ -448,7 +445,7 @@ S5 小范围功能演示沿用该会话思路：肘部 C620 编码器取一次 R
 | <a id="ref-exo-03"></a>`REF-EXO-03` | [IReaction.cpp](../../Open-source%20projects/ExoKit-main/Arduino%20API/lib/exokit_api/src/event/reaction/IReaction.cpp) | `doRunLoop()`、`notifyCancel()`、`notifyFinish()`、`evalFinishCondition()` | 动作开始、循环、结束与取消的封装 | 迁移时保留语义，清理不得直接恢复执行器旧输出；故障优先于恢复 |
 | <a id="ref-exo-04"></a>`REF-EXO-04` | [AmplifyReaction.cpp](../../Open-source%20projects/ExoKit-main/Arduino%20API/lib/exokit_api/src/event/concept/EffortModulation/AmplifyReaction.cpp) | `runLoop()`、`finishCondition()`、`startup()`、`shutdown()`、`configure()` | 方向、起始速度、反向暂停、低速与最高速度判断；finishCondition返回false | 正常暂停改为撤增量，不关闭重力基线；不照搬Dynamixel模式、电流比例、目标范围或退出时恢复扭矩 |
 | <a id="ref-exo-05"></a>`REF-EXO-05` | [JointAmplifyCmd.cpp](../../Open-source%20projects/ExoKit-main/Arduino%20API/lib/exokit_api/src/com/serialreactions/cmd/JointAmplifyCmd.cpp) | `JointAmplifyCmd`参数解析与创建AmplifyReaction的代码 | 外部助力命令的参数及动作入口 | 源代码最高速度默认值为0，runLoop有启用条件；不能把参考默认值当成已启用超速保护，阈值与单位须重定 |
-| <a id="ref-exo-06"></a>`REF-EXO-06` | [JointLockReaction.cpp](../../Open-source%20projects/ExoKit-main/Arduino%20API/lib/exokit_api/src/event/reaction/JointLockReaction.cpp) | `startup()`、`finishCondition()`、`shutdown()` | 进入时保持当前位置；退出时恢复原状态 | 只保留通电位置保持语义；位置控制环部署TBD，故障清理不能恢复旧模式/扭矩 |
+| <a id="ref-exo-06"></a>`REF-EXO-06`（历史） | [JointLockReaction.cpp](../../Open-source%20projects/ExoKit-main/Arduino%20API/lib/exokit_api/src/event/reaction/JointLockReaction.cpp) | `startup()`、`finishCondition()`、`shutdown()` | 原参考的进入时保持当前位置、退出时恢复原状态 | Lock已取消，不属于实现清单；保留编号和链接追溯历史设计 |
 | <a id="ref-exo-07"></a>`REF-EXO-07` | [ExoskeletonHandle.cpp](../../Open-source%20projects/ExoKit-main/Arduino%20API/lib/exokit_api/src/exo/ExoskeletonHandle.cpp) | `ExoskeletonRomKillSwitchExecutable::exec()`、`checkJoint()`；`ExoskeletonEmergencyBtnExecutable::exec()`、`shutdownJoint()` | 越界或按钮触发后，遍历主动关节并关闭扭矩 | 本项目严重故障作用于右臂两个关节；不移植左臂/SHOULDER_BACK或exit(1)停机方式；软件发送依赖程序与通信仍可用 |
 | <a id="ref-exo-08"></a>`REF-EXO-08` | [ExoskeletonCalibrator.cpp](../../Open-source%20projects/ExoKit-main/Arduino%20API/lib/exokit_api/src/exo/builder/ExoskeletonCalibrator.cpp) | 构造函数、`calibrate()`、`isPersistedConfigAvailable()` | 标定前关闭主动关节输出；加载配置或执行tare | 仅借鉴先关输出再检查/标定；Arduino EEPROM与阻塞等待重写；不是故障复位锁定的现成实现 |
 | <a id="ref-gal-01"></a>`REF-GAL-01` | [arm_robot.py](../../Open-source%20projects/GALAXEA-A1Z/a1z/robots/arm_robot.py) | `JointCommand`、`ArmRobot._update()`、`_control_loop()`、`_check_runtime_safety()`、`_check_runtime_joint_limits()` | 带类型命令、前馈力矩合成、位置/速度/增益分字段发送、异常处理 | 六轴Python/Pinocchio流程只作设计参考；保持环不全部在主机折算为力矩；运行角度越界部分仅告警，不能照搬为安全保证 |
@@ -474,7 +471,7 @@ S5 小范围功能演示沿用该会话思路：肘部 C620 编码器取一次 R
 ```mermaid
 flowchart TB
     L4["L4 系统应用层<br/>ExoskeletonSystem + RightArm<br/>启动 / 校准 / 系统状态机<br/>动作管理器 / 文本命令 / 裸机任务表<br/>健康监测 / SafetySupervisor / 遥测"]
-    L3["L3 领域与控制层<br/>RIGHT/SHOULDER_SIDE + RIGHT/ELBOW<br/>Joint / JointController / JointState<br/>Condition / Event / Reaction<br/>重力补偿 / Amplify / Lock / 合成与限制"]
+    L3["L3 领域与控制层<br/>RIGHT/SHOULDER_SIDE + RIGHT/ELBOW<br/>Joint / JointController / JointState<br/>Condition / Event / Reaction<br/>重力补偿 / 可选 Amplify / 合成与限制"]
     L2["L2 设备与通信驱动层<br/>GIM6010-8/GDS68 适配器<br/>M3508/C620 适配器<br/>CAN分发 / UART环形缓冲<br/>HX711低速采集 / 持久化适配"]
     L1["L1 STM32平台层<br/>HAL / CMSIS / 时基 / 中断<br/>CAN / UART-DMA / GPIO / Flash / 看门狗"]
     REQUEST["外部命令<br/>XDOM-CTRL-01"]
@@ -515,7 +512,7 @@ flowchart TB
 | 层 | 拥有的职责 | 明确不拥有的职责 |
 |---|---|---|
 | L4 | 启动检查、校准、状态机、动作管理、裸机任务表、遥测、健康监测和最终安全门 | 设备协议解析、重力补偿数学和直接CAN输出 |
-| L3 | ExoKit领域对象、JointState、重力补偿、Amplify、Lock、命令合成和平滑限幅 | CAN/UART/Flash细节、最终安全许可 |
+| L3 | ExoKit领域对象、JointState、重力补偿、可选Amplify、命令合成和平滑限幅 | CAN/UART/Flash细节、最终安全许可 |
 | L2 | CAN分发、串口缓冲、两个执行器适配器、原始状态、HX711采集和持久化适配 | 系统模式、Reaction生命周期和安全状态 |
 | L1 | HAL/CMSIS、时基、中断、外设、Flash与看门狗平台机制 | 关节、动作和助力语义 |
 
@@ -525,8 +522,8 @@ flowchart TB
 |---|---|
 | `ExoskeletonSystem -> RightArm -> Joint`对象归属 | Arduino/Dynamixel替换为STM32F446RE和两个异构执行器适配器 |
 | `Condition / Event / Reaction`和开始、循环、取消、清理语义 | TaskManagerIO和动态对象替换为静态裸机任务表与静态动作集合 |
-| 新动作取消旧动作、Lock与Cancel行为语义 | 新增持续重力补偿、关节命令合成、系统状态机和最终安全门 |
-| ExoKit文本命令名称和右臂/语义关节参数 | 固定缓冲解析器；拒绝`left`和`shoulderback`组合 |
+| 新动作取消旧动作、Cancel清理语义 | 新增持续重力补偿、关节命令合成、系统状态机和最终安全门；不移植Lock |
+| 适用的ExoKit文本命令名称和右臂/语义关节参数 | 固定缓冲解析器；不实现`jointlock`，拒绝`left`和`shoulderback`组合 |
 
 ### 6.5 边界与 TBD
 
@@ -537,8 +534,8 @@ flowchart TB
 
 | 领域对象 | 机械 | 电气与反馈 | 软件与控制 | 最终权限 |
 |---|---|---|---|---|
-| `RIGHT/SHOULDER_SIDE` | 台架固定座 -> GIM6010-8关节 -> 上臂刚性组件 | GDS68/GIM6010-8 -> CAN-01 -> 执行器适配器 -> JointState | 肩侧重力分量、Amplify、Lock、合成与限制 | `SafetySupervisor`许可后返回肩侧适配器 |
-| `RIGHT/ELBOW` | 上臂刚性组件 -> ELBOW -> 前臂链节和臂箍 | C620/裸M3508 -> CAN-02 -> 执行器适配器 -> JointState | 肘部重力分量、Amplify、Lock、合成与限制 | `SafetySupervisor`许可后返回肘部适配器 |
+| `RIGHT/SHOULDER_SIDE` | 台架固定座 -> GIM6010-8关节 -> 上臂刚性组件 | GDS68/GIM6010-8 -> CAN-01 -> 执行器适配器 -> JointState | 肩侧重力分量、可选Amplify、合成与限制 | `SafetySupervisor`许可后返回肩侧适配器 |
+| `RIGHT/ELBOW` | 上臂刚性组件 -> ELBOW -> 前臂链节和臂箍 | C620/裸M3508 -> CAN-02 -> 执行器适配器 -> JointState | 肘部重力分量、可选Amplify、合成与限制 | `SafetySupervisor`许可后返回肘部适配器 |
 
 ## 8. 集中 TBD 与验证门禁
 

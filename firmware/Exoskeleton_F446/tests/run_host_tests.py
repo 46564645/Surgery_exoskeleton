@@ -47,6 +47,7 @@ sources = ["tests/host/test_s1.c", "Core/Src/board_console.c", "Core/Src/board_r
            "App/application/s3_shoulder_service.c", "tests/host/stop_input_mock.c",
            "tests/host/test_stop_input.c", "tests/host/test_shoulder_chain.c",
            "tests/host/can_tx_mock.c",
+           "App/devices/hx711.c", "tests/host/test_hx711.c",
            "third_party/lwrb/src/lwrb/lwrb.c"]
 sources += [str(p.relative_to(root)) for p in sorted((root / "third_party/clip/src").glob("*.c"))]
 includes = ["tests/host", "Core/Inc", "App/application", "App/devices", "App/control", "third_party/lwrb/src/include", "third_party/clip/src"]
@@ -141,6 +142,7 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
              "can_errors", "can_commands", "can_failure_console",
              "c620_codec", "c620_invalid", "c620_freshness", "c620_wrap",
              "c620_integration", "c620_queue_age", "c620_console", "c620_failure_console",
+             "hx711_poll", "hx711_console",
               "s3_codec", "s3_mapping", "s3_default", "s3_lifecycle", "s3_interlocks", "s3_transport", "s3_bxcan", "s3_prepare", "s3_gds", "s3_cli", "s3_axes", "s3_observations", "s3_shoulder_console", "s3_standstill", "s3_elbow_session_angle", "s3_elbow_session_bench", "s3_bench_stop_policy", "s3_bench_stop_cli"]
 if r4_defines:
     cases.append("s5_r4_site")
