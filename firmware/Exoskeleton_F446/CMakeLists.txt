@@ -68,6 +68,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/control/joint_state.c
     App/control/gravity_compensation.c
     App/control/s5_elbow_support.c
+    App/control/shoulder_amplify.c
     App/control/safety_supervisor.c
     App/application/output_gateway.c
     App/application/output_can_transport.c
@@ -105,6 +106,7 @@ option(S5_R4_ELBOW_FOLLOW "Build the isolated elbow-only FOLLOW candidate" OFF)
 option(S5_R5_DUAL_FOLLOW "Build the isolated low-pose dual-axis FOLLOW candidate" OFF)
 set(S5_R5_ELBOW_SUPPORT_SIGN "" CACHE STRING "R5 dual FOLLOW elbow-current sign, explicitly 1 or -1 after direction observation")
 set(S5_R5_ELBOW_SUPPORT_MA "" CACHE STRING "R5 dual FOLLOW posture-curve current peak in mA, explicitly 1..20000; protocol cap is 20 A")
+set(S5_R5_SHOULDER_AMPLIFY_MNM "0" CACHE STRING "R5 shoulder Amplify rotor-torque increment while raising, 0..100 mNm; 0 = off")
 if(S5_R5_DUAL_FOLLOW)
     if(S5_R2_ELBOW_TRIAL OR S5_R4_ELBOW_FOLLOW)
         message(FATAL_ERROR "R5 dual FOLLOW must use a separate build from R2 and R4")
@@ -116,9 +118,13 @@ if(S5_R5_DUAL_FOLLOW)
         OR S5_R5_ELBOW_SUPPORT_MA GREATER 20000)
         message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_ELBOW_SUPPORT_MA=1..20000")
     endif()
+    if(NOT "${S5_R5_SHOULDER_AMPLIFY_MNM}" MATCHES "^(0|[1-9][0-9]?|100)$")
+        message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_SHOULDER_AMPLIFY_MNM=0..100")
+    endif()
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
         S5_R5_DUAL_FOLLOW S5_R5_ELBOW_SUPPORT_SIGN=${S5_R5_ELBOW_SUPPORT_SIGN}
-        S5_R5_ELBOW_SUPPORT_MA=${S5_R5_ELBOW_SUPPORT_MA})
+        S5_R5_ELBOW_SUPPORT_MA=${S5_R5_ELBOW_SUPPORT_MA}
+        S5_R5_SHOULDER_AMPLIFY_MNM=${S5_R5_SHOULDER_AMPLIFY_MNM})
 endif()
 set(S5_R4_ELBOW_SUPPORT_SIGN "" CACHE STRING "R4 elbow support-current sign, explicitly 1 or -1 after R2 direction observation")
 set(S5_R4_ELBOW_SUPPORT_MA "" CACHE STRING "R4 elbow support-current magnitude in mA, explicitly 1..4000 after R2 observation")

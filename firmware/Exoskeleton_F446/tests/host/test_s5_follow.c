@@ -146,6 +146,72 @@ static void elbow_gravity_model(void)
     assert(!S5Site_ReadReady(&p));
 }
 
+/* ExoKit AmplifyReaction::runLoop() timing: 0.35 rad/s start, 400 ms
+ * direction-change suspension and hold, plus the local 200 ms ramp. */
+static void shoulder_amplify_model(void)
+{
+    const ShoulderAmplifyConfig c = {0.04f, 0.35f, 400U, 200U};
+    assert(ShoulderAmplify_ConfigValid(&c));
+    ShoulderAmplify a;
+    ShoulderAmplify_Reset(&a, 0U);
+    uint32_t t = 0U;
+    float out = 1.0f;
+    for (; t < 300U; t += 10U) {
+        out = ShoulderAmplify_Step(&a, &c, 0.2f, t);
+        assert(out == 0.0f); /* Below the starting speed. */
+    }
+    out = ShoulderAmplify_Step(&a, &c, 0.5f, t); /* First raise: no suspension. */
+    assert(a.engaged && out > 0.0f && out < 0.04f);
+    for (t += 10U; t <= 520U; t += 10U) { out = ShoulderAmplify_Step(&a, &c, 0.5f, t); }
+    assert(out == 0.04f);
+    out = ShoulderAmplify_Step(&a, &c, -0.5f, t); /* Lowering switches off. */
+    assert(!a.engaged && out < 0.04f);
+    for (t += 10U; t <= 760U; t += 10U) {
+        out = ShoulderAmplify_Step(&a, &c, -0.5f, t);
+        assert(!a.engaged);
+    }
+    assert(out == 0.0f);
+    const uint32_t change = t;
+    uint32_t engaged_ms = 0U;
+    for (; t <= change + 600U; t += 10U) {
+        out = ShoulderAmplify_Step(&a, &c, 0.5f, t);
+        if (t - change <= 400U) { assert(!a.engaged && out == 0.0f); }
+        else if (engaged_ms == 0U) { assert(a.engaged); engaged_ms = t; }
+    }
+    assert(engaged_ms == change + 410U && out == 0.04f);
+    t = engaged_ms + 210U; /* Quiet before the 400 ms hold ends. */
+    out = ShoulderAmplify_Step(&a, &c, 0.0f, t);
+    assert(a.engaged && out == 0.04f);
+    for (t += 10U; t <= engaged_ms + 700U; t += 10U) {
+        out = ShoulderAmplify_Step(&a, &c, 0.0f, t);
+    }
+    assert(!a.engaged && out == 0.0f);
+    assert(ShoulderAmplify_Step(&a, &c, NAN, t + 10U) == 0.0f);
+    assert(ShoulderAmplify_Step(NULL, &c, 0.5f, t) == 0.0f);
+
+    ShoulderAmplifyConfig bad = c;
+    bad.increment_rotor_nm = 0.0f; /* Off needs no other field. */
+    bad.starting_velocity_rad_s = 0.0f;
+    assert(ShoulderAmplify_ConfigValid(&bad));
+    ShoulderAmplify_Reset(&a, 0U);
+    assert(ShoulderAmplify_Step(&a, &bad, 1.0f, 10U) == 0.0f);
+    bad = c; bad.increment_rotor_nm = -0.01f; assert(!ShoulderAmplify_ConfigValid(&bad));
+    bad = c; bad.increment_rotor_nm = NAN; assert(!ShoulderAmplify_ConfigValid(&bad));
+    bad = c; bad.starting_velocity_rad_s = 0.0f; assert(!ShoulderAmplify_ConfigValid(&bad));
+    bad = c; bad.suspension_ms = 0U; assert(!ShoulderAmplify_ConfigValid(&bad));
+    bad = c; bad.ramp_ms = 0U; assert(!ShoulderAmplify_ConfigValid(&bad));
+    assert(!ShoulderAmplify_ConfigValid(NULL));
+
+    S5SiteProfile p = dual_profile();
+    p.shoulder_amplify = c;
+    assert(S5Site_ReadReady(&p));
+    p.shoulder_amplify.increment_rotor_nm = 2.0f * p.s3.safety.joint[0].max_motor_command;
+    assert(!S5Site_ReadReady(&p)); /* Increment above the shoulder cap. */
+    p.shoulder_amplify = c;
+    p.shoulder_amplify.ramp_ms = 0U;
+    assert(!S5Site_ReadReady(&p));
+}
+
 #ifdef S5_R4_ELBOW_FOLLOW
 static void r4_isolated_site(void)
 {
@@ -245,6 +311,15 @@ static void r5_dual_site(void)
     active.s3.rotor_reference_confirmed[0] = true;
     active.s3.rotor_reference_confirmed[1] = true;
     assert(S5Site_ProfileReady(&active));
+    const ShoulderAmplifyConfig *amp = &p->shoulder_amplify;
+    assert(amp->increment_rotor_nm == 0.001f * S5_R5_SHOULDER_AMPLIFY_MNM
+        && amp->starting_velocity_rad_s == 0.34906585f
+        && amp->suspension_ms == 400U && amp->ramp_ms == 200U);
+    S5SiteProfile amp_site = *p;
+    amp_site.shoulder_amplify.increment_rotor_nm = 0.040f;
+    assert(S5Site_ReadReady(&amp_site));
+    amp_site.shoulder_amplify.starting_velocity_rad_s = p->soft_speed_rad_s[0];
+    assert(!S5Site_ReadReady(&amp_site)); /* Must engage below the soft pause. */
     TestClock_Set(100U);
     App_Init();
     assert(S5Follow_IsSelected() && !S4Follow_IsSelected());
@@ -314,7 +389,7 @@ static void elbow_chain(void)
 }
 
 static uint8_t shoulder_axis_state, shoulder_mode, shoulder_input, life;
-static float shoulder_torque, shoulder_rev;
+static float shoulder_torque, shoulder_rev, shoulder_rev_s;
 static unsigned shoulder_nonzero, shoulder_idle;
 static uint16_t elbow_offset_ticks;
 static bool elbow_reverse;
@@ -367,7 +442,7 @@ static void receive_shoulder_output(const BoardCanFrame *frame)
         uint32_t raw;
         switch (ep) {
         case 372U: raw = bits(shoulder_rev); break;
-        case 378U: raw = bits(0.0f); break;
+        case 378U: raw = bits(shoulder_rev_s); break;
         case 195U: case 366U: raw = 1U; break;
         case 272U: raw = bits(shoulder_torque); break;
         case 287U: raw = shoulder_mode; break;
@@ -620,9 +695,11 @@ static void r5_inject_shoulder_can_history(void)
         && can.fifo_overruns != 0U && can.queued == 0U && !can.bus_off);
 }
 
+static const S5SiteProfile *r5_site_override; /* NULL = actual isolated R5 site. */
+
 static void r5_dual_start_running(bool inject_br, bool inject_shoulder_history)
 {
-    S5Site_TestUseProfile(NULL); /* Use the actual isolated R5 site. */
+    S5Site_TestUseProfile(r5_site_override);
     const S5SiteProfile *p = S5Site_GetProfile();
     tick = 100U; TestClock_Set(tick);
     shoulder_axis_state = 1U; shoulder_mode = shoulder_input = 3U;
@@ -917,12 +994,57 @@ static void r5_dual_elbow_lower_margin(void)
     assert(s.phase == S5_FOLLOW_FAULT && s.safety_reason == SAFETY_RANGE
         && !s.output_allowed && s.stop_attempted);
 }
+
+static float r5_shoulder_base_nm(const S5FollowStatus *s)
+{ return 1.64f * sinf(s->joint[0].position_rad) / 8.0f; }
+
+static void r5_dual_amplify(void)
+{
+    S5Site_TestUseProfile(NULL);
+    profile = *S5Site_GetProfile();
+    profile.shoulder_amplify.increment_rotor_nm = 0.040f;
+    r5_site_override = &profile;
+    r5_dual_start_running(false, false);
+    const float raise_rev_s = 8.0f * 30.0f / 360.0f; /* 30 deg/s at the joint. */
+    S5FollowStatus s = {0};
+    shoulder_rev_s = raise_rev_s;
+    for (unsigned i = 0U; i < 400U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed && !s.assist_paused);
+    }
+    float base = r5_shoulder_base_nm(&s);
+    assert(base > 0.02f && fabsf(s.target.shoulder_rotor_nm - (base + 0.040f)) < 0.0001f
+        && fabsf(shoulder_torque - s.target.shoulder_rotor_nm) < 0.0001f);
+    shoulder_rev_s = -raise_rev_s; /* Lowering withdraws only the increment. */
+    for (unsigned i = 0U; i < 300U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    assert(s.phase == S5_FOLLOW_RUNNING
+        && fabsf(s.target.shoulder_rotor_nm - base) < 0.0001f
+        && fabsf(shoulder_torque - base) < 0.0001f);
+    shoulder_rev_s = raise_rev_s; /* Re-raise waits the 400 ms suspension. */
+    for (unsigned i = 0U; i < 350U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(fabsf(s.target.shoulder_rotor_nm - base) < 0.0001f);
+    }
+    for (unsigned i = 0U; i < 400U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    assert(fabsf(s.target.shoulder_rotor_nm - (base + 0.040f)) < 0.0001f);
+    shoulder_rev_s = 0.0f; /* Quiet: hold, then release to the baseline. */
+    for (unsigned i = 0U; i < 800U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    assert(s.phase == S5_FOLLOW_RUNNING
+        && fabsf(s.target.shoulder_rotor_nm - base) < 0.0001f);
+    shoulder_rev_s = 8.0f * 70.0f / 360.0f; /* Above the 60 deg/s soft pause. */
+    for (unsigned i = 0U; i < 100U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    assert(s.phase == S5_FOLLOW_RUNNING && s.assist_paused
+        && s.target.shoulder_rotor_nm == 0.0f);
+    shoulder_rev_s = 0.0f;
+    r5_site_override = NULL;
+}
 #endif
 
 void TestS5Follow_Run(const char *scenario)
 {
     if (!strcmp(scenario, "s5_model_site")) { site_and_model(); }
     else if (!strcmp(scenario, "s5_elbow_gravity")) { elbow_gravity_model(); }
+    else if (!strcmp(scenario, "s5_shoulder_amplify")) { shoulder_amplify_model(); }
     else if (!strcmp(scenario, "s5_elbow_follow")) { elbow_chain(); }
     else if (!strcmp(scenario, "s5_dual_follow")) { dual_chain(); }
 #ifdef S5_R4_ELBOW_FOLLOW
@@ -945,6 +1067,7 @@ void TestS5Follow_Run(const char *scenario)
     else if (!strcmp(scenario, "s5_r5_dual_hard_speed")) { r5_dual_hard_speed(); }
     else if (!strcmp(scenario, "s5_r5_dual_stop_settling")) { r5_dual_stop_settling(); }
     else if (!strcmp(scenario, "s5_r5_dual_elbow_lower_margin")) { r5_dual_elbow_lower_margin(); }
+    else if (!strcmp(scenario, "s5_r5_dual_amplify")) { r5_dual_amplify(); }
 #endif
     else { assert(!"unknown S5 scenario"); }
 }

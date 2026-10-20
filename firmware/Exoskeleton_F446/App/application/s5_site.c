@@ -15,6 +15,12 @@
     || (S5_R5_ELBOW_SUPPORT_MA < 1 || S5_R5_ELBOW_SUPPORT_MA > 20000)
 #error "R5 dual FOLLOW requires an explicit 1..20000 mA elbow-current peak"
 #endif
+#if !defined(S5_R5_SHOULDER_AMPLIFY_MNM)
+#define S5_R5_SHOULDER_AMPLIFY_MNM 0
+#endif
+#if S5_R5_SHOULDER_AMPLIFY_MNM < 0 || S5_R5_SHOULDER_AMPLIFY_MNM > 100
+#error "R5 shoulder Amplify increment must be 0..100 mNm (0 = off)"
+#endif
 /* Isolated dual candidate. The operator measured 0..110 degrees without
  * interference on each axis with power off, and will set both RAM zeroes at
  * the physical 0-degree marks. The -10..105-degree window includes the RAM
@@ -43,7 +49,12 @@
  * Third user step, "assist, not full support": gain 1.0 (whole 1.64 Nm
  * partial-load model), cap 205 mNm = model peak (1.64 Nm joint, ~33% of
  * rating), release slew 80 -> 120 mNm/s so the 1.9 s ramp still covers the
- * cap. Elbow lower edge -10 -> -20 deg: the hanging forearm reached -8.9 deg. */
+ * cap. Elbow lower edge -10 -> -20 deg: the hanging forearm reached -8.9 deg.
+ * Shoulder Amplify (2026-10-20, optional S7, unmeasured): ExoKit
+ * AmplifyReaction defaults are startingVelocity 30 deg/s and a 400 ms
+ * direction-change suspension; 20 deg/s here so slow raises engage. The
+ * build-selected increment is added to the gravity target before the
+ * unchanged 205 mNm cap, so high poses leave little room for it. */
 static const S5SiteProfile site = {
     .s3 = {
         .safety = {
@@ -91,6 +102,11 @@ static const S5SiteProfile site = {
         .sign_g = 1, .confirmed = true
     },
     .shoulder_gain = 1.0f,
+    .shoulder_amplify = {
+        .increment_rotor_nm = 0.001f * S5_R5_SHOULDER_AMPLIFY_MNM,
+        .starting_velocity_rad_s = 0.34906585f, /* 20 deg/s */
+        .suspension_ms = 400U, .ramp_ms = 200U
+    },
     .elbow_gravity = {
         .amplitude_nm = 0.001f * S5_R5_ELBOW_SUPPORT_MA * S5_ELBOW_MOTOR_KT_NM_PER_A,
         .gravity_zero_rad = 0.0f,
@@ -243,6 +259,10 @@ static bool base_ready(const S5SiteProfile *p)
             > e->max_motor_command) { return false; }
     const SafetyJointConfig *sh = &s->safety.joint[0];
     const GravityCompensationConfig *g = &p->shoulder_gravity;
+    const ShoulderAmplifyConfig *amp = &p->shoulder_amplify;
+    if (!ShoulderAmplify_ConfigValid(amp) || amp->increment_rotor_nm > sh->max_motor_command
+        || (amp->increment_rotor_nm > 0.0f && p->soft_speed_rad_s[0] > 0.0f
+            && amp->starting_velocity_rad_s >= p->soft_speed_rad_s[0])) { return false; }
     return S3ShoulderService_ReadProfileReady(s)
         && s->coordinates[0] == S3_ASSEMBLED_JOINT
         && isfinite(sh->mapping.rotor_zero_rad)

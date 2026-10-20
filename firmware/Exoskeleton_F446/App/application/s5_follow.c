@@ -24,6 +24,7 @@ static bool first_seen, preparation_submitted, selected;
 static float assist_scale;
 static bool assist_quiet;
 static uint32_t assist_quiet_ms, assist_scale_ms;
+static ShoulderAmplify amplify;
 
 static bool newer(uint32_t value, uint32_t before)
 {
@@ -45,6 +46,7 @@ static void reset_assist_pause(uint32_t now_ms)
     assist_scale = 1.0f;
     assist_quiet = false;
     assist_quiet_ms = assist_scale_ms = now_ms;
+    ShoulderAmplify_Reset(&amplify, now_ms);
 }
 
 /* ExoKit AmplifyReaction::runLoop(): above its speed limit the joint torque is
@@ -247,7 +249,8 @@ static bool capture_shoulder_zero(const S3SiteSample *sample,
     return true;
 }
 
-static bool compute_target(const S3SiteSample *sample, S5FollowEffort *effort)
+static bool compute_target(const S3SiteSample *sample, uint32_t now_ms,
+                           S5FollowEffort *effort)
 {
     *effort = (S5FollowEffort){0};
     if (dual()) {
@@ -259,8 +262,11 @@ static bool compute_target(const S3SiteSample *sample, S5FollowEffort *effort)
         effort->elbow_current_a = joint_nm / site->elbow_motor_kt_nm_per_a;
         if (!GravityCompensation_Compute(&site->shoulder_gravity,
                                          &sample->joint[0], &joint_nm)) { return false; }
+        const float up = (float)site->shoulder_gravity.sign_g;
         effort->shoulder_rotor_nm = joint_nm * site->shoulder_gain
-            / site->s3.safety.joint[0].mapping.rotor_per_joint;
+            / site->s3.safety.joint[0].mapping.rotor_per_joint
+            + up * ShoulderAmplify_Step(&amplify, &site->shoulder_amplify,
+                                        up * sample->joint[0].velocity_rad_s, now_ms);
     } else if (!S5ElbowSupport_Compute(&site->elbow_support,
                                       &sample->joint[1], &effort->elbow_current_a)) { return false; }
     if (!isfinite(effort->shoulder_rotor_nm)
@@ -429,7 +435,7 @@ void S5Follow_Poll(uint32_t now_ms, uint32_t elapsed_ms)
     if (!complete) { fail_follow(); return; }
     if (status.phase == S5_FOLLOW_RUNNING) {
         S5FollowEffort effort;
-        if (!compute_target(&sample, &effort)) { fail_follow(); return; }
+        if (!compute_target(&sample, now_ms, &effort)) { fail_follow(); return; }
         float gain = assist_gain(&sample, now_ms);
         effort.shoulder_rotor_nm *= gain;
         effort.elbow_current_a *= gain;

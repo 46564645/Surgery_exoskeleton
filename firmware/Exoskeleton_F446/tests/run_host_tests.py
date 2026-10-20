@@ -21,7 +21,8 @@ sources = ["tests/host/test_s1.c", "Core/Src/board_console.c", "Core/Src/board_r
            "App/devices/c620_feedback.c", "tests/host/test_c620.c",
            "App/devices/motor_command.c", "App/control/joint_state.c",
            "App/control/gravity_compensation.c", "tests/host/test_s4_gravity.c",
-           "App/control/s5_elbow_support.c", "App/application/s5_site.c",
+           "App/control/s5_elbow_support.c", "App/control/shoulder_amplify.c",
+           "App/application/s5_site.c",
            "App/application/s5_follow.c",
            "tests/host/test_s5_follow.c",
            "App/application/s4_site.c", "tests/host/test_s4_site.c",
@@ -68,8 +69,11 @@ if r5_sign is not None or r5_ma is not None:
     if r5_sign not in ("1", "-1") or r5_ma is None or not r5_ma.isdecimal() \
             or not 1 <= int(r5_ma) <= 20000:
         raise SystemExit("S5 R5 host profile requires sign=1/-1 and target=1..20000 mA")
+    r5_amp = env.get("S5_R5_HOST_AMPLIFY_MNM", "0")
+    if not r5_amp.isdecimal() or not 0 <= int(r5_amp) <= 100:
+        raise SystemExit("S5 R5 host shoulder Amplify increment must be 0..100 mNm")
     r5_defines = ["S5_R5_DUAL_FOLLOW", f"S5_R5_ELBOW_SUPPORT_SIGN={r5_sign}",
-                  f"S5_R5_ELBOW_SUPPORT_MA={r5_ma}"]
+                  f"S5_R5_ELBOW_SUPPORT_MA={r5_ma}", f"S5_R5_SHOULDER_AMPLIFY_MNM={r5_amp}"]
 if r4_defines and r5_defines:
     raise SystemExit("S5 R4 and R5 host profiles are mutually exclusive")
 site_defines = r4_defines + r5_defines
@@ -123,7 +127,8 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
          "s4_read_status_cli",
          "s4_gateway_ramp", "s4_gateway_expiry", "s4_gateway_faults",
          "s5_gateway_pair", "s5_gateway_stop",
-         "s5_model_site", "s5_elbow_gravity", "s5_elbow_follow", "s5_dual_follow",
+         "s5_model_site", "s5_elbow_gravity", "s5_shoulder_amplify",
+         "s5_elbow_follow", "s5_dual_follow",
          "s4_follow_cli_cancel", "s4_follow_expiry", "s4_follow_long_warning", "s4_follow_midcycle_arm",
          "s4_follow_read",
          "s4_observe_raw_mapping", "s4_observe_age_fault",
@@ -154,7 +159,7 @@ if r5_defines:
                "s5_r5_dual_can_history",
                "s5_r5_dual_upper_boundary", "s5_r5_dual_soft_pause",
                "s5_r5_dual_hard_speed", "s5_r5_dual_stop_settling",
-               "s5_r5_dual_elbow_lower_margin"]
+               "s5_r5_dual_elbow_lower_margin", "s5_r5_dual_amplify"]
 selected = sys.argv[1:] or cases
 if any(case not in cases for case in selected):
     raise SystemExit("Unknown host scenario")

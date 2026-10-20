@@ -4,11 +4,13 @@
 #include "s3_site.h"
 #include "gravity_compensation.h"
 #include "s5_elbow_support.h"
+#include "shoulder_amplify.h"
 
 typedef struct {
     S3SiteProfile s3;
     GravityCompensationConfig shoulder_gravity; /* S4 local shoulder model. */
     float shoulder_gain;
+    ShoulderAmplifyConfig shoulder_amplify;     /* Dual only; zero increment = off. */
     S5ElbowSupportConfig elbow_support;         /* Local command in C620 A. */
     GravityCompensationConfig elbow_gravity;
     float elbow_motor_kt_nm_per_a;
