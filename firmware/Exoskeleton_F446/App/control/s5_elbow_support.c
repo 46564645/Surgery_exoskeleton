@@ -16,3 +16,21 @@ bool S5ElbowSupport_Compute(const S5ElbowSupportConfig *config,
     *out_current_a = current_a;
     return true;
 }
+
+bool S5ElbowGravity_Compute(const GravityCompensationConfig *config,
+                            const JointState *shoulder, const JointState *elbow,
+                            float *out_joint_torque_nm)
+{
+    if (out_joint_torque_nm == NULL) { return false; }
+    *out_joint_torque_nm = 0.0f;
+    if (shoulder == NULL || elbow == NULL || !shoulder->valid || !elbow->valid) {
+        return false;
+    }
+    JointState forearm = *elbow;
+    forearm.position_rad += shoulder->position_rad;
+    forearm.velocity_rad_s += shoulder->velocity_rad_s;
+    float torque_nm;
+    if (!GravityCompensation_Compute(config, &forearm, &torque_nm)) { return false; }
+    *out_joint_torque_nm = torque_nm * (float)config->sign_g > 0.0f ? torque_nm : 0.0f;
+    return true;
+}

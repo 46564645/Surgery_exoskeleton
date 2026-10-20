@@ -123,7 +123,7 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
          "s4_read_status_cli",
          "s4_gateway_ramp", "s4_gateway_expiry", "s4_gateway_faults",
          "s5_gateway_pair", "s5_gateway_stop",
-         "s5_model_site", "s5_elbow_follow", "s5_dual_follow",
+         "s5_model_site", "s5_elbow_gravity", "s5_elbow_follow", "s5_dual_follow",
          "s4_follow_cli_cancel", "s4_follow_expiry", "s4_follow_long_warning", "s4_follow_midcycle_arm",
          "s4_follow_read",
          "s4_observe_raw_mapping", "s4_observe_age_fault",
@@ -147,7 +147,8 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
 if r4_defines:
     cases.append("s5_r4_site")
 if r5_defines:
-    cases += ["s5_r5_site", "s5_r5_dual_two_pair_zero", "s5_r5_dual_no_post_zero_dwell",
+    cases += ["s5_r5_site", "s5_r5_dual_gravity_zero", "s5_r5_dual_gravity_pose",
+               "s5_r5_dual_two_pair_zero", "s5_r5_dual_no_post_zero_dwell",
                "s5_r5_dual_cancel_early", "s5_r5_dual_cancel_pending",
                "s5_r5_dual_chain", "s5_r5_dual_elbow_stale", "s5_r5_dual_elbow_step",
                "s5_r5_dual_can_history",

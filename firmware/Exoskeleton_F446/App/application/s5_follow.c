@@ -250,15 +250,19 @@ static bool capture_shoulder_zero(const S3SiteSample *sample,
 static bool compute_target(const S3SiteSample *sample, S5FollowEffort *effort)
 {
     *effort = (S5FollowEffort){0};
-    if (!S5ElbowSupport_Compute(&site->elbow_support,
-                                &sample->joint[1], &effort->elbow_current_a)) { return false; }
     if (dual()) {
         float joint_nm;
+        if (!S5ElbowGravity_Compute(&site->elbow_gravity,
+                                    &sample->joint[0], &sample->joint[1], &joint_nm)) {
+            return false;
+        }
+        effort->elbow_current_a = joint_nm / site->elbow_motor_kt_nm_per_a;
         if (!GravityCompensation_Compute(&site->shoulder_gravity,
                                          &sample->joint[0], &joint_nm)) { return false; }
         effort->shoulder_rotor_nm = joint_nm * site->shoulder_gain
             / site->s3.safety.joint[0].mapping.rotor_per_joint;
-    }
+    } else if (!S5ElbowSupport_Compute(&site->elbow_support,
+                                      &sample->joint[1], &effort->elbow_current_a)) { return false; }
     if (!isfinite(effort->shoulder_rotor_nm)
         || !isfinite(effort->elbow_current_a)) { return false; }
     if (dual()) {

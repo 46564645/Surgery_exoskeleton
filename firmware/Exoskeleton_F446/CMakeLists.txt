@@ -104,7 +104,7 @@ option(S5_R2_ELBOW_TRIAL "Build the isolated one-shot elbow direction/stop candi
 option(S5_R4_ELBOW_FOLLOW "Build the isolated elbow-only FOLLOW candidate" OFF)
 option(S5_R5_DUAL_FOLLOW "Build the isolated low-pose dual-axis FOLLOW candidate" OFF)
 set(S5_R5_ELBOW_SUPPORT_SIGN "" CACHE STRING "R5 dual FOLLOW elbow-current sign, explicitly 1 or -1 after direction observation")
-set(S5_R5_ELBOW_SUPPORT_MA "" CACHE STRING "R5 dual FOLLOW elbow-current target in mA, explicitly 1..20000; command cap is 20 A")
+set(S5_R5_ELBOW_SUPPORT_MA "" CACHE STRING "R5 dual FOLLOW posture-curve current peak in mA, explicitly 1..20000; protocol cap is 20 A")
 if(S5_R5_DUAL_FOLLOW)
     if(S5_R2_ELBOW_TRIAL OR S5_R4_ELBOW_FOLLOW)
         message(FATAL_ERROR "R5 dual FOLLOW must use a separate build from R2 and R4")

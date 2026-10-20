@@ -2,6 +2,7 @@
 #define S5_ELBOW_SUPPORT_H
 /* L3: local low-pose elbow current candidate, A. This is not joint torque. */
 #include "joint_state.h"
+#include "gravity_compensation.h"
 #include <stdbool.h>
 
 typedef struct {
@@ -12,4 +13,7 @@ typedef struct {
 
 bool S5ElbowSupport_Compute(const S5ElbowSupportConfig *config,
                             const JointState *elbow, float *out_current_a);
+bool S5ElbowGravity_Compute(const GravityCompensationConfig *config,
+                            const JointState *shoulder, const JointState *elbow,
+                            float *out_joint_torque_nm);
 #endif

@@ -88,6 +88,64 @@ static void site_and_model(void)
     assert(S5Site_ProfileReady(&one_sided));
 }
 
+static void elbow_gravity_model(void)
+{
+    GravityCompensationConfig config = {0.04f, 0.0f, 1, true};
+    const struct { float shoulder_deg, elbow_deg, expected_nm; } cases[] = {
+        {0.0f, 0.0f, 0.0f}, {20.0f, 10.0f, 0.02f},
+        {30.0f, 15.0f, 0.02828427f}, {30.0f, 60.0f, 0.04f},
+        {20.0f, -20.0f, 0.0f}, {-10.0f, 0.0f, 0.0f},
+        {100.0f, 100.0f, 0.0f}, {60.0f, 60.0f, 0.03464102f}
+    };
+    JointState shoulder = {0.0f, 0.0f, 1U, true};
+    JointState elbow = {0.0f, 0.0f, 1U, true};
+    float nm = 0.0f;
+    for (unsigned i = 0U; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        shoulder.position_rad = cases[i].shoulder_deg * 0.0174532925f;
+        elbow.position_rad = cases[i].elbow_deg * 0.0174532925f;
+        assert(S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm)
+            && fabsf(nm - cases[i].expected_nm) < 0.000001f);
+    }
+    config.sign_g = -1;
+    shoulder.position_rad = 0.0f;
+    elbow.position_rad = 0.52359878f;
+    assert(S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm)
+        && fabsf(nm + 0.02f) < 0.000001f);
+    elbow.position_rad = -0.52359878f;
+    assert(S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm) && nm == 0.0f);
+    shoulder.valid = false;
+    nm = 1.0f;
+    assert(!S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm) && nm == 0.0f);
+    shoulder.valid = true;
+    elbow.valid = false;
+    assert(!S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm) && nm == 0.0f);
+    elbow.valid = true;
+    shoulder.position_rad = NAN;
+    assert(!S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm) && nm == 0.0f);
+    shoulder.position_rad = 0.0f;
+    elbow.velocity_rad_s = INFINITY;
+    assert(!S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm) && nm == 0.0f);
+    elbow.velocity_rad_s = 0.0f;
+    config.amplitude_nm = 0.0f;
+    assert(!S5ElbowGravity_Compute(&config, &shoulder, &elbow, &nm) && nm == 0.0f);
+    assert(!S5ElbowGravity_Compute(NULL, &shoulder, &elbow, &nm));
+    assert(!S5ElbowGravity_Compute(&config, NULL, &elbow, &nm));
+    assert(!S5ElbowGravity_Compute(&config, &shoulder, NULL, &nm));
+    assert(!S5ElbowGravity_Compute(&config, &shoulder, &elbow, NULL));
+
+    S5SiteProfile p = dual_profile();
+    assert(S5Site_ReadReady(&p));
+    p.elbow_motor_kt_nm_per_a = 0.0f;
+    assert(!S5Site_ReadReady(&p));
+    p = dual_profile();
+    p.elbow_gravity.amplitude_nm = 2.0f * p.s3.safety.joint[1].max_motor_command
+        * p.elbow_motor_kt_nm_per_a;
+    assert(!S5Site_ReadReady(&p));
+    p = dual_profile();
+    p.elbow_gravity.gravity_zero_rad = 0.1f;
+    assert(!S5Site_ReadReady(&p));
+}
+
 #ifdef S5_R4_ELBOW_FOLLOW
 static void r4_isolated_site(void)
 {
@@ -171,13 +229,18 @@ static void r5_dual_site(void)
         && p->ramp_max_ms == 2000U
         && p->release_slew_per_s.shoulder_rotor_nm == 0.120f
         && p->release_slew_per_s.elbow_current_a == 25.0f);
-    JointState elbow = {el->upper_rad, 0.0f, 1U, true};
-    float current_a = 0.0f;
+    JointState shoulder = {0.0f, 0.0f, 1U, true};
+    JointState elbow = {1.57079633f, 0.0f, 1U, true};
+    float torque_nm = 0.0f;
     const float expected = 0.001f * S5_R5_ELBOW_SUPPORT_MA
         * S5_R5_ELBOW_SUPPORT_SIGN;
-    assert(S5ElbowSupport_Compute(&p->elbow_support, &elbow, &current_a)
+    assert(p->elbow_motor_kt_nm_per_a == 0.02f
+        && p->elbow_gravity.gravity_zero_rad == 0.0f);
+    assert(S5ElbowGravity_Compute(&p->elbow_gravity, &shoulder, &elbow, &torque_nm));
+    float current_a = torque_nm / p->elbow_motor_kt_nm_per_a;
+    assert(fabsf(current_a) <= el->max_motor_command
         && fabsf(current_a - expected) < 0.000001f
-        && fabsf(current_a) <= el->max_motor_command);
+        && p->elbow_gravity.sign_g == S5_R5_ELBOW_SUPPORT_SIGN);
     S5SiteProfile active = *p;
     active.s3.rotor_reference_confirmed[0] = true;
     active.s3.rotor_reference_confirmed[1] = true;
@@ -289,6 +352,8 @@ static S5SiteProfile dual_profile(void)
     p.s3.shoulder_standstill = (ShoulderStandstillConfig){0.001f, 0.02f, 10U, 50U};
     p.s3.shoulder_stop_window_ms = 200U;
     p.shoulder_gravity = (GravityCompensationConfig){0.02f, 0.0f, 1, true};
+    p.elbow_gravity = (GravityCompensationConfig){0.002f, 0.0f, 1, true};
+    p.elbow_motor_kt_nm_per_a = 0.02f;
     p.shoulder_gain = 0.5f;
     p.shoulder_zero_dwell_ms = 10U;
     p.release_slew_per_s.shoulder_rotor_nm = 1.0f;
@@ -392,6 +457,29 @@ static uint32_t r5_first_property_pair(void)
     }
     assert(!"first complete shoulder pair missing");
     return 0U;
+}
+
+static void r5_dual_gravity_zero(void)
+{
+    r5_zero_fixture(20U);
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 5000U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase != S5_FOLLOW_FAULT);
+        if (s.phase == S5_FOLLOW_READY) { break; }
+    }
+    assert(s.phase == S5_FOLLOW_READY);
+    assert(strstr(TestConsole_QueryCached("followstart\n"), "axes=3"));
+    const float peak_a = 0.001f * S5_R5_ELBOW_SUPPORT_MA;
+    for (unsigned i = 0U; i < 200U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+        assert(fabsf(s.target.elbow_current_a) < peak_a * 0.001f);
+        const BoardCanFrame *frame = TestCanTx_Last(BOARD_CAN_ELBOW);
+        assert(frame != NULL && frame->id == 0x200U);
+        int16_t raw = (int16_t)((uint16_t)frame->data[0] << 8U | frame->data[1]);
+        assert(fabsf((float)raw * (20.0f / 16384.0f)) < peak_a * 0.001f);
+    }
 }
 
 static void r5_dual_two_pair_zero(void)
@@ -571,32 +659,20 @@ static void r5_dual_start_running(bool inject_br, bool inject_shoulder_history)
         && fabsf(s.joint[0].position_rad) < 0.005f
         && fabsf(s.joint[1].position_rad) < 0.005f);
     /* READY at the RAM zero must be startable without a precise pre-start
-     * displacement. At zero, the elbow candidate is nonzero and the shoulder
-     * gravity candidate is zero. */
+     * displacement. At zero, both gravity candidates are near zero, allowing
+     * the encoder's quantization step. */
     assert(strstr(TestConsole_QueryCached("followstart\n"), "axes=3"));
     uint32_t armed_ms = tick;
-    bool elbow_nonzero = false;
+    const float peak_a = 0.001f * S5_R5_ELBOW_SUPPORT_MA;
     for (unsigned i = 0U; i < 200U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
-        assert(s.phase != S5_FOLLOW_FAULT);
-        const BoardCanFrame *elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
-        if (elbow != NULL && elbow->id == 0x200U
-            && (elbow->data[0] != 0U || elbow->data[1] != 0U)) {
-            elbow_nonzero = true;
-            break;
-        }
+        assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed
+            && fabsf(s.target.elbow_current_a) < peak_a * 0.001f);
     }
     assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed
-        && elbow_nonzero && shoulder_nonzero == 0U);
-    const BoardCanFrame *first_elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
-    BoardCanFrame expected_elbow = {0};
-    assert(MotorCommand_C620(p->s3.elbow_id,
-        -0.001f * S5_R5_ELBOW_SUPPORT_MA * S5_R5_ELBOW_SUPPORT_SIGN,
-        &expected_elbow));
-    assert(first_elbow != NULL && first_elbow->id == expected_elbow.id
-        && memcmp(first_elbow->data, expected_elbow.data, 8U) == 0);
+        && shoulder_nonzero == 0U);
     /* Raise only the mock shoulder slowly after Start. No exact angle is
-     * needed to trigger RUNNING; movement only makes shoulder support visible. */
+     * needed to trigger RUNNING; movement makes both posture targets visible. */
     for (unsigned i = 0U; i < 600U; i++) {
         shoulder_rev += 8.0f * 10.0f / (360.0f * 600.0f);
         dual_step(); S5Follow_GetStatus(&s);
@@ -610,6 +686,15 @@ static void r5_dual_start_running(bool inject_br, bool inject_shoulder_history)
     const BoardCanFrame *elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
     assert(elbow != NULL && elbow->id == 0x200U
         && (elbow->data[0] != 0U || elbow->data[1] != 0U));
+    for (unsigned i = 0U; i < 100U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    float expected_a = peak_a * S5_R5_ELBOW_SUPPORT_SIGN
+        * fmaxf(0.0f, sinf(s.joint[0].position_rad + s.joint[1].position_rad));
+    assert(fabsf(s.target.elbow_current_a - expected_a) < 0.00001f);
+    elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
+    int16_t raw = (int16_t)((uint16_t)elbow->data[0] << 8U | elbow->data[1]);
+    float wire_a = (float)raw * (20.0f / 16384.0f);
+    assert(fabsf(wire_a - expected_a * p->s3.safety.joint[1].mapping.direction)
+        < peak_a * 0.002f + 20.0f / 16384.0f);
 }
 
 static void r5_dual_chain(void)
@@ -652,6 +737,36 @@ static void r5_dual_chain(void)
     const BoardCanFrame *elbow = TestCanTx_Last(BOARD_CAN_ELBOW);
     assert(elbow != NULL && elbow->id == 0x200U);
     for (unsigned i = 0U; i < 8U; i++) { assert(elbow->data[i] == 0U); }
+}
+
+static void r5_dual_gravity_pose(void)
+{
+    r5_dual_start_running(false, false);
+    const float peak_a = 0.001f * S5_R5_ELBOW_SUPPORT_MA;
+    const struct { float shoulder_deg; uint16_t elbow_ticks; bool flexion; float fraction; } poses[] = {
+        {20.0f, 228U, true, 0.5f},
+        {20.0f, 455U, false, 0.0f},
+        {30.0f, 1365U, true, 1.0f}
+    };
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < sizeof(poses) / sizeof(poses[0]); i++) {
+        shoulder_rev = 0.25f + 8.0f * poses[i].shoulder_deg / 360.0f;
+        elbow_offset_ticks = poses[i].elbow_ticks;
+        elbow_reverse = poses[i].flexion;
+        for (unsigned j = 0U; j < 200U; j++) {
+            dual_step(); S5Follow_GetStatus(&s);
+            assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+        }
+        float expected_a = peak_a * S5_R5_ELBOW_SUPPORT_SIGN * poses[i].fraction;
+        assert(fabsf(s.target.elbow_current_a - expected_a) < peak_a * 0.002f);
+        const BoardCanFrame *frame = TestCanTx_Last(BOARD_CAN_ELBOW);
+        assert(frame != NULL && frame->id == 0x200U);
+        int16_t raw = (int16_t)((uint16_t)frame->data[0] << 8U | frame->data[1]);
+        float wire_a = (float)raw * (20.0f / 16384.0f);
+        assert(fabsf(wire_a + expected_a) < peak_a * 0.002f + 20.0f / 16384.0f);
+        float shoulder_nm = fminf(0.205f, 1.64f * sinf(s.joint[0].position_rad) / 8.0f);
+        assert(fabsf(s.target.shoulder_rotor_nm - shoulder_nm) < 0.00001f);
+    }
 }
 
 static void r5_dual_elbow_stale(void)
@@ -733,6 +848,7 @@ static void r5_dual_soft_pause(void)
         && s.target.elbow_current_a == 0.0f && s.target.shoulder_rotor_nm == 0.0f
         && fabsf(s.peak_speed_rad_s[1] - 20.0f * 6.2831853f / 60.0f) < 0.01f);
     elbow_rpm = 0;
+    shoulder_rev = 0.25f + 8.0f * 30.0f / 360.0f;
     bool resumed = false;
     for (unsigned i = 0U; i < 1000U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
@@ -740,6 +856,11 @@ static void r5_dual_soft_pause(void)
         if (!s.assist_paused && !elbow_last_zero()) { resumed = true; break; }
     }
     assert(resumed && s.speed_pauses == 1U);
+    for (unsigned i = 0U; i < 500U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    float expected_a = 0.001f * S5_R5_ELBOW_SUPPORT_MA * S5_R5_ELBOW_SUPPORT_SIGN
+        * fmaxf(0.0f, sinf(s.joint[0].position_rad + s.joint[1].position_rad));
+    assert(s.phase == S5_FOLLOW_RUNNING && !s.assist_paused
+        && fabsf(s.target.elbow_current_a - expected_a) < 0.00001f);
 }
 
 static void r5_dual_hard_speed(void)
@@ -801,6 +922,7 @@ static void r5_dual_elbow_lower_margin(void)
 void TestS5Follow_Run(const char *scenario)
 {
     if (!strcmp(scenario, "s5_model_site")) { site_and_model(); }
+    else if (!strcmp(scenario, "s5_elbow_gravity")) { elbow_gravity_model(); }
     else if (!strcmp(scenario, "s5_elbow_follow")) { elbow_chain(); }
     else if (!strcmp(scenario, "s5_dual_follow")) { dual_chain(); }
 #ifdef S5_R4_ELBOW_FOLLOW
@@ -808,6 +930,8 @@ void TestS5Follow_Run(const char *scenario)
 #endif
 #ifdef S5_R5_DUAL_FOLLOW
     else if (!strcmp(scenario, "s5_r5_site")) { r5_dual_site(); }
+    else if (!strcmp(scenario, "s5_r5_dual_gravity_zero")) { r5_dual_gravity_zero(); }
+    else if (!strcmp(scenario, "s5_r5_dual_gravity_pose")) { r5_dual_gravity_pose(); }
     else if (!strcmp(scenario, "s5_r5_dual_two_pair_zero")) { r5_dual_two_pair_zero(); }
     else if (!strcmp(scenario, "s5_r5_dual_no_post_zero_dwell")) { r5_dual_no_post_zero_dwell(); }
     else if (!strcmp(scenario, "s5_r5_dual_cancel_early")) { r5_dual_cancel_early(false); }

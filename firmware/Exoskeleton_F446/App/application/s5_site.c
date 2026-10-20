@@ -6,13 +6,14 @@
 #include <stddef.h>
 
 #if defined(S5_R5_DUAL_FOLLOW)
+#define S5_ELBOW_MOTOR_KT_NM_PER_A 0.020f
 #if !defined(S5_R5_ELBOW_SUPPORT_SIGN) \
     || (S5_R5_ELBOW_SUPPORT_SIGN != 1 && S5_R5_ELBOW_SUPPORT_SIGN != -1)
 #error "R5 dual FOLLOW requires an explicit +1 or -1 elbow-current sign"
 #endif
 #if !defined(S5_R5_ELBOW_SUPPORT_MA) \
     || (S5_R5_ELBOW_SUPPORT_MA < 1 || S5_R5_ELBOW_SUPPORT_MA > 20000)
-#error "R5 dual FOLLOW requires an explicit 1..20000 mA elbow-current target"
+#error "R5 dual FOLLOW requires an explicit 1..20000 mA elbow-current peak"
 #endif
 /* Isolated dual candidate. The operator measured 0..110 degrees without
  * interference on each axis with power off, and will set both RAM zeroes at
@@ -90,12 +91,13 @@ static const S5SiteProfile site = {
         .sign_g = 1, .confirmed = true
     },
     .shoulder_gain = 1.0f,
-    .elbow_support = {
-        .current_at_zero_a = 0.001f * S5_R5_ELBOW_SUPPORT_MA
-            * S5_R5_ELBOW_SUPPORT_SIGN,
-        .slope_a_per_rad = 0.0f,
+    .elbow_gravity = {
+        .amplitude_nm = 0.001f * S5_R5_ELBOW_SUPPORT_MA * S5_ELBOW_MOTOR_KT_NM_PER_A,
+        .gravity_zero_rad = 0.0f,
+        .sign_g = S5_R5_ELBOW_SUPPORT_SIGN,
         .confirmed = true /* Bounded software candidate, not physical efficacy. */
     },
+    .elbow_motor_kt_nm_per_a = S5_ELBOW_MOTOR_KT_NM_PER_A,
     .release_slew_per_s = {.shoulder_rotor_nm = 0.120f,
                            .elbow_current_a = 25.0f},
     .send_interval_ms = 50U,
@@ -214,7 +216,6 @@ static bool base_ready(const S5SiteProfile *p)
         || p->send_interval_ms >= s->safety.max_request_ms
         || !isfinite(p->release_slew_per_s.elbow_current_a)
         || p->release_slew_per_s.elbow_current_a <= 0.0f
-        || !p->elbow_support.confirmed
         || !soft_speed_ready(p, dual)) { return false; }
     const SafetyJointConfig *e = &s->safety.joint[1];
     if (e->mapping.rotor_per_joint != 1.0f || e->mapping.rotor_zero_rad != 0.0f
@@ -223,14 +224,23 @@ static bool base_ready(const S5SiteProfile *p)
         || e->lower_rad <= -3.14159265f || e->upper_rad >= 3.14159265f
         || (double)e->max_speed_rad_s * s->safety.feedback_timeout_ms / 1000.0
             >= 3.14159265) { return false; }
-    JointState edge = {e->lower_rad, 0.0f, 0U, true};
-    float low_a, high_a;
-    if (!S5ElbowSupport_Compute(&p->elbow_support, &edge, &low_a)) { return false; }
-    edge.position_rad = e->upper_rad;
-    if (!S5ElbowSupport_Compute(&p->elbow_support, &edge, &high_a)
-        || fabsf(low_a) > e->max_motor_command
-        || fabsf(high_a) > e->max_motor_command) { return false; }
-    if (!dual) { return true; }
+    if (!dual) {
+        JointState edge = {e->lower_rad, 0.0f, 0U, true};
+        float low_a, high_a;
+        if (!S5ElbowSupport_Compute(&p->elbow_support, &edge, &low_a)) { return false; }
+        edge.position_rad = e->upper_rad;
+        return S5ElbowSupport_Compute(&p->elbow_support, &edge, &high_a)
+            && fabsf(low_a) <= e->max_motor_command
+            && fabsf(high_a) <= e->max_motor_command;
+    }
+    const JointState down = {0.0f, 0.0f, 0U, true};
+    const JointState horizontal = {1.57079633f, 0.0f, 0U, true};
+    float peak_nm;
+    if (!isfinite(p->elbow_motor_kt_nm_per_a) || p->elbow_motor_kt_nm_per_a <= 0.0f
+        || p->elbow_gravity.gravity_zero_rad != 0.0f
+        || !S5ElbowGravity_Compute(&p->elbow_gravity, &down, &horizontal, &peak_nm)
+        || fabsf(peak_nm) / p->elbow_motor_kt_nm_per_a
+            > e->max_motor_command) { return false; }
     const SafetyJointConfig *sh = &s->safety.joint[0];
     const GravityCompensationConfig *g = &p->shoulder_gravity;
     return S3ShoulderService_ReadProfileReady(s)

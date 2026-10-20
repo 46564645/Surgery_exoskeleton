@@ -10,6 +10,8 @@ typedef struct {
     GravityCompensationConfig shoulder_gravity; /* S4 local shoulder model. */
     float shoulder_gain;
     S5ElbowSupportConfig elbow_support;         /* Local command in C620 A. */
+    GravityCompensationConfig elbow_gravity;
+    float elbow_motor_kt_nm_per_a;
     S5FollowEffort release_slew_per_s;          /* Nm/s shoulder, A/s elbow. */
     uint32_t send_interval_ms, session_ms, ramp_max_ms;
     uint32_t shoulder_zero_dwell_ms;            /* Dual mode only. */
