@@ -2,7 +2,9 @@
 
 ## HX711 临时力值与去皮（2026-10-17）
 
-当前板上为 [R5 + HX711 力值候选](build/s5-r5-hx711-force-20261017/Exoskeleton_F446.elf)，BIN SHA256 `CDB40497A22045BDEBB09E95EC1143C1629AEBF3FE16D278E9A604A54ED7D006`，已刷写并独立读回一致，USB查询确认待机、输出许可为0。R5构建选项仍为 `SIGN=1/MA=2000`。
+当前板上为 [R5 肘姿态相关重力补偿 + 放宽限值候选](build/s5-r5-limit45-20261021/Exoskeleton_F446.elf)（2026-10-21 刷入），BIN SHA256 `241c006a71d42ecf814e75a3b36188b0f4d129b2aa885d8bbdc368a2ddc80cf2`，已刷写并独立读回一致，上电 `phase=1`。R5 构建选项 `S5_R5_DUAL_FOLLOW=ON`、`S5_R5_ELBOW_SUPPORT_SIGN=1`、`S5_R5_ELBOW_SUPPORT_MA=2000`（sin 曲线峰值）、`S5_R5_SHOULDER_AMPLIFY_MNM=0`。肘电流为 `峰值 × sin(肩角+肘角)`：垂臂约 0 A，前臂抬平方向达峰值。
+- 2026-10-21 放宽后的 R5 限值：软限肩 90°/s、肘 150°/s；硬限肩 150°/s、肘 240°/s；`resume_quiet_ms=250`；下限肩 −20°、肘 −30°；会话 45 s。肩读取窗口相应由 55 s 改为 70 s（必须大于 `prepare_timeout + session`）。
+- 上一版（30 s 会话、软限 60/90、硬限 120/180）BIN `87afce7f…789934`，2026-10-21 一次 8 s 窗口全程 RUNNING 并正常停止；更早的 HX711 力值镜像 `CDB40497…ED7D006` 见 `build/s5-r5-hx711-force-20261017/`。
 
 - `hx711`：保留 `seen/seq/raw/sat/age_ms`，增加 `valid/force_N/zero_raw/cal=temporary`。`force_N` 单位为牛顿，保留三位小数只是显示分辨率，不代表测量精度；`zero_raw` 显示四舍五入的计数。
 - `hxtare`：仅在无外加载荷时调用，立即将最新新鲜且未饱和的样本设为零点，返回 `OK hx711 tared ram_only=1`。只存在RAM，重启恢复标定零点；程序不会自动判断是否空载。

@@ -258,18 +258,18 @@ static void r5_dual_site(void)
     const SafetyJointConfig *sh = &p->s3.safety.joint[0];
     const SafetyJointConfig *el = &p->s3.safety.joint[1];
     assert(sh->mapping.rotor_per_joint == 8.0f
-        && sh->lower_rad == -0.17453293f && sh->upper_rad == 1.83259571f
-        && sh->max_speed_rad_s == 2.09439510f
+        && sh->lower_rad == -0.34906585f && sh->upper_rad == 1.83259571f
+        && sh->max_speed_rad_s == 2.61799388f
         && sh->max_motor_command == 0.205f && sh->motor_slew_per_s == 0.100f);
     assert(el->mapping.rotor_per_joint == 1.0f
         && el->mapping.direction == -1
-        && el->lower_rad == -0.34906585f && el->upper_rad == 1.83259571f
-        && el->max_speed_rad_s == 3.14159265f
+        && el->lower_rad == -0.52359878f && el->upper_rad == 1.83259571f
+        && el->max_speed_rad_s == 6.28318531f
         && el->max_motor_command == 20.0f && el->motor_slew_per_s == 20.0f);
-    /* Soft pause at 60/90 deg/s, below the 120/180 deg/s latched limits. */
-    assert(p->soft_speed_rad_s[0] == 1.04719755f
-        && p->soft_speed_rad_s[1] == 1.57079633f
-        && p->resume_quiet_ms == 100U && p->resume_ramp_ms == 300U);
+    /* Soft pause at 90/200 deg/s, below the 150/360 deg/s latched limits. */
+    assert(p->soft_speed_rad_s[0] == 1.57079633f
+        && p->soft_speed_rad_s[1] == 3.49065850f
+        && p->resume_quiet_ms == 250U && p->resume_ramp_ms == 300U);
     S5SiteProfile soft_bad = *p;
     soft_bad.soft_speed_rad_s[1] = el->max_speed_rad_s;
     assert(!S5Site_ReadReady(&soft_bad));
@@ -280,9 +280,9 @@ static void r5_dual_site(void)
         && p->s3.safety.service_limit_ms == 100U
         && p->s3.safety.max_request_ms == 250U
         && p->s3.prepare_timeout_ms == 20000U
-        && p->s3.shoulder_property_reply_ms == 20U
+        && p->s3.shoulder_property_reply_ms == 50U
         && p->s3.shoulder_property_period_ms == 20U
-        && p->s3.shoulder_property_window_ms == 55000U
+        && p->s3.shoulder_property_window_ms == 70000U
         && p->s3.shoulder_stop_window_ms == 1500U
         && p->s3.shoulder_standstill.span_rev == 0.011f
         && p->s3.shoulder_standstill.max_velocity_rev_s == 0.066f
@@ -291,7 +291,7 @@ static void r5_dual_site(void)
     assert(p->shoulder_gravity.amplitude_nm == 1.64f
         && p->shoulder_gravity.sign_g == 1 && p->shoulder_gain == 1.0f
         && p->shoulder_zero_dwell_ms <= 1U
-        && p->send_interval_ms == 50U && p->session_ms == 30000U
+        && p->send_interval_ms == 50U && p->session_ms == 45000U
         && p->ramp_max_ms == 2000U
         && p->release_slew_per_s.shoulder_rotor_nm == 0.120f
         && p->release_slew_per_s.elbow_current_a == 25.0f);
@@ -914,16 +914,22 @@ static bool elbow_last_zero(void)
 static void r5_dual_soft_pause(void)
 {
     r5_dual_start_running(false, false);
-    elbow_rpm = 20; /* 120 deg/s: above the 90 deg/s soft pause, below 180. */
+    /* Keep a shoulder baseline so the pause can be shown to be per-axis. */
+    shoulder_rev = 0.25f + 8.0f * 30.0f / 360.0f;
     S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 60U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    float shoulder_base = 1.64f * sinf(s.joint[0].position_rad) / 8.0f;
+    assert(shoulder_base > 0.05f);
+    elbow_rpm = 40; /* 240 deg/s: above the 200 deg/s soft pause, below 360. */
     for (unsigned i = 0U; i < 200U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
         assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
         if (s.assist_paused && elbow_last_zero()) { break; }
     }
     assert(s.assist_paused && s.speed_pauses == 1U && elbow_last_zero()
-        && s.target.elbow_current_a == 0.0f && s.target.shoulder_rotor_nm == 0.0f
-        && fabsf(s.peak_speed_rad_s[1] - 20.0f * 6.2831853f / 60.0f) < 0.01f);
+        && s.target.elbow_current_a == 0.0f
+        && fabsf(s.target.shoulder_rotor_nm - shoulder_base) < 0.0001f
+        && fabsf(s.peak_speed_rad_s[1] - 40.0f * 6.2831853f / 60.0f) < 0.01f);
     elbow_rpm = 0;
     shoulder_rev = 0.25f + 8.0f * 30.0f / 360.0f;
     bool resumed = false;
@@ -943,7 +949,7 @@ static void r5_dual_soft_pause(void)
 static void r5_dual_hard_speed(void)
 {
     r5_dual_start_running(false, false);
-    elbow_rpm = 35; /* 210 deg/s exceeds the latched 180 deg/s elbow limit. */
+    elbow_rpm = 65; /* 390 deg/s exceeds the latched 360 deg/s elbow limit. */
     S5FollowStatus s = {0};
     for (unsigned i = 0U; i < 50U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
@@ -953,6 +959,28 @@ static void r5_dual_hard_speed(void)
         && !s.output_allowed && s.stop_attempted);
     dual_step(); /* Complete the pending shoulder stop frame. */
     assert(elbow_last_zero() && shoulder_idle == 1U);
+}
+
+static void r5_dual_speed_spike(void)
+{
+    r5_dual_start_running(false, false);
+    S5FollowStatus s = {0};
+    /* One corrupted C620 frame (390 deg/s) must not latch the hard limit. */
+    elbow_rpm = 65;
+    dual_step();
+    S5Follow_GetStatus(&s);
+    assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+    elbow_rpm = 0;
+    for (unsigned i = 0U; i < 20U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    assert(s.phase == S5_FOLLOW_RUNNING && s.output_allowed);
+    /* Three consecutive samples still latch SAFETY_SPEED. */
+    elbow_rpm = 65;
+    for (unsigned i = 0U; i < 10U; i++) {
+        dual_step(); S5Follow_GetStatus(&s);
+        if (s.phase == S5_FOLLOW_FAULT) { break; }
+    }
+    assert(s.phase == S5_FOLLOW_FAULT && s.safety_reason == SAFETY_SPEED
+        && !s.output_allowed && s.stop_attempted);
 }
 
 static void r5_dual_stop_settling(void)
@@ -975,7 +1003,7 @@ static void r5_dual_elbow_lower_margin(void)
 {
     r5_dual_start_running(false, false);
     /* A hanging forearm reached about -8.9 degrees relative to the upper arm
-     * on the bench; about -14.5 degrees must stay RUNNING. Beyond -20 degrees
+     * on the bench; about -14.5 degrees must stay RUNNING. Beyond -30 degrees
      * still faults. */
     elbow_reverse = false;
     elbow_offset_ticks = 330U;
@@ -986,7 +1014,7 @@ static void r5_dual_elbow_lower_margin(void)
     }
     assert(s.joint[1].valid && s.joint[1].position_rad < -0.24f
         && s.joint[1].position_rad > -0.26f);
-    elbow_offset_ticks = 467U; /* About -20.5 degrees. */
+    elbow_offset_ticks = 694U; /* About -30.5 degrees. */
     for (unsigned i = 0U; i < 50U; i++) {
         dual_step(); S5Follow_GetStatus(&s);
         if (s.phase == S5_FOLLOW_FAULT) { break; }
@@ -1031,7 +1059,7 @@ static void r5_dual_amplify(void)
     for (unsigned i = 0U; i < 800U; i++) { dual_step(); S5Follow_GetStatus(&s); }
     assert(s.phase == S5_FOLLOW_RUNNING
         && fabsf(s.target.shoulder_rotor_nm - base) < 0.0001f);
-    shoulder_rev_s = 8.0f * 70.0f / 360.0f; /* Above the 60 deg/s soft pause. */
+    shoulder_rev_s = 8.0f * 100.0f / 360.0f; /* Above the 90 deg/s soft pause. */
     for (unsigned i = 0U; i < 100U; i++) { dual_step(); S5Follow_GetStatus(&s); }
     assert(s.phase == S5_FOLLOW_RUNNING && s.assist_paused
         && s.target.shoulder_rotor_nm == 0.0f);
@@ -1065,6 +1093,7 @@ void TestS5Follow_Run(const char *scenario)
     else if (!strcmp(scenario, "s5_r5_dual_upper_boundary")) { r5_dual_upper_boundary(); }
     else if (!strcmp(scenario, "s5_r5_dual_soft_pause")) { r5_dual_soft_pause(); }
     else if (!strcmp(scenario, "s5_r5_dual_hard_speed")) { r5_dual_hard_speed(); }
+    else if (!strcmp(scenario, "s5_r5_dual_speed_spike")) { r5_dual_speed_spike(); }
     else if (!strcmp(scenario, "s5_r5_dual_stop_settling")) { r5_dual_stop_settling(); }
     else if (!strcmp(scenario, "s5_r5_dual_elbow_lower_margin")) { r5_dual_elbow_lower_margin(); }
     else if (!strcmp(scenario, "s5_r5_dual_amplify")) { r5_dual_amplify(); }

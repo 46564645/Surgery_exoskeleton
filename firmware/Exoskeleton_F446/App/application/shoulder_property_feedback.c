@@ -44,8 +44,16 @@ void ShoulderPropertyFeedback_Invalidate(ShoulderPropertyFeedback *r)
 }
 void ShoulderPropertyFeedback_Poll(ShoulderPropertyFeedback *r, uint32_t now_ms)
 {
-    if (r != NULL && r->pending && (uint32_t)(now_ms - r->request_ms) > r->reply_timeout_ms) {
+    if (r == NULL || !r->pending
+        || (uint32_t)(now_ms - r->request_ms) <= r->reply_timeout_ms) { return; }
+    /* A lost reply re-requests the same field; the exclusive TX owner submits
+     * it on the next cycle. Only a run of timeouts latches the reader, so one
+     * dropped SDO frame no longer ends the session. */
+    r->pending = false;
+    if (r->reply_retries >= SHOULDER_PROPERTY_MAX_RETRIES) {
         ShoulderPropertyFeedback_Invalidate(r);
+    } else {
+        r->reply_retries++;
     }
 }
 bool ShoulderPropertyFeedback_Expect(ShoulderPropertyFeedback *r,
@@ -71,7 +79,10 @@ void ShoulderPropertyFeedback_Receive(ShoulderPropertyFeedback *r,
     if (r == NULL || r->reply_timeout_ms == 0U || r->quarantined || f == NULL
         || bus != BOARD_CAN_SHOULDER || (f->id & 0x1FU) != 0x005U) { return; }
     GdsPropertyValue value;
-    if (!r->pending || (uint32_t)(now_ms - r->request_ms) > r->reply_timeout_ms
+    /* A reply that arrives after the timeout was already replaced by a retry:
+     * drop it instead of latching, the next request fetches fresh data. */
+    if (!r->pending) { return; }
+    if ((uint32_t)(now_ms - r->request_ms) > r->reply_timeout_ms
         || (uint32_t)(f->received_ms - r->request_ms) > r->reply_timeout_ms
         || (uint32_t)(now_ms - f->received_ms) > r->reply_timeout_ms
         || !GdsSdoRead_PropertyDecode(r->next, bus, f, &value)
@@ -84,6 +95,7 @@ void ShoulderPropertyFeedback_Receive(ShoulderPropertyFeedback *r,
     r->working.received_ms[r->next] = f->received_ms;
     r->last_reply_ms = f->received_ms; r->has_reply = true;
     r->pending = false;
+    r->reply_retries = 0U;
     if (r->s5_fast_path && r->s5_bootstrap_complete) {
         if (r->next == GDS_PROPERTY_POSITION) {
             r->next = GDS_PROPERTY_VELOCITY;

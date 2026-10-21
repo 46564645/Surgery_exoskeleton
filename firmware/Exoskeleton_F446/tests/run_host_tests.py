@@ -158,7 +158,7 @@ if r5_defines:
                "s5_r5_dual_chain", "s5_r5_dual_elbow_stale", "s5_r5_dual_elbow_step",
                "s5_r5_dual_can_history",
                "s5_r5_dual_upper_boundary", "s5_r5_dual_soft_pause",
-               "s5_r5_dual_hard_speed", "s5_r5_dual_stop_settling",
+               "s5_r5_dual_hard_speed", "s5_r5_dual_speed_spike", "s5_r5_dual_stop_settling",
                "s5_r5_dual_elbow_lower_margin", "s5_r5_dual_amplify"]
 selected = sys.argv[1:] or cases
 if any(case not in cases for case in selected):

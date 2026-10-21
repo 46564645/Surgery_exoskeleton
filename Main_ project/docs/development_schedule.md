@@ -2233,3 +2233,72 @@
 - 源码与记录对照（本轮只读）：R5肘候选为恒定2 A、角度斜率0，没有速度阻尼项；启动时辅助比例为1。任一关节超软限时两轴目标同时归零，静止判据满足100 ms后在300 ms内恢复；R5正常运行的`direct_target`路径绕过网关常规升降斜率。故障前11.453 s两轴目标为0，11.594/11.750/11.891 s肘目标依次恢复到406/1426/2000 mA，随后肘角上升、速度反馈达到192°/s并触发硬限。
 - 判断边界：恒定屈肘偏置与暂停后自动恢复的控制行为已由代码和日志确认，并与用户所述非主动运动相符；不能只凭串口稀疏采样断言全部机械动态或排除其他因素。此前“2 A 扭矩很小，因此不会明显带动”的暗示不成立：不足以完全托住前臂，不代表不会在低负载姿态下使机构运动。
 - 建议下一步：暂停同配置穿戴复测，先准备肘零电流、保留反馈与停止保护的隔离观察方案，避免为继续测肩而反复恢复肘恒定助推；肘的姿态相关补偿与阻尼另按参考源码研究。肩软限同时撤基线与读取故障仍保留，不据零肘方案宣称穿戴已安全。未修改固件或参数，未复位、重试。
+
+### 2026-10-20｜补记：肩 Amplify 40 mNm 穿戴窗口（依据构建/板测证据，非本次会话现场）
+
+- 来源：2026-10-21 核对刷写前 512 KiB 备份，发现板上并非 2026-10-17 镜像，而是 `build/s5-r5-amplify40-20261020`（BIN `df1e6c9f…f38e6b`，138868 B）。该目录及 `build/s5-r5-amplify40-board-20261020/` 保存了三次窗口记录；当时未写入本日志，本条只按已有文件补记事实，不补写未记录的判断。
+- 窗口1（22:11–22:13）：预检 `shoulderfeedback` 为 `hb=0 wire_valid=0`，中止；`followstatus` 停在 `phase=8 gate=0 reason=1`，未启动。
+- 窗口2（22:17）：进入 RUNNING 约 1.6 s，`cmd_sh_mNm=0`、`cmd_el_mA=0`（未抬臂），随后 `phase=8 gate=3 reason=6`（`OUTPUT_REASON_TRANSPORT`），`stop=1 stop_failed=0`，`pk=3/18`。
+- 窗口3（23:33）：COM10 打不开、`No debug probe detected`，未运行。
+- 影响：排期表 S7 行原写“未上板”与板上证据矛盾；本条为追溯记录，不改变“Amplify 手感/误触发未验证”的结论。
+
+### 2026-10-21｜R5 肘姿态相关重力补偿候选上板并完成一次穿戴窗口
+
+- 本次完成：编译并刷入 `5e1f859` 的 R5 候选（`S5_R5_DUAL_FOLLOW=ON`、`SIGN=1`、`MA=2000`、`S5_R5_SHOULDER_AMPLIFY_MNM=0`），0 警告，FLASH 138868 B、RAM 12808 B；BIN SHA256 `87afce7f7d2c5ce01fa99dce49d71513c9ab36d24e39dac60344b4f828789934`。刷写脚本 `docs/bench/s5-elbow-gravity-20261020/flash_once.py`；用户确认 24 V 关闭后 HOTPLUG 备份 512 KiB、写入报 verified、独立读回逐字节一致，证据 `build/s5-r5-elbow-gravity-board-20261020/`。
+- 第一次窗口（20:02，`wearing-window1`）在准备阶段失败：`followstatus` 由 `phase=2` 直接到 `phase=8 gate=0`，`followstop` 返回 `ERR fault`；未进入 RUNNING，`output_allowed` 始终 0，机构未受力。SRAM 只读解析（`status@0x20002a40`）显示肩读取器 `state=FAULT reason=3`（`S3_READ_TX`）、`requests=8`、`read_arbitration_retries=0`，即不是 ALST 补发分支。
+- 同一时段 `shoulderfeedback` 变为 `hb=1 wire_valid=0 error=00000040 fault=9` 且 CAN1 停止收帧；用户随后发现一根线掉了。判断（推断，未用仪器独立验证）：掉线使读取帧无应答、NART 下直接判 TX 失败，因此本次 `S3_READ_TX` 由掉线引起，不是新的读取缺陷；历史同类故障仍无定论。
+- 链路恢复后先 SWD 复位 MCU 清故障锁存，预检 `phase=1`、肩 `hb=1 wire_valid=1 error=0 fault=0`、肘 `online=1 age=1ms`。
+- 第二次窗口（20:05，`wearing-window2`，8 s 观察）完整通过：`phase` 1→2→3→4→5→7，`stop_reply=OK S5 ramping_down`，终态 `phase=7 stop=1 stop_failed=0 reason=7`；无故障、无软限暂停（`pz=0/0`），峰值速度肩 10°/s、肘 54°/s。
+- 控制量观察：垂臂段 `cmd_el_mA=0`；肩角 −28 mrad、肘角 +52 mrad 时肘目标约 47–52 mA，与 `2 A × sin(肩+肘)` 一致。肩目标随角度由 0 到 −11 mNm（转子侧）。未再出现“恒定 2 A 带着前臂动”。
+- 参数/接线变化：无接线改动；板上镜像由 2026-10-20 Amplify40 版换成本候选。本次未改引脚、限值、会话时长或采样时序。
+- 实际结果边界：肩只动约 3°（−57 mrad），肘目标最大 52 mA（约 1 mNm），**不能作为支撑效果或省力证据**；窗口内未采集 HX711（脚本不含力值查询），前后空载读数 `valid=1`；`TRANSPORT` 在本次 8 s 窗口未复现，但单次窗口不足以排除；2026-10-17 的 `S3_READ_TX` 仍无定论。
+- 遗留问题与下一步：24 V 是否已关闭待用户确认。下一步在承托下做一次抬肩约 20–30° 的窗口，观察肘目标是否随前臂角上升、有无自走或往复，并在同一姿态采集 HX711 力值做有/无补偿对照；`TRANSPORT` 若再出现再单独立项。
+
+### 2026-10-21｜放宽 R5 速度/范围阈值并完成一次 40 s 穿戴窗口
+
+- 用户决定（按 2026-10-21 提出的清单）：肘软限 90→150°/s、硬限 180→240°/s；肩软限 60→90°/s、硬限 120→150°/s；`resume_quiet_ms` 100→250 ms；肩下限 −10°→−20°、肘下限 −20°→−30°；`session_ms` 30→45 s。
+- 耦合核查（改主值前已逐条确认）：①`soft_speed_ready()` 要求软限小于同轴硬限；②`assist_gain()` 以软限的一半作为恢复门限，软限改动会同步改变恢复条件；③Amplify 起动速度 20°/s 必须小于肩软限；④`S3ShoulderService_ProfileReady()` 要求 `shoulder_property_window_ms > prepare_timeout + session_ms`，45 s 会话使原 55 s 窗口不满足，故改为 **70 s**（否则上电即 `phase=0` 禁用）；⑤`硬限 × feedback_timeout < π` 仍满足；⑥`session_ms > ramp_max_ms` 仍满足；⑦`ElbowSessionAngle` 用硬限做单步跳变合理性检查，硬限提高后该检查相应变松。
+- 同步修改：`tests/host/test_s5_follow.c` 的 site 断言与 4 个用例阈值（软限 20→30 rpm、硬限 35→45 rpm、肘下限 467→694 ticks、Amplify 70→100°/s）；`docs/bench/s5-elbow-once-20261011/dual_follow_once.py` 观察上限 27000→42000 ms。
+- 验证：固件 0 警告，FLASH 138868 B、RAM 12808 B；默认主机测试通过，**R5 专项 17/17 通过**。另发现 R5 主机配置下 `s3_chain_relative_anchor` 断言失败，用改动前的 `s5_site.c` 复现同样失败，确认为既有问题、非本次引入（此前 R5 配置只跑 S5 子集）。
+- 刷板：BIN SHA256 `241c006a71d42ecf814e75a3b36188b0f4d129b2aa885d8bbdc368a2ddc80cf2`，备份后写入 verified、独立读回一致，上电 `phase=1`（说明放宽后的配置通过全部耦合校验）。脚本 `docs/bench/s5-elbow-gravity-20261020/flash_limits_once.py`，证据 `build/s5-r5-limit45-board-20261021/`。刷写时 24 V 状态未由工具独立核实。
+- 第一次 40 s 窗口（20:16）：10.08 s `SAFETY_SPEED`（肘峰值 246°/s > 240）。过程中多次出现指令为 0 而肘角持续变化（如 8.4–8.9 s 从 513→1298 mrad），当时按“外部带动”解读；用户随后发现一根线松了，故该窗口的运动学数据不作为判断依据。
+- 第二次 40 s 窗口（20:18，接线恢复后）：完整 RUNNING 40 s 并正常停止，`stop_reply=OK S5 ramping_down`，终态 `phase=7 stop=1 stop_failed=0 reason=7`，310 个 RUNNING 样本。
+  - 运动范围：肩 −7.0…+44.6°，肘 −0.4…+82.4°。
+  - 目标：肩 0…143 mNm（转子侧，约 1.14 N·m 关节侧）、肘 0…1999 mA（约 0.04 N·m，1:1 直驱）。
+  - 软限暂停 15 次；RUNNING 期间 **35% 的样本两轴指令为 0**；峰值速度肩 109°/s、肘 240°/s（恰等于硬限，未触发锁存）。
+- 判断：放宽后不再频繁硬限熄火，肩侧补偿可随姿态升到约 1.14 N·m 关节侧；但软限暂停仍占约三分之一运行时间，且肘补偿幅值（约 0.04 N·m）远小于前臂重力矩，仍不构成有效肘支撑。该窗口未采集 HX711 力值（脚本不含），主观感受未记录。
+- 遗留问题与下一步：①把 HX711 力值加入窗口采集，做同姿态有/无补偿对照；②评估软限暂停只作用于超限轴，而不是两轴同时清零（当前一次肘超速会同时撤掉肩支撑）；③肘幅值与阻尼需按开源索引查参考实现后再改，不凭现象直接加参数。
+
+### 2026-10-21｜软限暂停改为逐轴，并让窗口采集 HX711
+
+- 参考核对：开源索引第 19 行（动作意图判断）主参考 ExoKit `AmplifyReaction`。实读 `Open-source projects/ExoKit-main/Arduino API/lib/exokit_api/src/event/concept/EffortModulation/AmplifyReaction.cpp` 的 `runLoop()`：每个 Reaction 只持有一个关节（`c_joint`），超速或换向时 `c_joint->setTorque(false)` 只作用于该关节，其他关节的 Reaction 不受影响。原实现把两轴合并成一个 `assist_gain`，与参考的逐关节语义不符，本次按参考改为逐轴。
+- 本次修改（`App/application/s5_follow.c`）：`assist_gain()` 拆为 `assist_gain_axis(axis, …)` + `assist_gains()`；暂停状态、静止计时、恢复斜坡、`assist_scale` 均改为按轴数组；某轴超过自身软限只把该轴目标清零，另一轴保留当前基线；`status.assist_paused` 仍表示“任一轴暂停”，`speed_pauses` 按轴的新暂停次数累加。硬限仍由 `SafetySupervisor` 统一撤权，未改。
+- 测试同步（`tests/host/test_s5_follow.c`）：`r5_dual_soft_pause` 增加肩 30° 基线，断言肘暂停时 `cmd_el=0` 而肩目标等于重力基线；其余断言与用例不变。
+- 窗口脚本（`docs/bench/s5-elbow-once-20261011/dual_follow_once.py`）：RUNNING 期间每约 1 s 追加一次 `hx711` 查询并写入同一份 JSONL；查询失败不中止窗口，力值仍只作辅助记录。
+- 验证：R5 专项 17/17 通过；固件 0 警告，FLASH 138868 B、RAM 12808 B；BIN SHA256 `bd6787b5f291a7d77ce91972c20646162325c801064aca2a3f05dd1f7411272e`。
+- 刷板：备份后写入 verified、独立读回一致，上电 `phase=1`；刷前镜像前缀与 `241c006a…c80cf2` 一致，说明本次是在上一版基础上替换。脚本 `docs/bench/s5-elbow-gravity-20261020/flash_axis_pause_once.py`，证据 `build/s5-r5-axis-pause-board-20261021/`。
+- 未验证：逐轴暂停在真实穿戴窗口中的效果；HX711 采集在窗口内是否稳定（10 SPS、500 ms 新鲜度阈值）。
+
+### 2026-10-21｜新增 S5 实时三联图监控窗口（上位机，未改固件）
+
+- 需求（用户 2026-10-21）：测试时能实时看曲线并记录；要记录电机位置（关节角）、助力力矩、HX711 力；横轴为滚动 60 s；READY 后手动点开始；窗口独占串口并负责启停，取代 `dual_follow_once.py` 的日常使用。
+- 调研：本地 `tests/encoder_capture/visible_capture.py` 提供已验证的 tkinter「工作线程 + 队列 + `root.after`」模式；`elbow_once.py` 的 `Link.ask/fields/open_vcp` 与 `dual_follow_once.py` 的预检/准备/取零/READY/启停序列可直接复用。ExoKit 自带 Processing GUI 只做命令菜单、无绘图，故绘图部分为自行实现（开源辅助）；网上同类实现为 tkinter Canvas 环形缓冲 + 定时重绘、串口读取放独立线程。
+- 本次新增（不改固件、不改板上参数）：
+  - `firmware/Exoskeleton_F446/tests/live_monitor/s5_live_window.py`：独占 VCP，复刻预检与启停序列；20 Hz 轮询 `followstatus`、10 Hz 轮询 `hx711`；三联图（肩/肘角度、肩/肘关节侧力矩、力）滚动 60 s，助力生效/软限暂停用底色区分，起停画竖线；`停止` 全程可用，停止未确认显示红屏并提示切断 24 V；关窗先发停止。
+  - 落盘：`session.jsonl`、`samples.csv`（20 Hz）、`force.csv`（10 Hz）、`summary.json`。
+  - `--offline-check`（内置假串口）与 `--replay`（回放已存目录，供无硬件截图）。
+  - `tests/live_monitor/README.txt`：用法、前置条件、单位换算与已知限制。
+- 单位换算只在显示/落盘边界做：肩力矩 = 转子 mNm/1000 × 8；肘力矩 = mA/1000 × 0.020 N·m/A；角度 = mrad/1000 × 180/π。
+- 实际结果：`--offline-check` 通过（30 个样本、6 个力样本、暂停底色出现、`stop_confirmed=true`）；Canvas 绘制与 EPS 导出正常（约 20 KB）；`--replay` 启动 6 s 无异常；实机预检在 24 V 关闭时按预期拒绝并提示肩心跳缺失。未做真实穿戴窗口。
+- 遗留问题与下一步：24 V 开启后跑一次 40 s 会话，核对曲线与 CSV 是否与 `dual_follow_once.py` 记录一致；出版级图（PDF/SVG、可控字号尺寸）需要另加 matplotlib 脚本，本次未做。
+
+### 2026-10-21｜首次实机使用监控窗口、肘硬限抬到 300°/s、新增实验图导出
+
+- 实机第一次窗口（`build/live-20261021-204213`）：预检、准备、两轴取零、READY 全部通过，但用户点“开始”时已超过固件 `prepare_timeout_ms`（R5 为 20 s），`followstart` 返回 `ERR blocked`，`OutputGateway_Arm()` 按 EXPIRED 撤权并锁存故障。根因是 READY 只在 20 s 内有效，不是随机故障。
+- 窗口流程修改：去掉单独的“开始”按钮，改为勾选确认框后点“检查并开始”，一次点击连续完成 预检→准备→取零→READY→followstart，人工确认放在点击之前；README 写明原因。离线自检仍通过。
+- 第二次实机窗口（`build/live-20261021-204901`，40 s 预算）：RUNNING 16.5 s 后 `safety=7`（`SAFETY_SPEED`）锁存。数据分析：肘在 16.3–16.5 s 平滑加速 146→173→180→214°/s（相邻样本 7–10°/50 ms，属真实运动而非反馈跳变），峰值 246°/s 超过当时硬限 240°/s。同时 RUNNING 期间 19% 的样本处于软限暂停；暂停且肩角 >20° 的 23 个样本中有 21 个肩目标力矩为 0，说明**软限暂停把重力基线一起撤掉了**，这正是“抬臂一段时间后感觉没有助力”的直接原因。该行为与开源索引第 19 行“正常暂停只撤增量、保留获许可的重力基线”存在偏差，已记录待定。
+- 用户决定本轮只抬硬限：肘硬限 240→300°/s（`5.23598776`），软限 150、暂停与恢复逻辑、肩硬限 150 均不变。同步测试断言与 `r5_dual_hard_speed`（330°/s 触发）。R5 专项 7/7 通过，固件 0 警告。
+- 刷板：BIN `91bc021d9f004d24f928237d263f4f0f9dd30881c37af143a2de9fda91ce61f9`，备份→verified→独立读回一致，上电 `phase=1`。脚本 `docs/bench/s5-elbow-gravity-20261020/flash_hard300_once.py`。刷写时 24 V 状态未由工具核实；刷前镜像前缀检查因脚本写死旧长度（138868，实际 139052）报 `previous_image_match=false`，按实际长度比对板上确为上一版 `bd6787b5`，属脚本误报。
+- 新增实验图导出：安装 matplotlib 3.10.9 到 `build/s2-tools/python`（H 盘，`PIP_USER=0`、缓存与临时目录均在 H）。新增 `tests/live_monitor/figure_session.py`：从 `samples.csv/force.csv` 重绘三联图（角度/助力力矩/连接力），助力生效与软限暂停用底色区分、安全停机画虚线并标注，输出 `figure.pdf`（矢量）、`figure.svg`、`figure.png`（300 dpi）与 `figure.json`；默认只画 RUNNING 会话段（避免停机后保持值被误读为姿态），`--full` 可画整段；支持 `--lang en`、`--width/--height`、`--window`、`--title`。窗口内新增“导出实验图”按钮，会话结束后可一键调用。
+- 验证：对 `build/live-20261021-204901` 实际出图，肉眼检查三联图、底色分区、故障标注与坐标单位正常；GUI 内调用导出路径经桩函数验证成功（生成 pdf/svg/png）。未做英文版与多栏尺寸的实际排版检查。
+- 遗留问题与下一步：①“暂停是否应保留重力基线”仍未改，需用户确认后再动；②英文标注与双栏尺寸需要按目标期刊模板再调；③下一次实机窗口验证 300°/s 下不再频繁锁存。

@@ -61,8 +61,8 @@ static const S5SiteProfile site = {
             .joint[0] = {
                 .mapping = {.rotor_per_joint = 8.0f, .rotor_zero_rad = 0.0f,
                             .direction = 1, .confirmed = true},
-                .lower_rad = -0.17453293f, .upper_rad = 1.83259571f,
-                .max_speed_rad_s = 2.09439510f,
+                .lower_rad = -0.34906585f, .upper_rad = 1.83259571f,
+                .max_speed_rad_s = 2.61799388f,
                 .max_motor_command = 0.205f, .motor_slew_per_s = 0.100f,
                 .limits_confirmed = true, .feedback_confirmed = true,
                 .protocol_confirmed = true
@@ -70,8 +70,8 @@ static const S5SiteProfile site = {
             .joint[1] = {
                 .mapping = {.rotor_per_joint = 1.0f, .rotor_zero_rad = 0.0f,
                             .direction = -1, .confirmed = true},
-                .lower_rad = -0.34906585f, .upper_rad = 1.83259571f,
-                .max_speed_rad_s = 3.14159265f,
+                .lower_rad = -0.52359878f, .upper_rad = 1.83259571f,
+                .max_speed_rad_s = 6.28318531f,
                 .max_motor_command = 20.0f, .motor_slew_per_s = 20.0f,
                 .limits_confirmed = true, .feedback_confirmed = true,
                 .protocol_confirmed = true
@@ -88,9 +88,9 @@ static const S5SiteProfile site = {
         .coordinates = {S3_ASSEMBLED_JOINT, S3_ASSEMBLED_JOINT},
         .operational_confirmed[1] = true,
         .shoulder_source = S3_SHOULDER_ENCODER_PROPERTIES,
-        .shoulder_property_reply_ms = 20U,
+        .shoulder_property_reply_ms = 50U,
         .shoulder_property_period_ms = 20U,
-        .shoulder_property_window_ms = 55000U,
+        .shoulder_property_window_ms = 70000U,
         .shoulder_standstill = {
             .span_rev = 0.011f, .max_velocity_rev_s = 0.066f,
             .dwell_ms = 100U, .freshness_ms = 150U
@@ -117,11 +117,11 @@ static const S5SiteProfile site = {
     .release_slew_per_s = {.shoulder_rotor_nm = 0.120f,
                            .elbow_current_a = 25.0f},
     .send_interval_ms = 50U,
-    .session_ms = 30000U,
+    .session_ms = 45000U,
     .ramp_max_ms = 2000U,
     .shoulder_zero_dwell_ms = 1U,
-    .soft_speed_rad_s = {1.04719755f, 1.57079633f}, /* 60 / 90 deg/s */
-    .resume_quiet_ms = 100U, .resume_ramp_ms = 300U,
+    .soft_speed_rad_s = {1.57079633f, 3.49065850f}, /* 90 / 200 deg/s */
+    .resume_quiet_ms = 250U, .resume_ramp_ms = 300U,
     .output_enabled = true
 };
 #elif defined(S5_R4_ELBOW_FOLLOW)

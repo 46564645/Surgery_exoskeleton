@@ -65,9 +65,9 @@ static void association(void)
     BoardCanFrame f = reply(0U, 2U, payload[0]);
     ShoulderPropertyFeedback_Receive(&r, BOARD_CAN_SHOULDER, &f, 2U);
     assert(!ShoulderPropertyFeedback_Get(&r, 2U, 50U, &s)); /* No partial snapshot. */
-    f = reply(0U, 3U, payload[0]);
+    f = reply(0U, 3U, payload[0]); /* Duplicate reply: dropped, not latched. */
     ShoulderPropertyFeedback_Receive(&r, BOARD_CAN_SHOULDER, &f, 3U);
-    assert(r.quarantined && !ShoulderPropertyFeedback_Expect(&r, GDS_PROPERTY_VELOCITY, 4U));
+    assert(!r.quarantined && ShoulderPropertyFeedback_Expect(&r, GDS_PROPERTY_VELOCITY, 4U));
     ShoulderPropertyFeedback_Init(&r, 10U); cycle(&r, 100U);
     assert(ShoulderPropertyFeedback_Get(&r, 113U, 50U, &s));
     assert(s.value[GDS_PROPERTY_POSITION].real == 3.0f && s.value[GDS_PROPERTY_VELOCITY].real == -0.125f);
@@ -83,10 +83,21 @@ static void association(void)
     assert(r.quarantined && !ShoulderPropertyFeedback_Get(&r, 153U, 1000U, &s));
     ShoulderPropertyFeedback_Init(&r, 10U);
     assert(ShoulderPropertyFeedback_Expect(&r, GDS_PROPERTY_POSITION, 10U));
-    ShoulderPropertyFeedback_Poll(&r, 21U);
-    f = reply(0U, 22U, payload[0]);
+    ShoulderPropertyFeedback_Poll(&r, 21U); /* First timeout only retries. */
+    assert(!r.quarantined && !r.pending && r.reply_retries == 1U);
+    f = reply(0U, 22U, payload[0]); /* Reply after the retry was issued. */
     ShoulderPropertyFeedback_Receive(&r, BOARD_CAN_SHOULDER, &f, 22U);
-    assert(r.quarantined && !r.published.valid);
+    assert(!r.quarantined && !r.has_reply && r.reply_retries == 1U);
+    uint32_t retry_ms = 30U;
+    for (unsigned i = 0U; i < 3U; i++) {
+        assert(ShoulderPropertyFeedback_Expect(&r, GDS_PROPERTY_POSITION, retry_ms));
+        ShoulderPropertyFeedback_Poll(&r, retry_ms + 11U);
+        assert(!r.quarantined);
+        retry_ms += 20U;
+    }
+    assert(ShoulderPropertyFeedback_Expect(&r, GDS_PROPERTY_POSITION, retry_ms));
+    ShoulderPropertyFeedback_Poll(&r, retry_ms + 11U);
+    assert(r.quarantined && !r.published.valid); /* Fifth timeout latches. */
     ShoulderPropertyFeedback_Init(&r, 10U); cycle(&r, UINT32_MAX - 5U);
     assert(ShoulderPropertyFeedback_Get(&r, 7U, 50U, &s));
     assert(!ShoulderPropertyFeedback_Get(&r, 45U, 50U, &s));

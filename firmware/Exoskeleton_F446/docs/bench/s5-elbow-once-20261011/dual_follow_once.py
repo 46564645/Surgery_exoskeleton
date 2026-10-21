@@ -173,6 +173,11 @@ def run_once(link, observe_ms=4500, manual_cue_ms=1000,
                     and mode.get("q_el_mrad") != "na",
                     "R5 left dual RUNNING or lost an angle")
             active_samples += 1
+            if active_samples % 10 == 1:
+                try:
+                    link.ask("hx711", timeout_s=0.15)
+                except (Exception, KeyboardInterrupt):
+                    pass  # Auxiliary force telemetry never aborts the window.
             record_targets(mode)
             elapsed_ms = (clock() - started_at) * 1000.0
             if not manual_cued and elapsed_ms >= manual_cue_ms:
@@ -464,9 +469,9 @@ def main():
     parser.add_argument("--output-dir", type=Path, help="H: JSONL evidence directory")
     parser.add_argument("--board-bin-sha256", help="hash from independent board readback")
     parser.add_argument("--observe-ms", type=int, default=4500,
-                        help="RUNNING observation before followstop, 500..27000 ms")
+                        help="RUNNING observation before followstop, 500..42000 ms")
     args = parser.parse_args()
-    require(500 <= args.observe_ms <= 27000, "observe-ms must be 500..27000")
+    require(500 <= args.observe_ms <= 42000, "observe-ms must be 500..42000")
     if args.offline_check:
         require(not args.run, "offline check cannot run a live session")
         offline_check()

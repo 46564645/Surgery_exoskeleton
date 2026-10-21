@@ -16,6 +16,7 @@ typedef struct {
     bool pending, quarantined, has_reply;
     bool s5_fast_path, s5_bootstrap_complete;
     bool zero_proof_requested, mode_proof_requested;
+    uint8_t reply_retries; /* Consecutive timeouts before the reader latches. */
 } ShoulderPropertyFeedback;
 /* Cold initialization only; zero timeout leaves the provider disabled. */
 void ShoulderPropertyFeedback_Init(ShoulderPropertyFeedback *reader, uint32_t reply_timeout_ms);
@@ -35,6 +36,9 @@ void ShoulderPropertyFeedback_Receive(ShoulderPropertyFeedback *reader,
 void ShoulderPropertyFeedback_Poll(ShoulderPropertyFeedback *reader, uint32_t now_ms);
 /* Failure is latched for the boot; late/repeated responses cannot recover it. */
 void ShoulderPropertyFeedback_Invalidate(ShoulderPropertyFeedback *reader);
+/* Bounded retry budget: a single lost reply re-requests the same field and
+ * only repeated timeouts latch the reader (CANopen SDO retry practice). */
+#define SHOULDER_PROPERTY_MAX_RETRIES 4U
 bool ShoulderPropertyFeedback_Get(const ShoulderPropertyFeedback *reader,
                                  uint32_t now_ms, uint32_t freshness_ms, ShoulderPropertySnapshot *out);
 #endif

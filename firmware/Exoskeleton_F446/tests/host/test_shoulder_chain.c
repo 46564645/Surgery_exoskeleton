@@ -206,9 +206,10 @@ static void run(void)
 static void faults(void)
 {
     start(); omit_reply=true;
-    for(unsigned i=0U;i<15U;i++){step();}
+    for(unsigned i=0U;i<60U;i++){step();} /* 4 retries x 10 ms, then latch. */
     S3BenchStatus gate; S3Bench_GetStatus(&gate);
-    assert(gate.state==OUTPUT_FAULT && !gate.output_allowed && read_count==1U && output_count==0U);
+    assert(gate.state==OUTPUT_FAULT && !gate.output_allowed && read_count>=1U
+        && read_count<=5U && output_count==0U); /* Retries re-send the same read. */
     assert(S3ShoulderService_Get().state==S3_READER_FAULT);
     start(); ready();
     assert(S3Bench_Arm(tick)); S3Bench_GetStatus(&gate);
@@ -287,7 +288,7 @@ static void supervised_faults(void)
     start(); ready(); assert(S3Bench_Arm(tick)); S3Bench_GetStatus(&gate);
     assert(S3Bench_Request(gate.arm_token,0U,0.02f,20U,tick)); step();
     S3Bench_Cancel(); assert(S3ShoulderService_Get().state==S3_READER_OBSERVING);
-    omit_reply=true; for(unsigned i=0U;i<20U;i++){step();}
+    omit_reply=true; for(unsigned i=0U;i<60U;i++){step();} /* 4 retries x 10 ms. */
     assert(S3ShoulderService_Get().state==S3_READER_FAULT && !S3ShoulderService_Get().stop_observed);
     assert(!S3Bench_Prepare(tick));
     start(); ready(); assert(S3Bench_Arm(tick)); S3Bench_GetStatus(&gate);

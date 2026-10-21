@@ -21,9 +21,9 @@ static uint32_t zero_shoulder_sequence, zero_shoulder_request_ms;
 static uint32_t last_sent_sequence[SAFETY_JOINT_COUNT];
 static float first_rev;
 static bool first_seen, preparation_submitted, selected;
-static float assist_scale;
-static bool assist_quiet;
-static uint32_t assist_quiet_ms, assist_scale_ms;
+static float assist_scale[SAFETY_JOINT_COUNT];
+static bool assist_quiet[SAFETY_JOINT_COUNT], assist_paused[SAFETY_JOINT_COUNT];
+static uint32_t assist_quiet_ms[SAFETY_JOINT_COUNT], assist_scale_ms[SAFETY_JOINT_COUNT];
 static ShoulderAmplify amplify;
 
 static bool newer(uint32_t value, uint32_t before)
@@ -43,50 +43,64 @@ static void reset_assist_pause(uint32_t now_ms)
     status.assist_paused = false;
     status.speed_pauses = 0U;
     status.peak_speed_rad_s[0] = status.peak_speed_rad_s[1] = 0.0f;
-    assist_scale = 1.0f;
-    assist_quiet = false;
-    assist_quiet_ms = assist_scale_ms = now_ms;
+    for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
+        assist_paused[axis] = assist_quiet[axis] = false;
+        assist_scale[axis] = 1.0f;
+        assist_quiet_ms[axis] = assist_scale_ms[axis] = now_ms;
+    }
     ShoulderAmplify_Reset(&amplify, now_ms);
 }
 
-/* ExoKit AmplifyReaction::runLoop(): above its speed limit the joint torque is
- * switched off for that loop and re-applied once motion conditions return.
- * Here the candidate becomes zero above any soft speed, is held at zero until
- * every axis stays below half its soft speed for resume_quiet_ms, then ramps
- * back over resume_ramp_ms. No FAULT here; SafetySupervisor keeps the hard
- * limit, feedback, range and transport checks. */
-static float assist_gain(const S3SiteSample *sample, uint32_t now_ms)
+/* ExoKit AmplifyReaction::runLoop() owns one joint: the joint that exceeds its
+ * own speed limit drops its torque for that loop while another joint's
+ * reaction keeps running. Each axis here follows the same rule with its own
+ * soft speed, half-speed resume threshold, quiet time and ramp, so a fast
+ * elbow no longer withdraws the shoulder baseline. No FAULT here;
+ * SafetySupervisor keeps the hard limit, feedback, range and transport checks
+ * for the whole arm. */
+static float assist_gain_axis(unsigned axis, const S3SiteSample *sample, uint32_t now_ms)
 {
+    float speed = fabsf(sample->joint[axis].velocity_rad_s);
+    if (speed > status.peak_speed_rad_s[axis]) { status.peak_speed_rad_s[axis] = speed; }
     if (!soft_speed_enabled()) { return 1.0f; }
-    bool over = false, quiet = true;
-    for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
-        float speed = fabsf(sample->joint[axis].velocity_rad_s);
-        if (speed > status.peak_speed_rad_s[axis]) { status.peak_speed_rad_s[axis] = speed; }
-        over = over || speed > site->soft_speed_rad_s[axis];
-        quiet = quiet && speed < 0.5f * site->soft_speed_rad_s[axis];
-    }
-    if (over) {
-        if (!status.assist_paused && status.speed_pauses < UINT16_MAX) { status.speed_pauses++; }
-        status.assist_paused = true;
-        assist_scale = 0.0f;
-        assist_quiet = false;
+    if (speed > site->soft_speed_rad_s[axis]) {
+        if (!assist_paused[axis] && status.speed_pauses < UINT16_MAX) { status.speed_pauses++; }
+        assist_paused[axis] = true;
+        assist_scale[axis] = 0.0f;
+        assist_quiet[axis] = false;
         return 0.0f;
     }
-    if (status.assist_paused) {
-        if (!quiet) { assist_quiet = false; return 0.0f; }
-        if (!assist_quiet) { assist_quiet = true; assist_quiet_ms = now_ms; return 0.0f; }
-        if ((uint32_t)(now_ms - assist_quiet_ms) < site->resume_quiet_ms) { return 0.0f; }
-        status.assist_paused = false;
-        assist_scale_ms = now_ms;
+    if (assist_paused[axis]) {
+        if (speed >= 0.5f * site->soft_speed_rad_s[axis]) {
+            assist_quiet[axis] = false;
+            return 0.0f;
+        }
+        if (!assist_quiet[axis]) {
+            assist_quiet[axis] = true;
+            assist_quiet_ms[axis] = now_ms;
+            return 0.0f;
+        }
+        if ((uint32_t)(now_ms - assist_quiet_ms[axis]) < site->resume_quiet_ms) { return 0.0f; }
+        assist_paused[axis] = false;
+        assist_scale_ms[axis] = now_ms;
         return 0.0f; /* Ramp starts from zero on the next poll. */
     }
-    if (assist_scale < 1.0f) {
-        uint32_t elapsed = now_ms - assist_scale_ms;
-        assist_scale += (float)elapsed / (float)site->resume_ramp_ms;
-        if (assist_scale > 1.0f) { assist_scale = 1.0f; }
+    if (assist_scale[axis] < 1.0f) {
+        uint32_t elapsed = now_ms - assist_scale_ms[axis];
+        assist_scale[axis] += (float)elapsed / (float)site->resume_ramp_ms;
+        if (assist_scale[axis] > 1.0f) { assist_scale[axis] = 1.0f; }
     }
-    assist_scale_ms = now_ms;
-    return assist_scale;
+    assist_scale_ms[axis] = now_ms;
+    return assist_scale[axis];
+}
+
+static void assist_gains(const S3SiteSample *sample, uint32_t now_ms,
+                         float gain[SAFETY_JOINT_COUNT])
+{
+    for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
+        gain[axis] = assist_gain_axis(axis, sample, now_ms);
+    }
+    status.assist_paused = assist_paused[0] || assist_paused[1];
 }
 
 static bool bus_healthy(BoardCanBus bus)
@@ -98,6 +112,31 @@ static bool bus_healthy(BoardCanBus bus)
      * earlier queue/protocol error. These cumulative counters remain visible. */
     return dual() || (can.dropped == 0U
         && can.fifo_overruns == 0U && can.invalid == 0U);
+}
+
+#define S5_SPEED_DEBOUNCE_POLLS 3U
+static uint8_t speed_over_count[SAFETY_JOINT_COUNT];
+
+/* One corrupted C620 frame can report a physically impossible speed. Industry
+ * practice (WPILib Debouncer, Tinymovr) requires the condition to persist, so
+ * the latched hard limit needs three consecutive 1 ms polls. The raw peak is
+ * still reported; only the safety input is filtered. */
+static void debounce_speed(SafetyInputs *in)
+{
+    for (unsigned axis = 0U; axis < SAFETY_JOINT_COUNT; axis++) {
+        const SafetyJointConfig *j = &session_site.s3.safety.joint[axis];
+        float limit = j->max_speed_rad_s;
+        float v = in->joint[axis].velocity_rad_s;
+        if (!isfinite(limit) || limit <= 0.0f || !isfinite(v)
+            || (v <= limit && v >= -limit)) {
+            speed_over_count[axis] = 0U;
+            continue;
+        }
+        if (speed_over_count[axis] < UINT8_MAX) { speed_over_count[axis]++; }
+        if (speed_over_count[axis] < S5_SPEED_DEBOUNCE_POLLS) {
+            in->joint[axis].velocity_rad_s = v > 0.0f ? limit : -limit;
+        }
+    }
 }
 
 static bool read_inputs(uint32_t now_ms, uint32_t elapsed_ms,
@@ -135,6 +174,7 @@ static bool read_inputs(uint32_t now_ms, uint32_t elapsed_ms,
         && elapsed_ms <= site->s3.safety.service_limit_ms
         && !BoardConsole_HasFault() && bus_healthy(BOARD_CAN_ELBOW)
         && (!dual() || bus_healthy(BOARD_CAN_SHOULDER));
+    debounce_speed(in);
     memcpy(status.joint, sample->joint, sizeof(status.joint));
     return complete;
 }
@@ -296,6 +336,7 @@ void S5Follow_Init(const S5SiteProfile *profile)
     last_sent_sequence[0] = last_sent_sequence[1] = 0U;
     first_rev = 0.0f;
     first_seen = preparation_submitted = false;
+    speed_over_count[0] = speed_over_count[1] = 0U;
     if (profile != NULL) {
         session_site = *profile;
         S3Feedback_Init();
@@ -332,6 +373,7 @@ bool S5Follow_Prepare(uint32_t now_ms)
         shoulder_sequence_floor = before.properties.sequence;
     }
     first_seen = preparation_submitted = false;
+    speed_over_count[0] = speed_over_count[1] = 0U;
     status.elbow_zero_valid = false;
     status.shoulder_zero_valid = false;
     status.model_valid = false;
@@ -436,9 +478,10 @@ void S5Follow_Poll(uint32_t now_ms, uint32_t elapsed_ms)
     if (status.phase == S5_FOLLOW_RUNNING) {
         S5FollowEffort effort;
         if (!compute_target(&sample, now_ms, &effort)) { fail_follow(); return; }
-        float gain = assist_gain(&sample, now_ms);
-        effort.shoulder_rotor_nm *= gain;
-        effort.elbow_current_a *= gain;
+        float gain[SAFETY_JOINT_COUNT];
+        assist_gains(&sample, now_ms, gain);
+        effort.shoulder_rotor_nm *= gain[0];
+        effort.elbow_current_a *= gain[1];
         status.target = effort;
         status.model_valid = true;
         S5FollowSample feedback = {0};
