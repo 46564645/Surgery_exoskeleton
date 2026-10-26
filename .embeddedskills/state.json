@@ -1,0 +1,23 @@
+{
+  "last_build": {
+    "provider": "gcc",
+    "action": "build",
+    "project": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446",
+    "preset": "WindowsDebug",
+    "log_dir": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\s5-r5-fast-gates-20261015\\gcc-default",
+    "artifacts": {
+      "build_dir": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug",
+      "elf_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug\\Exoskeleton_F446.elf",
+      "debug_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug\\Exoskeleton_F446.elf",
+      "flash_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug\\Exoskeleton_F446.elf",
+      "log_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\s5-r5-fast-gates-20261015\\gcc-default\\Exoskeleton_F446-WindowsDebug-build.log"
+    },
+    "build_dir": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug",
+    "elf_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug\\Exoskeleton_F446.elf",
+    "debug_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug\\Exoskeleton_F446.elf",
+    "flash_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\WindowsDebug\\Exoskeleton_F446.elf",
+    "log_file": "H:\\Desktop\\Surgery_exoskeleton-git\\firmware\\Exoskeleton_F446\\build\\s5-r5-fast-gates-20261015\\gcc-default\\Exoskeleton_F446-WindowsDebug-build.log",
+    "timestamp": "2026-10-15T23:07:56+08:00"
+  },
+  "terminal_sessions": {}
+}

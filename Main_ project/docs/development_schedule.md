@@ -2586,3 +2586,10 @@ M6（应用层完整闭环、肌肉模型）保持可选，不在本次批准范
 - 过程中查明的两件事：①查看器失败根因是**Intel Iris Xe与RTX 3060均为设备管理器Code 43**、桌面由ToDesk虚拟显示输出、无OpenGL；MuJoCo Windows版只支持WGL，故查看器与离屏渲染都不可用，数值仿真与matplotlib正常。②肩轴在桌面上方仅0.30 m而整臂0.77 m，**直臂前屈约25°以上必穿过桌面**，与S5自由空间扫动不能同时成立。
 - 参数变化：`shoulder_offset_x_m` 0.05→0.20 m（用户坐姿离桌沿约0.2 m，吊臂避开桌沿，assumed）；新增`table.collision_enabled=false`（M1只把桌子当固定座，T5桌面动作需先定坐姿）。
 - 遗留与下一步：桌面碰撞开启后的T5姿态待定；绑带刚度`solref`与"外骨骼肘轴比人体肘轴高5.5 cm"共同决定交互力量级（2 N·m时约180 N），M5对标前不当作真实力。下一步M2a：把`compute_target()`的合成部分纯搬移到`App/control/s5_assist_compose.{c,h}`，主机测试保持全绿。
+
+### 2026-10-26｜归档台架会话日志与本地工具配置
+
+- 本次完成：把`build/live-*`（31 个实时窗口会话，24 MB，M5 台架回放的数据源）复制到`firmware/Exoskeleton_F446/docs/bench/live-sessions/`并加 README 说明列名与边界；提交根目录与固件目录的编辑器/agent 配置（`.claude`、`.cursor`、`.embeddedskills`、`.vscode`，已扫描无凭据）；新增`CMakeUserPresets.example.json`（含 macOS 预设），本机个人预设仍保持忽略。
+- 未提交：`build/`整体（2.4 GB：虚拟环境 233 MB、s2-tools 182 MB、pip 缓存、编译中间产物、293 个 .bin 与 .elf）。固件镜像只在本机，源码与编译选项已记录，需要时可重建。
+- 参数/接线变化：无；固件与仿真代码未改。
+- 遗留与下一步：Mac 上按 README 建虚拟环境并重跑`build_model.py`/`check_static.py`；M2b 桥接构建脚本需同时支持 Windows `.dll` 与 macOS `.dylib`。

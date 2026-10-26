@@ -1,0 +1,12 @@
+{
+  "session": "build\\live-20261022-003823",
+  "mode": "xy",
+  "samples": 778,
+  "amplitude_nm": 1.64,
+  "elbow_amplitude_nm": 0.28,
+  "outputs": [
+    "build\\live-20261022-003823\\figure\\curve.pdf",
+    "build\\live-20261022-003823\\figure\\curve.svg",
+    "build\\live-20261022-003823\\figure\\curve.png"
+  ]
+}

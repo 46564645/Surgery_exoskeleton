@@ -42,7 +42,7 @@
 
 预设是一组已命名的构建设置。共享 `CMakePresets.json` 保留 `Debug/Release`；Windows 本机的 `CMakeUserPresets.json` 定义 `WindowsDebug/WindowsRelease`，继承共享设置并补充 Ninja、ARM GCC 的 PATH。个人预设已被 Git 忽略，不随克隆分发。
 
-本机已有个人预设，继续使用即可。新电脑可在本目录创建以下 `CMakeUserPresets.json`，先将两个示例 `bin` 路径替换成实际位置；已有文件时只合并所需项，不覆盖其他预设。`$penv{PATH}` 保留原终端环境，Windows 路径列表用分号分隔。
+本机已有个人预设，继续使用即可。新电脑可在本目录创建以下 `CMakeUserPresets.json`，先将两个示例 `bin` 路径替换成实际位置；已有文件时只合并所需项，不覆盖其他预设。仓库内的 `CMakeUserPresets.example.json` 是同一份模板，另含 macOS 预设（`MacDebug`/`MacRelease`），复制改名后按本机路径修改即可。`$penv{PATH}` 保留原终端环境，Windows 路径列表用分号分隔。
 
 ```json
 {

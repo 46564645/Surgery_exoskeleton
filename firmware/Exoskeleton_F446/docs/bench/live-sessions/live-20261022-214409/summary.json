@@ -1,0 +1,16 @@
+{
+  "stop_reply_accepted": false,
+  "final_phase": "8",
+  "stop_confirmed": false,
+  "samples": 605,
+  "peak_deg_s": [
+    35.0,
+    102.0
+  ],
+  "speed_pauses": 0,
+  "error": null,
+  "started_utc": "2026-10-22T13:44:18.600375+00:00",
+  "board_bin_sha256": "fc6324de25a0101adc2bb81c2639b1c318fdd7cc2b8b01e9d0b8b1db9c9f462b",
+  "duration_ms": 40000,
+  "port": "COM10"
+}

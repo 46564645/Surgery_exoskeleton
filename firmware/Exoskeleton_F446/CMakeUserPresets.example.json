@@ -1,0 +1,47 @@
+{
+    "_readme": [
+        "Template for the personal CMakeUserPresets.json, which stays git-ignored.",
+        "Copy to CMakeUserPresets.json and replace the two bin paths with the ones",
+        "installed on this machine. Keep the preset names WindowsDebug/WindowsRelease",
+        "on Windows; on macOS name them MacDebug/MacRelease or reuse Debug/Release.",
+        "The shared CMakePresets.json already defines Debug/Release with the ARM GCC",
+        "toolchain file; this file only adds the local tool paths."
+    ],
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "WindowsDebug",
+            "inherits": "Debug",
+            "environment": {
+                "PATH": "C:/Tools/ninja/bin;C:/Tools/arm-gnu-toolchain/bin;$penv{PATH}"
+            }
+        },
+        {
+            "name": "WindowsRelease",
+            "inherits": "Release",
+            "environment": {
+                "PATH": "C:/Tools/ninja/bin;C:/Tools/arm-gnu-toolchain/bin;$penv{PATH}"
+            }
+        },
+        {
+            "name": "MacDebug",
+            "inherits": "Debug",
+            "environment": {
+                "PATH": "/opt/homebrew/bin:/Applications/ARM/bin:$penv{PATH}"
+            }
+        },
+        {
+            "name": "MacRelease",
+            "inherits": "Release",
+            "environment": {
+                "PATH": "/opt/homebrew/bin:/Applications/ARM/bin:$penv{PATH}"
+            }
+        }
+    ],
+    "buildPresets": [
+        { "name": "WindowsDebug", "configurePreset": "WindowsDebug" },
+        { "name": "WindowsRelease", "configurePreset": "WindowsRelease" },
+        { "name": "MacDebug", "configurePreset": "MacDebug" },
+        { "name": "MacRelease", "configurePreset": "MacRelease" }
+    ]
+}

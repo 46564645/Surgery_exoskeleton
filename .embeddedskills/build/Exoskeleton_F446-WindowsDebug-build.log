@@ -1,0 +1,6 @@
+[1/2] Building C object CMakeFiles/Exoskeleton_F446.dir/App/application/s4_site.c.obj
+[2/2] Linking C executable Exoskeleton_F446.elf
+Memory region         Used Size  Region Size  %age Used
+             RAM:       11440 B       128 KB      8.73%
+           FLASH:      113500 B       512 KB     21.65%
+

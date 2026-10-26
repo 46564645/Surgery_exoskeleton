@@ -1,0 +1,13 @@
+{
+  "samples": 0,
+  "peak_deg_s": [
+    0.0,
+    0.0
+  ],
+  "speed_pauses": 0,
+  "error": "TrialError: R5 会话不在待机状态",
+  "started_utc": "2026-10-22T15:58:28.774702+00:00",
+  "board_bin_sha256": null,
+  "duration_ms": 40000,
+  "port": "COM10"
+}

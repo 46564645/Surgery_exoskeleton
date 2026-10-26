@@ -1,0 +1,28 @@
+{
+  "session": "build\\live-20261021-204901",
+  "samples": 330,
+  "force_samples": 66,
+  "duration_s": 16.5,
+  "fault_at_s": 16.531,
+  "outputs": [
+    "build\\live-20261021-204901\\figure\\figure.pdf",
+    "build\\live-20261021-204901\\figure\\figure.svg",
+    "build\\live-20261021-204901\\figure\\figure.png"
+  ],
+  "summary": {
+    "stop_reply_accepted": false,
+    "final_phase": "8",
+    "stop_confirmed": false,
+    "samples": 800,
+    "peak_deg_s": [
+      111.0,
+      246.0
+    ],
+    "speed_pauses": 6,
+    "error": null,
+    "started_utc": "2026-10-21T12:49:34.195309+00:00",
+    "board_bin_sha256": "bd6787b5f291a7d77ce91972c20646162325c801064aca2a3f05dd1f7411272e",
+    "duration_ms": 40000,
+    "port": "COM10"
+  }
+}

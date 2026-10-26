@@ -1,0 +1,7 @@
+{
+  "gcc": {
+    "project": "firmware/Exoskeleton_F446",
+    "preset": "WindowsDebug",
+    "log_dir": "firmware/Exoskeleton_F446/build/s5-r5-fast-gates-20261015/gcc-default"
+  }
+}
