@@ -12,7 +12,7 @@ import sys
 root = Path(__file__).resolve().parents[1]
 out = root / "build" / "host"
 out.mkdir(parents=True, exist_ok=True)
-sources = ["tests/host/test_s1.c", "tests/host/test_force_assist.c", "Core/Src/board_console.c", "Core/Src/board_runtime.c",
+sources = ["tests/host/test_s1.c", "tests/host/test_force_assist.c", "tests/host/test_assist_compose.c", "Core/Src/board_console.c", "Core/Src/board_runtime.c",
            "App/application/app_main.c", "App/application/console_commands.c",
            "App/application/c620_standstill.c",
            "App/application/elbow_session_angle.c",
@@ -23,6 +23,7 @@ sources = ["tests/host/test_s1.c", "tests/host/test_force_assist.c", "Core/Src/b
            "App/control/gravity_compensation.c", "tests/host/test_s4_gravity.c",
            "App/control/s5_elbow_support.c", "App/control/shoulder_amplify.c",
            "App/control/force_assist.c",
+           "App/control/s5_assist_compose.c",
            "App/application/s5_site.c",
            "App/application/s5_follow.c",
            "tests/host/test_s5_follow.c",
@@ -151,6 +152,8 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
              "hx711_poll", "hx711_console",
              "force_assist_config", "force_assist_model", "force_assist_trigger",
              "force_assist_hold", "force_assist_reference",
+             "compose_gravity", "compose_caps", "compose_assist_off", "compose_amplify",
+             "compose_force", "compose_single", "compose_invalid",
               "s3_codec", "s3_mapping", "s3_default", "s3_lifecycle", "s3_interlocks", "s3_transport", "s3_bxcan", "s3_prepare", "s3_gds", "s3_cli", "s3_axes", "s3_observations", "s3_shoulder_console", "s3_standstill", "s3_elbow_session_angle", "s3_elbow_session_bench", "s3_bench_stop_policy", "s3_bench_stop_cli"]
 if r4_defines:
     cases.append("s5_r4_site")

@@ -1,0 +1,64 @@
+{
+  "_readme": [
+    "Timing and actuator-model parameters for M3. Only what the firmware does",
+    "not already expose through the bridge lives here; the controller periods",
+    "(send interval, shoulder property read, feedback timeout, session length)",
+    "and every control value are read from the shared library via",
+    "sim/controller.py Controller.site, never copied into this file.",
+    "status: measured = from a document or a real statistic, estimated =",
+    "derived from a document, assumed = modelling assumption, unknown = no data."
+  ],
+  "physics": {
+    "step_s": {
+      "value": 0.001,
+      "status": "assumed",
+      "source": "same value as model/params.json meta.timestep_s; the firmware service period is 1 ms (s1_config.h S1_SERVICE_MS)"
+    }
+  },
+  "sensor": {
+    "elbow_counts_per_rev": {
+      "value": 8192.0,
+      "status": "measured",
+      "source": "C620 feedback 0..8191 per revolution, s3_feedback.c uses 6.2831853/8192"
+    },
+    "elbow_quantize": {
+      "value": true,
+      "status": "assumed",
+      "source": "the raw C620 tick is rounded to the nearest count; shoulder position arrives as a float32 revolution value and is not quantised here"
+    }
+  },
+  "actuator": {
+    "shoulder_lag_s": {
+      "value": 0.0,
+      "status": "unknown",
+      "source": "no GDS68 torque-loop bandwidth or friction data in the repository; 0 = ideal torque source, scan in M5"
+    },
+    "elbow_lag_s": {
+      "value": 0.049,
+      "status": "estimated",
+      "source": "bare M3508 mechanical time constant, hardware reference 6.2 (official test condition, not this load)"
+    }
+  },
+  "force": {
+    "rate_hz": {
+      "value": 10.0,
+      "status": "measured",
+      "source": "HX711 module fixed at 10 SPS, user decision 2026-10-22 (RATE left unchanged)"
+    },
+    "delay_ms": {
+      "value": 100,
+      "status": "estimated",
+      "source": "one 10 SPS sample period; conversion and transfer time not measured, plan 1.2 allows 100-200 ms"
+    },
+    "noise_sigma_n": {
+      "value": 0.001,
+      "status": "measured",
+      "source": "2026-10-21 static statistics, plan 1.3.3 M3 row"
+    },
+    "enabled": {
+      "value": true,
+      "status": "assumed",
+      "source": "the force path only matters when the DLL build enables S5_R5_FORCE_ASSIST; otherwise the site reports confirmed=false and the trigger stays off"
+    }
+  }
+}

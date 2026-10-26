@@ -6,6 +6,7 @@
 #include "board_runtime.h"
 #include "shoulder_standstill.h"
 #include "s2_config.h"
+#include "s5_assist_compose.h"
 #include "hx711.h"
 #include <math.h>
 #include <stddef.h>
@@ -296,53 +297,40 @@ static bool compute_target(const S3SiteSample *sample, uint32_t now_ms,
                            S5FollowEffort *effort)
 {
     *effort = (S5FollowEffort){0};
-    if (dual()) {
-        float joint_nm;
-        if (!S5ElbowGravity_Compute(&site->elbow_gravity,
-                                    &sample->joint[0], &sample->joint[1], &joint_nm)) {
-            return false;
-        }
-        effort->elbow_current_a = joint_nm / site->elbow_motor_kt_nm_per_a;
-        if (!GravityCompensation_Compute(&site->shoulder_gravity,
-                                         &sample->joint[0], &joint_nm)) { return false; }
-        const float up = (float)site->shoulder_gravity.sign_g;
-        effort->shoulder_rotor_nm = joint_nm * site->shoulder_gain
-            / site->s3.safety.joint[0].mapping.rotor_per_joint
-            + up * ShoulderAmplify_Step(&amplify, &site->shoulder_amplify,
-                                        up * sample->joint[0].velocity_rad_s, now_ms);
-    } else if (!S5ElbowSupport_Compute(&site->elbow_support,
-                                      &sample->joint[1], &effort->elbow_current_a)) { return false; }
-    if (!isfinite(effort->shoulder_rotor_nm)
-        || !isfinite(effort->elbow_current_a)) { return false; }
-    if (dual()) {
-        /* Force never gates safety: a missing sample only drops the increment. */
+    const bool dual_session = dual();
+    /* The composition itself lives in App/control so the MuJoCo bridge runs the
+     * same code; this function only gathers the site numbers and the force
+     * sample. Values and order are unchanged from the previous inline body. */
+    S5AssistComposeConfig config = {
+        .dual = dual_session,
+        .shoulder_gravity = &site->shoulder_gravity,
+        .elbow_gravity = &site->elbow_gravity,
+        .elbow_support = &site->elbow_support,
+        .shoulder_amplify = &site->shoulder_amplify,
+        .force_assist = &site->force_assist,
+        .shoulder_gain = site->shoulder_gain,
+        .elbow_motor_kt_nm_per_a = site->elbow_motor_kt_nm_per_a,
+        .shoulder_rotor_per_joint = site->s3.safety.joint[0].mapping.rotor_per_joint,
+        .shoulder_rotor_cap_nm = site->s3.safety.joint[0].max_motor_command,
+        .elbow_current_cap_a = site->s3.safety.joint[1].max_motor_command
+    };
+    /* Force never gates safety: a missing sample only drops the increment. */
+    bool force_valid = false;
+    float force_n = 0.0f;
+    if (dual_session) {
         Hx711Sample force_sample;
         Hx711_Get(&force_sample);
         /* No assist means no boost: F0 is only valid with the assist on. */
-        bool force_ok = assist_enabled
-            && force_sample.has_sample && !force_sample.saturated
+        force_valid = assist_enabled && force_sample.has_sample && !force_sample.saturated
             && (uint32_t)(now_ms - force_sample.received_ms) <= site->force_assist.freshness_ms;
-        float force_n = 0.0f;
-        if (force_ok) { force_ok = Hx711_GetForce(now_ms, &force_n); }
-        (void)ForceAssist_Update(&force_state, &site->force_assist, force_ok, force_n,
-                                 sample->joint[0].position_rad,
-                                 sample->joint[1].position_rad, now_ms);
-        float gain = ForceAssist_Gain(&force_state);
-        effort->shoulder_rotor_nm *= gain;
-        effort->elbow_current_a *= gain;
+        if (force_valid) { force_valid = Hx711_GetForce(now_ms, &force_n); }
     }
-    if (!assist_enabled) {
-        effort->shoulder_rotor_nm = 0.0f;
-        effort->elbow_current_a = 0.0f;
-    }
-    if (dual()) {
-        const float shoulder_cap = site->s3.safety.joint[0].max_motor_command;
-        const float elbow_cap = site->s3.safety.joint[1].max_motor_command;
-        effort->shoulder_rotor_nm = fmaxf(-shoulder_cap,
-            fminf(shoulder_cap, effort->shoulder_rotor_nm));
-        effort->elbow_current_a = fmaxf(-elbow_cap,
-            fminf(elbow_cap, effort->elbow_current_a));
-    }
+    S5AssistComposeOutput command;
+    if (!S5AssistCompose_Update(&config, &sample->joint[0], &sample->joint[1],
+                                assist_enabled, force_valid, force_n,
+                                &amplify, &force_state, now_ms, &command)) { return false; }
+    effort->shoulder_rotor_nm = command.shoulder_rotor_nm;
+    effort->elbow_current_a = command.elbow_current_a;
     return true;
 }
 

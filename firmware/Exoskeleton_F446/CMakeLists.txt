@@ -70,6 +70,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/control/s5_elbow_support.c
     App/control/shoulder_amplify.c
     App/control/force_assist.c
+    App/control/s5_assist_compose.c
     App/control/safety_supervisor.c
     App/application/output_gateway.c
     App/application/output_can_transport.c
