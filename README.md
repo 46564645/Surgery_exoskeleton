@@ -1,4 +1,4 @@
-# Surgery Upper Exoskeleton
+# Orthoease
 
 以当前 Git 克隆目录作为项目根目录；文档中的工程路径均相对于此目录。当前默认开发环境为 Windows，旧目录作为本地历史副本，不与当前克隆自动同步。
 
