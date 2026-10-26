@@ -2602,3 +2602,10 @@ M6（应用层完整闭环、肌肉模型）保持可选，不在本次批准范
 - 实际结果：主机用例**124个全过**（原117+7）；`WindowsDebug`编译通过（FLASH 141912 B/RAM 12928 B），R5双轴配置（`S5_R5_DUAL_FOLLOW=ON`、SIGN=1、MA=2000）也编译通过（141896 B）；**未刷写**。`test_bridge.py --sweep`通过：30/60/90°肩转子0.1025/0.1775/0.2050 N·m、肘1.0/1.732/2.0 A与手算一致，assist关为0，肩反馈失效返回0，gain 0.6时肩命令正好0.6倍。`check_timing.py`六组全过：肩角每秒20次更新且之间不变、命令20 Hz、肘0.0439°台阶、肘力矩49 ms到63.2%、5 s采50个力样本且阶跃延迟100 ms（σ0.84 mN）、闭环2 s肩力矩20 Hz阶梯且稳态1.420 N·m。`check_static.py`仍全过。
 - 参数/接线变化：无控制参数改动；`timing.json`为新增模型假设文件。
 - 遗留与下一步：M4实验运行器（人体PD控制器、T1/T2动作、C0/C1/C2对照、CSV与图）。肩电机滞后与摩擦仍无数据，M4先用0并在M5扫描。
+
+### 2026-10-26｜显卡恢复，查看器与离屏渲染可用；补场景可视化
+
+- 本次完成：用户停用ToDesk后复查，Intel Iris Xe与RTX 3060均恢复为正常（此前Code 43），Iris Xe驱动2560×1600；实测`smoke_env.py --viewer 5`能开窗关闭、`mujoco.Renderer`能离屏渲染。新增`sim/mujoco_arm/scripts/plot_scene.py`（三视角离屏PNG + `--viewer` 交互窗口 + `--hide human` 看外骨骼），README更新查看器状态并补用法。
+- 实际结果：M1"场景看起来对"这条验收现在有图可看——0°与60°/30°两个姿态渲染正常，肩轴、两连杆、桌面与支架位置与`check_static.py`打印的数值一致；外骨骼与人臂同轴且更细，正常视角被人臂完全遮挡，需`--hide human`。
+- 参数/接线变化：无；模型、控制与固件均未改。
+- 遗留与下一步：M1可视化补齐；下一步M4实验运行器（tasks/human_controller/metrics/plots/run_experiment）。

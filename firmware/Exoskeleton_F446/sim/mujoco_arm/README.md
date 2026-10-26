@@ -25,7 +25,17 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\smoke_env.py --viewer 5
 
 输出 MuJoCo 版本、单摆 30° 静止所需力矩（`mj_inverse` 与公式对照）和步进 1 s 后的角度。
 
-**查看器在本机不可用（2026-10-26 实测）**：Intel Iris Xe 与 RTX 3060 都处于设备管理器 Code 43（`CM_PROB_FAILED_POST_START`），桌面由 ToDesk 虚拟显示适配器输出，没有 OpenGL 驱动；MuJoCo 3.16.0 的 Windows 构建只支持 WGL，因此查看器和离屏渲染都失败。数值仿真与 matplotlib 出图不受影响。显卡恢复后可用 `--viewer 5` 复核。
+**查看器状态（2026-10-26）**：当天早些时候 Intel Iris Xe 与 RTX 3060 都处于设备管理器 Code 43，桌面由 ToDesk 虚拟显示输出、没有 OpenGL，查看器与离屏渲染都失败。同日晚显卡恢复（两块均正常，Iris Xe 驱动 2560×1600），实测 `--viewer` 能开窗、`mujoco.Renderer` 能离屏出图，两条路径都可用。此前"Windows 版只支持 WGL"的结论不变，只是现在 WGL 有可用的驱动。
+
+## 场景可视化（2026-10-26 补）
+
+```powershell
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,30
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,30 --hide human
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --viewer 10
+```
+
+默认输出三个视角的 PNG 到 `build/sim/scene/`，并打印关键body位置。**外骨骼与人臂同轴且更细，正常视角下人臂会完全挡住外骨骼**，看外骨骼用 `--hide human`（仅渲染时把人臂设为透明，不改模型）。`--viewer` 打开真正的交互窗口。
 
 ## M1 模型（2026-10-26 建立）
 
