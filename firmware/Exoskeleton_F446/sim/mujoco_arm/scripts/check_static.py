@@ -94,8 +94,12 @@ def analytic_chain(segments: list[tuple[float, float, float]],
     return gravity * shoulder, gravity * elbow
 
 
-def strap_force(model: mujoco.MjModel, data: mujoco.MjData, eq_index: int) -> float:
-    """Magnitude of the force the given equality constraint carries."""
+def strap_load(model: mujoco.MjModel, data: mujoco.MjData, eq_index: int) -> float:
+    """Load carried by one band constraint.
+
+    The bands are joint-angle couplings, so this is a torque in Nm, not a
+    force: it is the torque the band passes from the exoskeleton to the arm.
+    """
     rows = [i for i in range(data.nefc)
             if data.efc_type[i] == mujoco.mjtConstraint.mjCNSTR_EQUALITY
             and data.efc_id[i] == eq_index]
@@ -139,12 +143,21 @@ def main() -> int:
           abs(sz - (d["table_height"] + d["column_height"])) < 1e-6,
           f"{sz:.4f} m")
 
-    for strap, a, b in (("upper", "strap_upper_human", "strap_upper_exo"),
-                        ("forearm", "strap_fore_human", "strap_fore_exo")):
-        pa = data.site(a).xpos
-        pb = data.site(b).xpos
-        gap = float(np.linalg.norm(pa - pb))
-        check(f"{strap} strap points coincide at q=0", gap < 1e-6, f"{gap * 1e3:.4f} mm")
+    # Cuffs are compliant welds with an explicit assembly pose, so at q = 0 the
+    # constraint must be satisfied (zero violation) rather than the two marker
+    # sites coinciding: the exoskeleton plane sits outside the arm.
+    equality_rows = [i for i in range(data.nefc)
+                     if data.efc_type[i] == mujoco.mjtConstraint.mjCNSTR_EQUALITY]
+    violation = float(np.max(np.abs(data.efc_pos[equality_rows]))) if equality_rows else 0.0
+    check("cuff constraints start satisfied at q=0", violation < 1e-6,
+          f"max |efc_pos| {violation:.2e} over {len(equality_rows)} rows")
+
+    exo_y = float(data.body("exo_upper").xpos[1])
+    human_y = float(data.body("human_upper").xpos[1])
+    clearance = abs(exo_y - human_y) - (hu["radius"] + eu["radius"])
+    check("exoskeleton plane clears the arm", clearance > 0.0,
+          f"lateral gap {clearance * 1e3:.0f} mm (offset {abs(exo_y - human_y) * 1e3:.0f} mm "
+          f"- radii {1000 * (hu['radius'] + eu['radius']):.0f} mm)")
 
     exo_mass = sum(float(model.body_mass[mujoco.mj_name2id(
         model, mujoco.mjtObj.mjOBJ_BODY, n)]) for n in ("exo_upper", "exo_elbow", "exo_fore"))
@@ -268,7 +281,7 @@ def main() -> int:
     e_sh = math.degrees(data.qpos[qpos_adr(model, "exo_shoulder")])
     gap = abs(h_sh - e_sh)
     print(f"  human shoulder {h_sh:.2f} deg, exoskeleton shoulder {e_sh:.2f} deg, "
-          f"strap {strap_force(model, data, 0):.2f} N")
+          f"band torque {strap_load(model, data, 0):.2f} Nm")
     check("human arm lifted against gravity", h_sh > 20.0, f"{h_sh:.1f} deg")
     check("exoskeleton follows the arm through the straps", gap < 2.0,
           f"difference {gap:.2f} deg")
@@ -283,7 +296,7 @@ def main() -> int:
     h_el = math.degrees(data.qpos[qpos_adr(model, "human_elbow")])
     e_el = math.degrees(data.qpos[qpos_adr(model, "exo_elbow")])
     print(f"  human elbow {h_el:.2f} deg, exoskeleton elbow {e_el:.2f} deg, "
-          f"strap {strap_force(model, data, 1):.2f} N")
+          f"band torque {strap_load(model, data, 1):.2f} Nm")
     check("human elbow bent", h_el > 5.0, f"{h_el:.1f} deg")
     check("exoskeleton elbow follows", e_el > 5.0, f"{e_el:.1f} deg")
 

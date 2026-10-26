@@ -87,11 +87,14 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     renderer = mujoco.Renderer(model, args.height, args.width)
     camera = mujoco.MjvCamera()
-    camera.lookat[:] = [0.0, 0.0, 0.85]
+    camera.lookat[:] = [-0.05, 0.0, 0.95]
     camera.distance = 1.6
-    camera.elevation = -12
-    for name, azimuth in (("front", 135), ("side", 90), ("back", 225)):
+    # The last view looks down the arm axis: that is the only one where the
+    # lateral offset between the exoskeleton plane and the arm is visible.
+    for name, azimuth, elevation in (("front", 135, -12), ("side", 90, -12),
+                                     ("back", 225, -12), ("top", 90, -70)):
         camera.azimuth = azimuth
+        camera.elevation = elevation
         renderer.update_scene(data, camera)
         image = renderer.render()
         target = out / f"scene_{name}_sh{shoulder:.0f}_el{elbow:.0f}.png"

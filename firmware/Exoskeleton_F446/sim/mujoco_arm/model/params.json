@@ -115,6 +115,11 @@
       "value": 0.030,
       "status": "assumed",
       "source": "visual only"
+    },
+    "lateral_offset_y_m": {
+      "value": 0.10,
+      "status": "assumed",
+      "source": "User SolidWorks view 2026-10-26: the links run along the outside of the arm and the cuffs wrap it, so the exoskeleton plane is offset from the arm axis. Must stay above arm radius + link half width (0.045 + 0.035) to avoid interpenetration; 0.10 m is a placeholder until measured on the bench."
     }
   },
   "human": {
@@ -196,12 +201,12 @@
     }
   },
   "straps": {
-    "model_note": "Each band is a soft point attachment (equality connect). Both attachment points are placed so they coincide at the assembly pose (q = 0), which keeps the constraint free of an initial pull. The exoskeleton forearm point is therefore derived from the human forearm point, not measured.",
+    "model_note": "Each cuff is a soft ball joint (equality connect) at the centre of the band. The human-side attachment point is placed in the band plane (y = lateral offset), so the two points coincide at q = 0 and the constraint starts without a pull. A ball joint is deliberate: a rigid weld cannot work because the exoskeleton elbow axis sits 5.5 cm above the human elbow, which locks elbow bending.",
     "upper_arm": {
       "distance_from_shoulder_m": {
         "value": 0.15,
         "status": "assumed",
-        "source": "band around the middle of the upper arm, same point on both chains"
+        "source": "band around the middle of the upper arm"
       }
     },
     "forearm": {
@@ -213,18 +218,20 @@
       "exo_distance_from_elbow_m": {
         "value": 0.1555,
         "status": "derived",
-        "source": "human 0.3255 + 0.10 - exo upper link 0.27, so the two points coincide at q = 0"
+        "source": "human 0.3255 + 0.10 - exo upper link 0.27; keeps the exoskeleton marker level with the human one at q = 0"
       }
     },
-    "solref_timeconst_s": {
-      "value": 0.02,
-      "status": "assumed",
-      "source": "soft band; lower = stiffer, 0.02 s is roughly a stiff velcro band"
-    },
-    "solref_dampratio": {
-      "value": 1.0,
-      "status": "assumed",
-      "source": "critically damped constraint"
+    "band": {
+      "solref_timeconst_s": {
+        "value": 0.02,
+        "status": "assumed",
+        "source": "soft band; lower = stiffer, 0.02 s is roughly a stiff velcro band"
+      },
+      "solref_dampratio": {
+        "value": 1.0,
+        "status": "assumed",
+        "source": "critically damped constraint; the stiffness is a placeholder, so the interaction-force level must be scanned in M5 before quoting any force"
+      }
     }
   }
 }

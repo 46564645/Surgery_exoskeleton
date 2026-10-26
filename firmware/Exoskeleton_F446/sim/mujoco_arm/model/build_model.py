@@ -67,18 +67,27 @@ def derive(params: dict) -> dict:
     strap_upper = _v(params["straps"]["upper_arm"]["distance_from_shoulder_m"])
     strap_fore_h = _v(params["straps"]["forearm"]["human_distance_from_elbow_m"])
     strap_fore_e = _v(params["straps"]["forearm"]["exo_distance_from_elbow_m"])
-    # Both strap pairs must sit at the same world point at q = 0, otherwise the
-    # equality constraint starts with a pull and yanks the model.
-    strap_fore_expected = upper["length"] + strap_fore_h - exo_upper_len
-    if abs(strap_fore_expected - strap_fore_e) > 1e-9:
-        raise ValueError(
-            f"forearm strap points do not coincide at q=0: "
-            f"params say {strap_fore_e:.4f} m, geometry needs {strap_fore_expected:.4f} m"
-        )
     if strap_upper > exo_upper_len or strap_upper > upper["length"]:
         raise ValueError("upper strap lies outside one of the upper links")
     if strap_fore_e > exo_fore_len or strap_fore_h > forearm["length"]:
         raise ValueError("forearm strap lies outside one of the forearm links")
+
+    # The exoskeleton runs along the outside of the arm (user SolidWorks view
+    # 2026-10-26), so its plane is offset in y and the cuffs must not overlap
+    # the arm. The joint axes stay parallel to y, so the sagittal dynamics are
+    # unchanged; only the band geometry sees the offset.
+    offset_y = _v(exo["lateral_offset_y_m"])
+    if offset_y < upper["radius"] + _v(exo["upper_radius_m"]):
+        raise ValueError(
+            f"exoskeleton offset {offset_y:.3f} m would intersect the arm "
+            f"(needs > {upper['radius'] + _v(exo['upper_radius_m']):.3f} m)")
+    # The marker sites are visual only (the band is a joint-angle coupling),
+    # so the forearm marker is kept level with the human one at q = 0.
+    strap_fore_expected = upper["length"] + strap_fore_h - exo_upper_len
+    if abs(strap_fore_expected - strap_fore_e) > 1e-9:
+        raise ValueError(
+            f"forearm cuff markers are not level at q=0: params say "
+            f"{strap_fore_e:.4f} m, geometry needs {strap_fore_expected:.4f} m")
 
     return {
         "table_height": _v(table["height_m"]),
@@ -114,9 +123,10 @@ def derive(params: dict) -> dict:
         "strap_upper": strap_upper,
         "strap_fore_h": strap_fore_h,
         "strap_fore_e": strap_fore_e,
+        "offset_y": offset_y,
         "strap_solref": (
-            _v(params["straps"]["solref_timeconst_s"]),
-            _v(params["straps"]["solref_dampratio"]),
+            _v(params["straps"]["band"]["solref_timeconst_s"]),
+            _v(params["straps"]["band"]["solref_dampratio"]),
         ),
         "gravity": _v(params["meta"]["gravity_m_s2"]),
         "timestep": _v(params["meta"]["timestep_s"]),
@@ -193,7 +203,7 @@ def build_xml(d: dict) -> str:
     <!-- Mount: vertical post on the table edge plus a short bracket, so the
          exoskeleton shoulder axis sits at seat shoulder height above the desk
          (D4: one number keeps both aligned). -->
-    <body name="mount" pos="{d['edge_x']:.6f} 0 {d['table_height']:.6f}">
+    <body name="mount" pos="{d['edge_x']:.6f} {d['offset_y']:.6f} {d['table_height']:.6f}">
       <geom name="post" type="cylinder" size="{d['column_radius']:.6f} {post_half:.6f}"
             pos="0 0 {post_half:.6f}" rgba="0.35 0.35 0.38 1" contype="0" conaffinity="0"/>
       <geom name="bracket" type="capsule" fromto="0 0 {d['column_height']:.6f} {-d['shoulder_offset']:.6f} 0 {d['column_height']:.6f}"
@@ -237,7 +247,7 @@ def build_xml(d: dict) -> str:
               size="{hu['radius']:.6f}" mass="{hu['mass']:.6f}" rgba="0.85 0.62 0.50 1"
               contype="2" conaffinity="1"/>
         <site name="strap_upper_human" type="sphere" size="0.012" rgba="0.1 0.8 0.2 1"
-              pos="0 0 {-d['strap_upper']:.6f}"/>
+              pos="0 {d['offset_y']:.6f} {-d['strap_upper']:.6f}"/>
         <body name="human_fore" pos="0 0 {-hu['length']:.6f}">
           <joint name="human_elbow" type="hinge" axis="{axis}" damping="0.02"/>
 {_inertial(hf['mass'], hf['length'], hf['radius'], hf['com'])}
@@ -245,7 +255,7 @@ def build_xml(d: dict) -> str:
                 size="{hf['radius']:.6f}" mass="{hf['mass']:.6f}" rgba="0.85 0.62 0.50 1"
                 contype="2" conaffinity="1"/>
           <site name="strap_fore_human" type="sphere" size="0.012" rgba="0.1 0.8 0.2 1"
-                pos="0 0 {-d['strap_fore_h']:.6f}"/>
+                pos="0 {d['offset_y']:.6f} {-d['strap_fore_h']:.6f}"/>
           <body name="human_hand" pos="0 0 {-hf['length']:.6f}">
 {_inertial(hh['mass'], hh['length'], hh['radius'], hh['com'])}
             <geom name="human_hand_geom" type="capsule" fromto="0 0 0 0 0 {-hh['length']:.6f}"
@@ -256,14 +266,19 @@ def build_xml(d: dict) -> str:
       </body>
     </body>
   </worldbody>
-  <!-- Two soft bands. A connect constraint only pulls the two attachment
-       points together, so the band carries axial load and allows some
-       relative sliding/rotation, like a velcro cuff. -->
+  <!-- Two bands. Each one keeps the exoskeleton joint angle equal to the arm
+       joint angle (1:1), which is what a well-fitted cuff does: the band
+       absorbs the axial mismatch (the exoskeleton elbow axis sits 5.5 cm above
+       the human elbow, so two point attachments cannot stay coincident) and
+       leaves the arm free to bend. The constraint also carries the
+       exoskeleton weight back to the arm, which is the C1 effect. A point
+       attachment is deliberately NOT used: with that 5.5 cm offset it becomes
+       infeasible past a small elbow angle and fights the human. -->
   <equality>
-    <connect name="strap_upper" site1="strap_upper_human" site2="strap_upper_exo"
-             solref="{solref}" solimp="0.95 0.99 0.001"/>
-    <connect name="strap_fore" site1="strap_fore_human" site2="strap_fore_exo"
-             solref="{solref}" solimp="0.95 0.99 0.001"/>
+    <joint name="strap_upper" joint1="human_shoulder" joint2="exo_shoulder"
+           polycoef="0 1 0 0 0" solref="{solref}" solimp="0.95 0.99 0.001"/>
+    <joint name="strap_fore" joint1="human_elbow" joint2="exo_elbow"
+           polycoef="0 1 0 0 0" solref="{solref}" solimp="0.95 0.99 0.001"/>
   </equality>
   <!-- Joint torque actuators, 1:1 with the joint. The firmware maps shoulder
        rotor Nm x8 and elbow current x kt; that mapping lives in the M2b
