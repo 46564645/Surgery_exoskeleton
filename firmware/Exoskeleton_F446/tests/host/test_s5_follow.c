@@ -276,12 +276,12 @@ static void r5_dual_site(void)
     soft_bad = *p;
     soft_bad.resume_ramp_ms = 0U;
     assert(!S5Site_ReadReady(&soft_bad));
-    assert(p->s3.safety.feedback_timeout_ms == 150U
+    assert(p->s3.safety.feedback_timeout_ms == 250U
         && p->s3.safety.service_limit_ms == 100U
         && p->s3.safety.max_request_ms == 250U
         && p->s3.prepare_timeout_ms == 20000U
-        && p->s3.shoulder_property_reply_ms == 50U
-        && p->s3.shoulder_property_period_ms == 20U
+        && p->s3.shoulder_property_reply_ms == 100U
+        && p->s3.shoulder_property_period_ms == 50U
         && p->s3.shoulder_property_window_ms == 70000U
         && p->s3.shoulder_stop_window_ms == 1500U
         && p->s3.shoulder_standstill.span_rev == 0.011f
@@ -983,6 +983,22 @@ static void r5_dual_speed_spike(void)
         && !s.output_allowed && s.stop_attempted);
 }
 
+static void r5_dual_assist_toggle(void)
+{
+    r5_dual_start_running(false, false);
+    shoulder_rev = 0.25f + 8.0f * 30.0f / 360.0f; /* Non-zero gravity baseline. */
+    S5FollowStatus s = {0};
+    for (unsigned i = 0U; i < 60U; i++) { dual_step(); S5Follow_GetStatus(&s); }
+    assert(s.phase == S5_FOLLOW_RUNNING && s.target.shoulder_rotor_nm != 0.0f);
+    S5Follow_SetAssist(false);
+    dual_step(); S5Follow_GetStatus(&s);
+    assert(s.phase == S5_FOLLOW_RUNNING && s.target.shoulder_rotor_nm == 0.0f
+        && s.target.elbow_current_a == 0.0f);
+    S5Follow_SetAssist(true);
+    dual_step(); S5Follow_GetStatus(&s);
+    assert(s.phase == S5_FOLLOW_RUNNING && s.target.shoulder_rotor_nm != 0.0f);
+}
+
 static void r5_dual_stop_settling(void)
 {
     r5_dual_start_running(false, false);
@@ -1094,6 +1110,7 @@ void TestS5Follow_Run(const char *scenario)
     else if (!strcmp(scenario, "s5_r5_dual_soft_pause")) { r5_dual_soft_pause(); }
     else if (!strcmp(scenario, "s5_r5_dual_hard_speed")) { r5_dual_hard_speed(); }
     else if (!strcmp(scenario, "s5_r5_dual_speed_spike")) { r5_dual_speed_spike(); }
+    else if (!strcmp(scenario, "s5_r5_dual_assist_toggle")) { r5_dual_assist_toggle(); }
     else if (!strcmp(scenario, "s5_r5_dual_stop_settling")) { r5_dual_stop_settling(); }
     else if (!strcmp(scenario, "s5_r5_dual_elbow_lower_margin")) { r5_dual_elbow_lower_margin(); }
     else if (!strcmp(scenario, "s5_r5_dual_amplify")) { r5_dual_amplify(); }

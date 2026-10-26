@@ -39,7 +39,7 @@ for bus, prescaler, pins in [(1, 6, "GPIO_PIN_8|GPIO_PIN_9"), (2, 3, "GPIO_PIN_1
     for field, value in {"Prescaler": str(prescaler), "Mode": "CAN_MODE_NORMAL",
                          "SyncJumpWidth": "CAN_SJW_1TQ", "TimeSeg1": "CAN_BS1_11TQ",
                          "TimeSeg2": "CAN_BS2_2TQ", "AutoBusOff": "DISABLE",
-                         "AutoRetransmission": "DISABLE", "ReceiveFifoLocked": "ENABLE"}.items():
+                         "AutoRetransmission": "ENABLE", "ReceiveFifoLocked": "ENABLE"}.items():
         assert f"hcan{bus}.Init.{field} = {value};" in main
     assert f"__HAL_RCC_CAN{bus}_CLK_ENABLE();" in msp
     assert f"GPIO_InitStruct.Pin = {pins};" in msp

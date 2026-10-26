@@ -94,7 +94,7 @@ AI 辅助开发遵循以下原则：
 - 语义关节只有`RIGHT/SHOULDER_SIDE`和`RIGHT/ELBOW`。肩侧为GIM6010-8/GDS68；肘部为裸M3508/C620。没有SHOULDER_BACK，不套用M3508 P19参数。
 - 当前目标为省力和自由跟随：通过姿态相关重力补偿减少扶持用力，并允许手动改变姿态。Lock位置保持已按用户2026-10-16决定取消，不再实现，也不作为后续阶段前置；不要求完全松手后固定在原角度。
 - Amplify作为可选后续扩展，基于关节位置/速度趋势增加助力，不阻塞当前省力与自由跟随演示。普通Cancel清理附加动作，健康且有许可时回到FOLLOW；暂停Amplify只撤增量，不直接关闭全部补偿。结束整个FOLLOW会话仍走停止与撤力流程。
-- HX711固定10SPS，只作辅助记录/观察，不作为快速助力或安全触发。IMU当前停用，不因库存或参考代码存在而启用。
+- HX711固定10SPS（2026-10-22决定暂不改RATE），只作辅助记录/观察；同日起可选"力触发有界增量"（默认关闭，需把传感器改到绑带-手臂界面并做F0校准）。10SPS下触发延迟约100–200ms，只用于起步辅助。力数据不参与故障判断，只触发有界增量，过期即撤。IMU当前停用，不因库存或参考代码存在而启用。
 - STM32F446RE/NUCLEO-F446RE，HAL/CMSIS，裸机静态调度，双路经典CAN。不是博主的AT32底盘，不采用其FreeRTOS、CAN FD、PWM电机驱动或传感器针脚。
 
 ### 3.2 资料权威与读取顺序
@@ -170,6 +170,7 @@ CAN模块TX接MCU TX、RX接MCU RX，不按UART交叉。CN编号是板连接器�
 | 固件内`CMakeLists.txt`、`cmake/` | 新源文件和头文件目录加入顶层构建清单；不手改生成的`cmake/stm32cubemx/`清单。 |
 | 固件内`.vscode/`、`build.sh` | VS Code使用CMake Tools原生任务与当前预设；build.sh保留为Mac/POSIX入口。机器路径配置变动同步固件README。 |
 | 固件内`build/` | 可重新生成的编译产物，不提交；迁移工程不沿用旧位置的构建缓存。 |
+| 固件内`sim/mujoco_arm/` | MuJoCo仿真子项目（2026-10-26建立）：印证并优化实体控制程序；进入该目录先读其`AGENTS.md`。虚拟环境`build/sim-venv/`、产物`build/sim*/`不提交。 |
 | 固件内`.local-tools.sh`、`CMakeUserPresets.json` | 前者为Mac/POSIX可选路径配置，后者保存本机WindowsDebug/WindowsRelease等个人预设，均保持Git忽略；不假定换电脑后已存在。CMake可执行文件路径配置在VS Code用户设置或终端中。 |
 | 固件内`.agents/`、`.auto-embedded/`、`.codex/` | 已有辅助工具配置，保留；移动后核对路径，不默认嵌套hooks已启用或擅改全局信任。 |
 | `Main_ project/docs/` | 需求、架构、排期与唯一开发日志。 |

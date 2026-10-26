@@ -45,8 +45,10 @@ static void reconcile_output(unsigned bus)
         output_sent[bus] = (tsr & proof) == proof;
         output_failed[bus] = !output_sent[bus];
         output_mailbox[bus] = 0U;
-        /* NART stays on. ALST without TERR means the frame never won the bus,
-         * so one same-frame resend is safe, as for shoulder reads (2026-10-07). */
+        /* Hardware auto-retransmission is on since 2026-10-22 (transient CAN2
+         * bit error, TEC=7, latched TRANSPORT), so ALST/TERR normally retry in
+         * hardware. Kept as a defensive path: ALST without TERR means the frame
+         * never won the bus, so one same-frame resend is safe. */
         uint32_t mailbox;
         if (!output_sent[bus] && !output_resent[bus] && (tsr & rqcp) != 0U
             && (tsr & alst) != 0U && (tsr & terr) == 0U && listening(handles[bus])

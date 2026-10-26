@@ -9,7 +9,8 @@
 #define S1_RX_STORAGE_SIZE     1024U /* LwRB usable capacity: size - 1 */
 #define S1_TX_STORAGE_SIZE     2048U
 #define S1_TX_CHUNK_SIZE        256U
-#define S1_REPLY_SIZE           256U
+/* followstatus grew with the force-trigger fields; 256 truncated it. */
+#define S1_REPLY_SIZE           384U
 #define S1_LINE_MAX              96U
 #define S1_RX_BUDGET            128U
 #define S1_SERVICE_MS             1U

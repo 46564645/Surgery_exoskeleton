@@ -28,10 +28,18 @@ typedef struct {
     bool assist_paused;
     uint16_t speed_pauses;
     float peak_speed_rad_s[SAFETY_JOINT_COUNT]; /* |joint velocity| while RUNNING. */
+    /* Interaction-force trigger record (optional feature). */
+    bool force_active;
+    float force_error_n;
+    uint16_t force_triggers;
 } S5FollowStatus;
 
 void S5Follow_Init(const S5SiteProfile *profile);
 bool S5Follow_IsSelected(void);
+/* Bench A/B: runtime assist gate. Off keeps the session RUNNING but commands
+ * zero effort, so one window can compare the same poses with and without. */
+void S5Follow_SetAssist(bool enabled);
+bool S5Follow_AssistEnabled(void);
 bool S5Follow_Prepare(uint32_t now_ms);
 bool S5Follow_Start(uint32_t now_ms);
 bool S5Follow_Cancel(void); /* True only for a healthy normal ramp. */

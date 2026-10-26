@@ -5,6 +5,7 @@
 #include "gravity_compensation.h"
 #include "s5_elbow_support.h"
 #include "shoulder_amplify.h"
+#include "force_assist.h"
 
 typedef struct {
     S3SiteProfile s3;
@@ -23,6 +24,7 @@ typedef struct {
      * limit stays SafetyJointConfig.max_speed_rad_s. */
     float soft_speed_rad_s[SAFETY_JOINT_COUNT];
     uint32_t resume_quiet_ms, resume_ramp_ms;
+    ForceAssistConfig force_assist;             /* Dual only; confirmed=false = off. */
     bool output_enabled;                        /* No CLI setter. */
 } S5SiteProfile;
 

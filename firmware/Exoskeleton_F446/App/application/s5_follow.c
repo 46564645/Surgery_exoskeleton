@@ -6,6 +6,7 @@
 #include "board_runtime.h"
 #include "shoulder_standstill.h"
 #include "s2_config.h"
+#include "hx711.h"
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
@@ -25,6 +26,8 @@ static float assist_scale[SAFETY_JOINT_COUNT];
 static bool assist_quiet[SAFETY_JOINT_COUNT], assist_paused[SAFETY_JOINT_COUNT];
 static uint32_t assist_quiet_ms[SAFETY_JOINT_COUNT], assist_scale_ms[SAFETY_JOINT_COUNT];
 static ShoulderAmplify amplify;
+static ForceAssistState force_state;
+static bool assist_enabled = true;
 
 static bool newer(uint32_t value, uint32_t before)
 {
@@ -312,6 +315,27 @@ static bool compute_target(const S3SiteSample *sample, uint32_t now_ms,
     if (!isfinite(effort->shoulder_rotor_nm)
         || !isfinite(effort->elbow_current_a)) { return false; }
     if (dual()) {
+        /* Force never gates safety: a missing sample only drops the increment. */
+        Hx711Sample force_sample;
+        Hx711_Get(&force_sample);
+        /* No assist means no boost: F0 is only valid with the assist on. */
+        bool force_ok = assist_enabled
+            && force_sample.has_sample && !force_sample.saturated
+            && (uint32_t)(now_ms - force_sample.received_ms) <= site->force_assist.freshness_ms;
+        float force_n = 0.0f;
+        if (force_ok) { force_ok = Hx711_GetForce(now_ms, &force_n); }
+        (void)ForceAssist_Update(&force_state, &site->force_assist, force_ok, force_n,
+                                 sample->joint[0].position_rad,
+                                 sample->joint[1].position_rad, now_ms);
+        float gain = ForceAssist_Gain(&force_state);
+        effort->shoulder_rotor_nm *= gain;
+        effort->elbow_current_a *= gain;
+    }
+    if (!assist_enabled) {
+        effort->shoulder_rotor_nm = 0.0f;
+        effort->elbow_current_a = 0.0f;
+    }
+    if (dual()) {
         const float shoulder_cap = site->s3.safety.joint[0].max_motor_command;
         const float elbow_cap = site->s3.safety.joint[1].max_motor_command;
         effort->shoulder_rotor_nm = fmaxf(-shoulder_cap,
@@ -327,6 +351,8 @@ void S5Follow_Init(const S5SiteProfile *profile)
     site = profile;
     selected = profile != NULL;
     memset(&status, 0, sizeof(status));
+    assist_enabled = true;
+    ForceAssist_Reset(&force_state, 0U);
     status.phase = S5Site_ReadReady(profile) ? S5_FOLLOW_IDLE : S5_FOLLOW_DISABLED;
     status.axes = profile == NULL ? 0U : profile->s3.safety.enabled_axes;
     status.output_bound = status.phase == S5_FOLLOW_IDLE;
@@ -353,6 +379,9 @@ void S5Follow_Init(const S5SiteProfile *profile)
 }
 
 bool S5Follow_IsSelected(void) { return selected; }
+
+void S5Follow_SetAssist(bool enabled) { assist_enabled = enabled; }
+bool S5Follow_AssistEnabled(void) { return assist_enabled; }
 
 bool S5Follow_Prepare(uint32_t now_ms)
 {
@@ -566,6 +595,9 @@ void S5Follow_GetStatus(S5FollowStatus *out)
     out->stop_attempted = gateway.stop_attempted;
     out->stop_accepted = gateway.stop_accepted;
     out->stop_delivery_failed = gateway.stop_delivery_failed;
+    out->force_active = force_state.active;
+    out->force_error_n = force_state.last_error_n;
+    out->force_triggers = force_state.triggers;
     out->output_allowed = status.phase == S5_FOLLOW_RUNNING
         && (gateway.state == OUTPUT_ARMED || gateway.state == OUTPUT_ACTIVE);
     out->remaining_ms = 0U;

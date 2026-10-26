@@ -7,6 +7,12 @@
 
 #if defined(S5_R5_DUAL_FOLLOW)
 #define S5_ELBOW_MOTOR_KT_NM_PER_A 0.020f
+#if !defined(S5_R5_SHOULDER_GAIN)
+#define S5_R5_SHOULDER_GAIN 1.0f
+#endif
+#if !defined(S5_R5_FORCE_BOOST_PCT)
+#define S5_R5_FORCE_BOOST_PCT 50
+#endif
 #if !defined(S5_R5_ELBOW_SUPPORT_SIGN) \
     || (S5_R5_ELBOW_SUPPORT_SIGN != 1 && S5_R5_ELBOW_SUPPORT_SIGN != -1)
 #error "R5 dual FOLLOW requires an explicit +1 or -1 elbow-current sign"
@@ -76,7 +82,7 @@ static const S5SiteProfile site = {
                 .limits_confirmed = true, .feedback_confirmed = true,
                 .protocol_confirmed = true
             },
-            .feedback_timeout_ms = 150U, .service_limit_ms = 100U,
+            .feedback_timeout_ms = 250U, .service_limit_ms = 100U,
             .max_request_ms = 250U, .enabled_axes = SAFETY_ALL_AXES,
             .protection_confirmed = true, .stop_method_confirmed = true,
             .timing_confirmed = true,
@@ -88,8 +94,8 @@ static const S5SiteProfile site = {
         .coordinates = {S3_ASSEMBLED_JOINT, S3_ASSEMBLED_JOINT},
         .operational_confirmed[1] = true,
         .shoulder_source = S3_SHOULDER_ENCODER_PROPERTIES,
-        .shoulder_property_reply_ms = 50U,
-        .shoulder_property_period_ms = 20U,
+        .shoulder_property_reply_ms = 100U,
+        .shoulder_property_period_ms = 50U,
         .shoulder_property_window_ms = 70000U,
         .shoulder_standstill = {
             .span_rev = 0.011f, .max_velocity_rev_s = 0.066f,
@@ -101,7 +107,7 @@ static const S5SiteProfile site = {
         .amplitude_nm = 1.64f, .gravity_zero_rad = 0.0f,
         .sign_g = 1, .confirmed = true
     },
-    .shoulder_gain = 1.0f,
+    .shoulder_gain = S5_R5_SHOULDER_GAIN,
     .shoulder_amplify = {
         .increment_rotor_nm = 0.001f * S5_R5_SHOULDER_AMPLIFY_MNM,
         .starting_velocity_rad_s = 0.34906585f, /* 20 deg/s */
@@ -122,6 +128,25 @@ static const S5SiteProfile site = {
     .shoulder_zero_dwell_ms = 1U,
     .soft_speed_rad_s = {1.57079633f, 3.49065850f}, /* 90 / 200 deg/s */
     .resume_quiet_ms = 250U, .resume_ramp_ms = 300U,
+    /* Interaction-force trigger. Coefficients are bench-calibrated values;
+     * confirmed=false keeps the feature off until a calibration run fills
+     * S5_FORCE_C0..C2 (see tests/live_monitor/force_trigger_sim.py). */
+    .force_assist = {
+        /* Bench fit 2026-10-22 (worn, relaxed sweep, residual 0.104 N).
+         * c1 stays zero: the link only follows the forearm angle. */
+        .c0 = 0.0593f, .c1 = 0.0f, .c2 = 0.3995f,
+        /* Bench 2026-10-22: |e_F| p90 is 0.21-0.25 N, so 0.5 N never fired. */
+        .on_n = 0.30f, .off_n = 0.15f,
+        .boost_pct = 0.001f * S5_R5_FORCE_BOOST_PCT,
+        .ramp_ms = 200U, .max_hold_ms = 3000U,
+        /* 10 SPS: one sample per 100 ms, so allow three sample periods. */
+        .freshness_ms = 300U,
+#if defined(S5_R5_FORCE_ASSIST)
+        .confirmed = true
+#else
+        .confirmed = false
+#endif
+    },
     .output_enabled = true
 };
 #elif defined(S5_R4_ELBOW_FOLLOW)
@@ -232,7 +257,10 @@ static bool base_ready(const S5SiteProfile *p)
         || p->send_interval_ms >= s->safety.max_request_ms
         || !isfinite(p->release_slew_per_s.elbow_current_a)
         || p->release_slew_per_s.elbow_current_a <= 0.0f
-        || !soft_speed_ready(p, dual)) { return false; }
+        || !soft_speed_ready(p, dual)
+        || (p->force_assist.confirmed && !ForceAssist_ConfigValid(&p->force_assist))) {
+        return false;
+    }
     const SafetyJointConfig *e = &s->safety.joint[1];
     if (e->mapping.rotor_per_joint != 1.0f || e->mapping.rotor_zero_rad != 0.0f
         || (e->mapping.direction != 1 && e->mapping.direction != -1)

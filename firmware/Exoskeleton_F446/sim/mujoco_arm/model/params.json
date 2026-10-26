@@ -1,0 +1,230 @@
+{
+  "_readme": [
+    "Physical model parameters for the MuJoCo arm simulation. Single source of truth:",
+    "controller parameters are NOT stored here, they come from App/application/s5_site.c",
+    "and the firmware CMake options through the bridge DLL (M2b).",
+    "status: measured = real measurement, estimated = rough estimate from a document,",
+    "assumed = modelling assumption, derived = computed from other entries in this file.",
+    "Every entry carries source and status; nothing here is validated on hardware."
+  ],
+  "meta": {
+    "model_version": "M1 (2026-10-26)",
+    "coordinate_convention": "Sagittal plane x-z. Hanging arm = q 0 rad. Positive joint angle = forward flexion (+x), matching the firmware zero and sign (s5_site.c gravity_zero_rad = 0).",
+    "gravity_m_s2": {
+      "value": 9.81,
+      "status": "assumed",
+      "source": "standard gravity"
+    },
+    "timestep_s": {
+      "value": 0.001,
+      "status": "assumed",
+      "source": "physics step only; controller periods are added in M3"
+    }
+  },
+  "table": {
+    "height_m": {
+      "value": 0.75,
+      "status": "assumed",
+      "source": "D4 user decision 2026-10-26: everyday desk height"
+    },
+    "top_thickness_m": {
+      "value": 0.05,
+      "status": "assumed",
+      "source": "typical desk top"
+    },
+    "top_length_m": {
+      "value": 0.80,
+      "status": "assumed",
+      "source": "typical desk depth, only used to place the collision surface"
+    },
+    "top_width_m": {
+      "value": 0.60,
+      "status": "assumed",
+      "source": "typical desk width"
+    },
+    "edge_x_m": {
+      "value": 0.05,
+      "status": "assumed",
+      "source": "front edge of the table top, measured from the world origin where the arm hangs"
+    },
+    "collision_enabled": {
+      "value": false,
+      "status": "assumed",
+      "source": "M1 keeps the desk as the mount only. With the shoulder 0.30 m above the top and a 0.77 m arm, a straight forward sweep passes through the desk above ~25 deg, so the S5 free-air sweep and a desk in front cannot both exist. Enable for the T5 desk task after the sitting posture is decided."
+    }
+  },
+  "mount": {
+    "column_height_m": {
+      "value": 0.30,
+      "status": "estimated",
+      "source": "D4 user decision 2026-10-26: seat shoulder height minus desk height; also the table-edge-to-shoulder-axis height, so one number keeps both aligned"
+    },
+    "column_radius_m": {
+      "value": 0.02,
+      "status": "assumed",
+      "source": "support post size, not modelled from the drawing"
+    },
+    "shoulder_offset_x_m": {
+      "value": 0.20,
+      "status": "assumed",
+      "source": "horizontal bracket from the post top back to the shoulder axis: the user sits about 0.2 m behind the desk edge, so the hanging upper arm clears the desk front face"
+    }
+  },
+  "exo": {
+    "upper_link_m": {
+      "value": 0.27,
+      "status": "measured",
+      "source": "2026-10-08 user measurement, shoulder axis to elbow axis (L1)"
+    },
+    "upper_mass_kg": {
+      "value": 0.380,
+      "status": "estimated",
+      "source": "3MF volume 2026-10-08 x ABS 1.1 g/cm3, 100% infill; screws/bearings/straps not included"
+    },
+    "upper_com_fraction": {
+      "value": 0.5,
+      "status": "assumed",
+      "source": "uniform link, centre of mass at mid length"
+    },
+    "forearm_link_m": {
+      "value": 0.175,
+      "status": "measured",
+      "source": "2026-10-08 user measurement, elbow axis to the outermost forearm cuff (L2)"
+    },
+    "forearm_mass_kg": {
+      "value": 0.233,
+      "status": "estimated",
+      "source": "3MF volume 2026-10-08 x ABS 1.1 g/cm3, 100% infill"
+    },
+    "forearm_com_fraction": {
+      "value": 0.5,
+      "status": "assumed",
+      "source": "uniform link, centre of mass at mid length"
+    },
+    "elbow_motor_mass_kg": {
+      "value": 0.120,
+      "status": "estimated",
+      "source": "bare M3508 mass, hardware reference 6.2; sits on the elbow axis"
+    },
+    "upper_radius_m": {
+      "value": 0.035,
+      "status": "assumed",
+      "source": "visual only, exoskeleton does not collide in M1"
+    },
+    "forearm_radius_m": {
+      "value": 0.030,
+      "status": "assumed",
+      "source": "visual only"
+    }
+  },
+  "human": {
+    "body_mass_kg": {
+      "value": 70.0,
+      "status": "assumed",
+      "source": "default until the user provides height and mass"
+    },
+    "height_m": {
+      "value": 1.75,
+      "status": "assumed",
+      "source": "default until the user provides height and mass"
+    },
+    "upper_arm": {
+      "length_fraction_of_height": {
+        "value": 0.186,
+        "status": "estimated",
+        "source": "Winter, Biomechanics and Motor Control of Human Movement, Table 4.1 / Drillis-Contini segment length ratios"
+      },
+      "mass_fraction_of_body": {
+        "value": 0.028,
+        "status": "estimated",
+        "source": "Winter Table 4.1 (Dempster)"
+      },
+      "com_fraction_from_proximal": {
+        "value": 0.436,
+        "status": "estimated",
+        "source": "Winter Table 4.1 (Dempster)"
+      },
+      "radius_m": {
+        "value": 0.045,
+        "status": "assumed",
+        "source": "collision radius for the table contact, visual only otherwise"
+      }
+    },
+    "forearm": {
+      "length_fraction_of_height": {
+        "value": 0.146,
+        "status": "estimated",
+        "source": "Winter Table 4.1 / Drillis-Contini segment length ratios"
+      },
+      "mass_fraction_of_body": {
+        "value": 0.016,
+        "status": "estimated",
+        "source": "Winter Table 4.1 (Dempster)"
+      },
+      "com_fraction_from_proximal": {
+        "value": 0.430,
+        "status": "estimated",
+        "source": "Winter Table 4.1 (Dempster)"
+      },
+      "radius_m": {
+        "value": 0.035,
+        "status": "assumed",
+        "source": "collision radius for the table contact"
+      }
+    },
+    "hand": {
+      "length_fraction_of_height": {
+        "value": 0.108,
+        "status": "estimated",
+        "source": "Winter Table 4.1 / Drillis-Contini segment length ratios"
+      },
+      "mass_fraction_of_body": {
+        "value": 0.006,
+        "status": "estimated",
+        "source": "Winter Table 4.1 (Dempster)"
+      },
+      "com_fraction_from_proximal": {
+        "value": 0.506,
+        "status": "estimated",
+        "source": "Winter Table 4.1 (Dempster)"
+      },
+      "radius_m": {
+        "value": 0.020,
+        "status": "assumed",
+        "source": "collision radius for the table contact"
+      }
+    }
+  },
+  "straps": {
+    "model_note": "Each band is a soft point attachment (equality connect). Both attachment points are placed so they coincide at the assembly pose (q = 0), which keeps the constraint free of an initial pull. The exoskeleton forearm point is therefore derived from the human forearm point, not measured.",
+    "upper_arm": {
+      "distance_from_shoulder_m": {
+        "value": 0.15,
+        "status": "assumed",
+        "source": "band around the middle of the upper arm, same point on both chains"
+      }
+    },
+    "forearm": {
+      "human_distance_from_elbow_m": {
+        "value": 0.10,
+        "status": "assumed",
+        "source": "band on the proximal half of the human forearm"
+      },
+      "exo_distance_from_elbow_m": {
+        "value": 0.1555,
+        "status": "derived",
+        "source": "human 0.3255 + 0.10 - exo upper link 0.27, so the two points coincide at q = 0"
+      }
+    },
+    "solref_timeconst_s": {
+      "value": 0.02,
+      "status": "assumed",
+      "source": "soft band; lower = stiffer, 0.02 s is roughly a stiff velcro band"
+    },
+    "solref_dampratio": {
+      "value": 1.0,
+      "status": "assumed",
+      "source": "critically damped constraint"
+    }
+  }
+}

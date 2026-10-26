@@ -69,6 +69,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/control/gravity_compensation.c
     App/control/s5_elbow_support.c
     App/control/shoulder_amplify.c
+    App/control/force_assist.c
     App/control/safety_supervisor.c
     App/application/output_gateway.c
     App/application/output_can_transport.c
@@ -107,6 +108,9 @@ option(S5_R5_DUAL_FOLLOW "Build the isolated low-pose dual-axis FOLLOW candidate
 set(S5_R5_ELBOW_SUPPORT_SIGN "" CACHE STRING "R5 dual FOLLOW elbow-current sign, explicitly 1 or -1 after direction observation")
 set(S5_R5_ELBOW_SUPPORT_MA "" CACHE STRING "R5 dual FOLLOW posture-curve current peak in mA, explicitly 1..20000; protocol cap is 20 A")
 set(S5_R5_SHOULDER_AMPLIFY_MNM "0" CACHE STRING "R5 shoulder Amplify rotor-torque increment while raising, 0..100 mNm; 0 = off")
+option(S5_R5_FORCE_ASSIST "Enable interaction-force triggered bounded boost (needs calibrated F0)" OFF)
+set(S5_R5_FORCE_BOOST_PCT "50" CACHE STRING "Force-triggered boost, percent of the gravity baseline, 1..50")
+set(S5_R5_SHOULDER_GAIN "1.0" CACHE STRING "R5 shoulder gravity gain, 0.001..1.0; 0.001 builds the assist-off baseline for A/B bench comparison")
 if(S5_R5_DUAL_FOLLOW)
     if(S5_R2_ELBOW_TRIAL OR S5_R4_ELBOW_FOLLOW)
         message(FATAL_ERROR "R5 dual FOLLOW must use a separate build from R2 and R4")
@@ -121,10 +125,21 @@ if(S5_R5_DUAL_FOLLOW)
     if(NOT "${S5_R5_SHOULDER_AMPLIFY_MNM}" MATCHES "^(0|[1-9][0-9]?|100)$")
         message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_SHOULDER_AMPLIFY_MNM=0..100")
     endif()
+    if(S5_R5_SHOULDER_GAIN LESS 0.001 OR S5_R5_SHOULDER_GAIN GREATER 1.0)
+        message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_SHOULDER_GAIN=0.001..1.0")
+    endif()
+    if(S5_R5_FORCE_ASSIST AND (S5_R5_FORCE_BOOST_PCT LESS 1 OR S5_R5_FORCE_BOOST_PCT GREATER 50))
+        message(FATAL_ERROR "S5_R5_FORCE_BOOST_PCT must be 1..50")
+    endif()
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
         S5_R5_DUAL_FOLLOW S5_R5_ELBOW_SUPPORT_SIGN=${S5_R5_ELBOW_SUPPORT_SIGN}
         S5_R5_ELBOW_SUPPORT_MA=${S5_R5_ELBOW_SUPPORT_MA}
-        S5_R5_SHOULDER_AMPLIFY_MNM=${S5_R5_SHOULDER_AMPLIFY_MNM})
+        S5_R5_SHOULDER_AMPLIFY_MNM=${S5_R5_SHOULDER_AMPLIFY_MNM}
+        S5_R5_SHOULDER_GAIN=${S5_R5_SHOULDER_GAIN}
+        S5_R5_FORCE_BOOST_PCT=${S5_R5_FORCE_BOOST_PCT})
+    if(S5_R5_FORCE_ASSIST)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE S5_R5_FORCE_ASSIST=1)
+    endif()
 endif()
 set(S5_R4_ELBOW_SUPPORT_SIGN "" CACHE STRING "R4 elbow support-current sign, explicitly 1 or -1 after R2 direction observation")
 set(S5_R4_ELBOW_SUPPORT_MA "" CACHE STRING "R4 elbow support-current magnitude in mA, explicitly 1..4000 after R2 observation")

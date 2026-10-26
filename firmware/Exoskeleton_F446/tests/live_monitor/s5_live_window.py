@@ -43,7 +43,8 @@ PHASE_TEXT = {0: "禁用", 1: "待机", 2: "准备中", 3: "READY", 4: "运行�
 
 SAMPLE_FIELDS = ["t_s", "phase", "gate", "reason", "safety", "q_sh_deg", "q_el_deg",
                  "sh_rotor_mNm", "sh_joint_Nm", "el_mA", "el_Nm", "paused",
-                 "allowed", "remaining_ms"]
+                 "allowed", "remaining_ms", "assist",
+                 "force_active", "force_error_mN", "force_triggers"]
 FORCE_FIELDS = ["t_s", "raw", "force_N", "valid", "sat", "age_ms"]
 
 
@@ -93,9 +94,12 @@ class Worker(threading.Thread):
     def __init__(self, args, outdir, events, stop_event):
         super().__init__(daemon=True)
         self.args = args
+        self.base_outdir = outdir
         self.outdir = outdir
+        self.run_index = 0
         self.events = events
         self.stop_event = stop_event
+        self.commands = queue.Queue(maxsize=16)
         self.samples = 0
         self.peak = [0.0, 0.0]
         self.pauses = 0
@@ -208,12 +212,37 @@ class Worker(threading.Thread):
         require(budget_s > 1.0, "会话剩余时间不足以观察")
         self.emit(kind="marker", name="start")
         self.stage("running", f"运行中：{budget_s:.0f} s 后自动停止")
+        split_at = budget_s / 2.0 if getattr(self.args, "ab_split", False) else None
+        if split_at is not None:
+            try:
+                link.ask("assistoff", timeout_s=0.2)
+                self.emit(kind="marker", name="ab_off")
+            except Exception as exc:
+                self.emit(kind="error", text=f"assistoff 失败：{exc}")
+        split_done = False
         t0 = time.monotonic()
         next_t = t0
         index = 0
         while not self.stop_event.is_set() and (time.monotonic() - t0) < budget_s:
-            mode = self.status(link, timeout_s=0.15)
+            while True:
+                try:
+                    command = self.commands.get_nowait()
+                except queue.Empty:
+                    break
+                try:
+                    self.emit(kind="marker", name="assist", command=command)
+                    link.ask(command, timeout_s=0.2)
+                except Exception as exc:
+                    self.emit(kind="error", text=f"{command} 失败：{exc}")
             elapsed = time.monotonic() - t0
+            if split_at is not None and not split_done and elapsed >= split_at:
+                split_done = True
+                try:
+                    link.ask("assiston", timeout_s=0.2)
+                    self.emit(kind="marker", name="ab_on")
+                except Exception as exc:
+                    self.emit(kind="error", text=f"assiston 失败：{exc}")
+            mode = self.status(link, timeout_s=0.15)
             self.publish_sample(mode, elapsed, samples_csv)
             if index % FORCE_EVERY == 0:
                 self.publish_force(link, elapsed, force_csv)
@@ -251,6 +280,10 @@ class Worker(threading.Thread):
             "paused": 1 if paused else 0,
             "allowed": mode.get("output_allowed", "0"),
             "remaining_ms": mode.get("remaining_ms", "0"),
+            "assist": mode.get("asst", "1"),
+            "force_active": mode.get("fa", "0"),
+            "force_error_mN": mode.get("fe_mN", ""),
+            "force_triggers": mode.get("fc", "0"),
         }
         samples_csv.writerow(row)
         self.samples += 1
@@ -314,7 +347,9 @@ class Window:
         self.tk = tk
         self.root = root
         self.args = args
+        self.base_outdir = outdir
         self.outdir = outdir
+        self.run_index = 0
         self.events = queue.Queue(maxsize=8192)
         self.stop_event = threading.Event()
         self.worker = None
@@ -353,9 +388,22 @@ class Window:
         self.prepare_button.grid(row=0, column=1, padx=4)
         self.stop_button = ttk.Button(controls, text="停止", command=self.request_stop, state="disabled")
         self.stop_button.grid(row=0, column=2, padx=4)
+        self.assist_off_button = ttk.Button(controls, text="助力关", command=lambda: self.send_assist(False),
+                                            state="disabled")
+        self.assist_off_button.grid(row=0, column=6, padx=(16, 4))
+        self.assist_on_button = ttk.Button(controls, text="助力开", command=lambda: self.send_assist(True),
+                                           state="disabled")
+        self.assist_on_button.grid(row=0, column=7, padx=4)
         self.export_button = ttk.Button(controls, text="导出实验图", command=self.export_figure,
                                         state="disabled")
         self.export_button.grid(row=0, column=3, padx=4)
+        self.ab_split = tk.BooleanVar(value=True)
+        self.ab_box = tk.Checkbutton(controls, text="自动 A/B（前半关/后半开）",
+                                     variable=self.ab_split, bg="#141c28", fg="#dbe7f1",
+                                     selectcolor="#1d2a3a", activebackground="#141c28",
+                                     activeforeground="white",
+                                     font=("Microsoft YaHei UI", 10))
+        self.ab_box.grid(row=1, column=0, columnspan=3, sticky="w", pady=(4, 0))
         self.duration = tk.StringVar(value=str(args.duration_ms // 1000))
         ttk.Label(controls, text="会话秒数").grid(row=0, column=4, padx=(16, 4))
         ttk.Entry(controls, textvariable=self.duration, width=5).grid(row=0, column=5)
@@ -377,6 +425,9 @@ class Window:
             state="disabled" if running or not self.confirm.get() else "normal")
         self.export_button.configure(
             state="normal" if not running and self.samples else "disabled")
+        assist_state = "normal" if running and self.stage == "running" else "disabled"
+        self.assist_off_button.configure(state=assist_state)
+        self.assist_on_button.configure(state=assist_state)
 
     def start_prepare(self):
         if self.worker is not None and self.worker.is_alive():
@@ -390,6 +441,11 @@ class Window:
             self.error_text = "会话秒数需在 2–60 s（固件上限 45 s，脚本留 1.5 s 停止余量）"
             return
         self.args.duration_ms = min(seconds * 1000, 43000)
+        self.args.ab_split = bool(self.ab_split.get())
+        # One window may serve several runs after MCU resets; each run needs its
+        # own directory because the worker opens the CSV/JSONL with mode "x".
+        self.run_index += 1
+        self.outdir = self.base_outdir if self.run_index == 1             else self.base_outdir / f"run{self.run_index}"
         self.outdir.mkdir(parents=True, exist_ok=True)
         self.stop_event.clear()
         self.samples.clear()
@@ -414,6 +470,13 @@ class Window:
             messagebox.showerror("导出失败", (result.stderr or result.stdout)[-800:])
             return
         messagebox.showinfo("已导出", f"{self.outdir / 'figure'}\nfigure.pdf / .svg / .png")
+
+    def send_assist(self, enabled):
+        if self.worker is not None and self.worker.is_alive():
+            try:
+                self.worker.commands.put_nowait("assiston" if enabled else "assistoff")
+            except queue.Full:
+                pass
 
     def request_stop(self):
         self.stop_event.set()
@@ -556,6 +619,18 @@ class Window:
         if self.samples:
             last = self.samples[-1]
             detail += f"  pz={last['paused']}  allowed={last['allowed']}  remaining={last['remaining_ms']} ms"
+            if last.get("force_triggers"):
+                detail += (f"  力触发={last.get('force_triggers')} 次"
+                           f"  fa={last.get('force_active')}  e_F={last.get('force_error_mN')} mN")
+            if self.force:
+                recent = [r for r in self.force[-20:] if r.get("valid") == "1"]
+                if recent:
+                    values = [float(r["force_N"]) for r in recent]
+                    mean = sum(values) / len(values)
+                    sd = (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5
+                    newest = recent[-1]
+                    detail += '  |  HX711 raw={} F={:+.2f} N sd={:.3f} N age={} ms sat={} n={}'.format(
+                        newest.get('raw'), mean, sd, newest.get('age_ms'), newest.get('sat'), len(recent))
         if self.force:
             detail += f"  力={self.force[-1]['force_N'] or 'na'} N"
         if self.error_text:
@@ -725,15 +800,32 @@ def offline_check(outdir):
           f"pauses={summary['speed_pauses']} stop_confirmed={summary['stop_confirmed']}")
 
 
+def resolve_port(requested):
+    """Keep the requested VCP when present, otherwise find the ST-Link one."""
+    from serial.tools import list_ports
+    ports = list(list_ports.comports())
+    names = [p.device for p in ports]
+    if requested in names:
+        return requested
+    for port in ports:
+        text = f"{port.description} {port.manufacturer or ''}".lower()
+        if "stlink" in text or "st-link" in text or "stmicro" in text:
+            return port.device
+    raise SystemExit(f"找不到 {requested}，也没有 ST-Link 串口；当前端口：{names}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", help="显式 VCP，例如 COM10；不自动扫描")
     parser.add_argument("--output-dir", type=Path, help="记录目录，默认 firmware/build/live-<时间>")
     parser.add_argument("--duration-ms", type=int, default=40000, help="会话观察时长，默认 40000")
     parser.add_argument("--board-bin-sha256", help="板上镜像 BIN 的 SHA256（可选，写入 summary）")
+    parser.add_argument("--ab-split", action="store_true",
+                        help="自动 A/B：开始即关助力，半程再开（同一会话内对照）")
     parser.add_argument("--offline-check", action="store_true", help="内置假串口，不接触硬件")
     parser.add_argument("--replay", type=Path, help="回放已保存的会话目录")
     args = parser.parse_args()
+    args.port = resolve_port(args.port)
 
     if args.replay:
         samples, force = load_replay(args.replay)

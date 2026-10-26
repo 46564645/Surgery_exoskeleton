@@ -1,0 +1,25 @@
+# MuJoCo arm simulation, Python 3.13 (H:\app\python.exe). All pins resolved
+# 2026-10-26; every release was published at least 7 days earlier.
+mujoco==3.16.0
+numpy==2.4.6
+matplotlib==3.10.9
+# mujoco dependencies
+absl-py==2.5.1
+etils==1.14.0
+fsspec==2026.9.0
+glfw==2.11.0
+PyOpenGL==3.1.10
+typing_extensions==4.16.0
+tzdata==2026.5
+websockets==17.2
+zipp==4.1.1
+# matplotlib dependencies
+contourpy==1.4.0
+cycler==0.12.1
+fonttools==4.67.0
+kiwisolver==1.5.1
+packaging==26.3
+pillow==13.0.0
+pyparsing==3.3.3
+python-dateutil==2.9.0.post0
+six==1.17.0

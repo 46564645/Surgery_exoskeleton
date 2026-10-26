@@ -226,9 +226,10 @@ void S3ShoulderService_Poll(uint32_t now_ms)
     if (pending) {
         BoardCanReadTxResult tx = BoardCanTx_ShoulderReadResult();
         if (tx == BOARD_CAN_READ_TX_ALST) {
-            /* NART deliberately remains on for motion frames. A lost read is
-             * known not to have reached the motor, so one same-field retry is
-             * safe while the original reply deadline is still open. */
+            /* Hardware auto-retransmission normally retries lost arbitration;
+             * this path stays defensive. A lost read is known not to have
+             * reached the motor, so one same-field retry is safe while the
+             * original reply deadline is still open. */
             if (read_arbitration_retries != 0U
                 || (uint32_t)(now_ms - read_submitted_ms) >= profile->shoulder_property_reply_ms) {
                 fail(S3_READ_TX); return;

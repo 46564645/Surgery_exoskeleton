@@ -26,7 +26,7 @@ static size_t used;
 static bool saw_cr, invalid_line, long_line;
 static const char help_text[] = "OK commands=ping,status,help,?,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,shoulderreadpos,shoulderreadvel,shoulderreadstatus,encstart,encstop,encfeedback,outputstatus,stopstatus,prepare,arm,cancel,ackfault,shoulderpulse,elbowpulse,s3help\r\n";
 static const char s4_help_text[] = "OK commands=ping,status,canstatus,shoulder,shoulderfeedback,shoulderreadstatus,followobserve,followprepare,followstart,followstop,followstatus,followangle,hx711,hxtare,cancel,help\r\n";
-static const char s5_help_text[] = "OK commands=ping,status,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,followprepare,followstart,followstop,followstatus,followangle,hx711,hxtare,cancel,help\r\n";
+static const char s5_help_text[] = "OK commands=ping,status,canstatus,shoulder,elbow,elbowfeedback,shoulderfeedback,followprepare,followstart,followstop,followstatus,followangle,assiston,assistoff,hx711,hxtare,cancel,help\r\n";
 _Static_assert(sizeof(help_text) <= S1_REPLY_SIZE, "help must fit reserved reply slot");
 _Static_assert(sizeof(s4_help_text) <= S1_REPLY_SIZE, "S4 help must fit reserved reply slot");
 _Static_assert(sizeof(s5_help_text) <= S1_REPLY_SIZE, "S5 help must fit reserved reply slot");
@@ -262,7 +262,7 @@ static void s5_follow_status_reply(void)
         "OK s5=1 axes=%u phase=%u gate=%u reason=%u safety=%u "
         "q_sh_mrad=%s q_el_mrad=%s cmd_sh_mNm=%s cmd_el_mA=%s "
         "seq_sh=%lu seq_el=%lu zero_sh=%u zero_el=%u remaining_ms=%lu "
-        "output_allowed=%u stop=%u stop_failed=%u pz=%u/%u pk=%lu/%lu\r\n",
+        "output_allowed=%u stop=%u stop_failed=%u pz=%u/%u pk=%lu/%lu asst=%u fa=%u fe_mN=%ld fc=%u\r\n",
         (unsigned)s.axes, (unsigned)s.phase, (unsigned)s.output_state,
         (unsigned)s.output_reason, (unsigned)s.safety_reason,
         shoulder_q, elbow_q, shoulder_nm, elbow_a,
@@ -273,7 +273,9 @@ static void s5_follow_status_reply(void)
         (unsigned)s.assist_paused, (unsigned)s.speed_pauses,
         /* Shoulder/elbow peak |joint speed| in deg/s since Start, shown <= 9999. */
         (unsigned long)fminf(s.peak_speed_rad_s[0] * 57.2957795f + 0.5f, 9999.0f),
-        (unsigned long)fminf(s.peak_speed_rad_s[1] * 57.2957795f + 0.5f, 9999.0f));
+        (unsigned long)fminf(s.peak_speed_rad_s[1] * 57.2957795f + 0.5f, 9999.0f),
+        (unsigned)S5Follow_AssistEnabled(), (unsigned)s.force_active,
+        (long)lroundf(s.force_error_n * 1000.0f), (unsigned)s.force_triggers);
     if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
     else { reply("ERR format\r\n"); }
 }
@@ -297,6 +299,12 @@ static void s5_follow_command_reply(const char *command, uint32_t now_ms)
             (unsigned)s.axes, (unsigned long)s.remaining_ms);
         if (n > 0 && (size_t)n < sizeof(out)) { reply(out); }
         else { reply("ERR format\r\n"); }
+        return;
+    }
+    if (strcmp(command, "assiston") == 0 || strcmp(command, "assistoff") == 0) {
+        bool on = strcmp(command, "assiston") == 0;
+        S5Follow_SetAssist(on);
+        reply(on ? "OK assist on\r\n" : "OK assist off\r\n");
         return;
     }
     if (strcmp(command, "followstop") == 0) {
@@ -444,7 +452,9 @@ static void command_reply(const struct clip *self, const struct clip_command *cm
                || strcmp(cmd->name, "followstart") == 0
                || strcmp(cmd->name, "followstop") == 0
                || strcmp(cmd->name, "followstatus") == 0
-               || strcmp(cmd->name, "followangle") == 0) {
+               || strcmp(cmd->name, "followangle") == 0
+               || strcmp(cmd->name, "assiston") == 0
+               || strcmp(cmd->name, "assistoff") == 0) {
         follow_command_reply(cmd->name, ((const CommandContext *)context)->now_ms);
     } else if (strcmp(cmd->name, "outputstatus") == 0) {
         if (S5Follow_IsSelected()) { s5_follow_status_reply(); return; }
@@ -629,6 +639,10 @@ static CLIP_DEF_ROOT_COMMAND(followstatus_cmd, "followstatus", "S4 observation a
 CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(followangle_cmd, "followangle", "S4 cached angle and sample time", command_reply)
 CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(assiston_cmd, "assiston", "S5 bench A/B: re-enable gravity assist", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
+static CLIP_DEF_ROOT_COMMAND(assistoff_cmd, "assistoff", "S5 bench A/B: command zero effort, session keeps running", command_reply)
+CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(s3feedback_cmd, "s3feedback", "S3 cached query or bounded qualification", command_reply)
 CLIP_DEF_ROOT_COMMAND_END()
 static CLIP_DEF_ROOT_COMMAND(s3properties_cmd, "s3properties", "S3 cached query or bounded qualification", command_reply)
@@ -681,6 +695,8 @@ static CLIP_DEF_ROOT(commands, NULL, command_event)
     CLIP_DEF_ADD_ROOT_COMMAND(&followstop_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&followstatus_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&followangle_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&assiston_cmd)
+    CLIP_DEF_ADD_ROOT_COMMAND(&assistoff_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&s3feedback_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&s3properties_cmd)
     CLIP_DEF_ADD_ROOT_COMMAND(&s3reader_cmd)
