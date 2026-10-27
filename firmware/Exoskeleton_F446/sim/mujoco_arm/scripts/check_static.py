@@ -1,21 +1,10 @@
 #!/usr/bin/env python3
-"""M1 static check for the table + exoskeleton + human arm model.
+"""M1b check: MyoArm + Fusion OrthoEase + table, "roughly right" level.
 
-Rebuilds the MJCF from params.json, then checks that the scene is the one the
-parameters describe and that gravity torques match the hand calculation:
-
-  1. structure, masses and strap attachment points,
-  2. gravity torque of each chain alone (straps disabled) against the analytic
-     two-link formula, at several poses,
-  3. the exoskeleton shoulder peak against the firmware 1.64 Nm partial model
-     (s5_site.c), which is the number the controller assumes,
-  4. passive stability with the straps on,
-  5. the two "worn" effects: the straps make the human carry the exoskeleton
-     weight (C1 heavier than C0), and a human torque drags the unpowered
-     exoskeleton along.
-
-Headless only: this machine has no working OpenGL (GPUs report Code 43), so
-there is no viewer and no offscreen render. Numbers stand in for "looks right".
+Acceptance follows the sim AGENTS rule (main goal roughly confirmed, no
+percentage gates): the scene relations are the ones discussed with the user,
+gravity torques have a sensible size, the straps carry the exoskeleton and let
+the elbow bend, and the forearm can touch the table.
 
 Usage (from firmware/Exoskeleton_F446):
     build\\sim-venv\\Scripts\\python.exe sim\\mujoco_arm\\scripts\\check_static.py
@@ -32,12 +21,11 @@ import numpy as np
 
 SIM_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SIM_ROOT / "model"))
-import build_model  # noqa: E402
+import build_model as bm  # noqa: E402
 
-# Firmware reference only: s5_site.c .shoulder_gravity.amplitude_nm. The
-# simulation never uses it as a control value; it is the number to reproduce.
+# Firmware reference only (s5_site.c .shoulder_gravity.amplitude_nm): the
+# number the controller assumes for the exoskeleton self weight.
 FIRMWARE_SHOULDER_PEAK_NM = 1.64
-
 FAILURES: list[str] = []
 
 
@@ -47,264 +35,208 @@ def check(name: str, ok: bool, detail: str = "") -> None:
         FAILURES.append(name)
 
 
-def joint_id(model: mujoco.MjModel, name: str) -> int:
-    jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
-    if jid < 0:
-        raise ValueError(f"joint {name} not found")
-    return jid
-
-
-def dof_adr(model: mujoco.MjModel, name: str) -> int:
-    return int(model.jnt_dofadr[joint_id(model, name)])
-
-
-def qpos_adr(model: mujoco.MjModel, name: str) -> int:
-    return int(model.jnt_qposadr[joint_id(model, name)])
-
-
-def set_pose(model: mujoco.MjModel, data: mujoco.MjData, **angles_rad: float) -> None:
+def pose(model, data, **deg) -> None:
     data.qpos[:] = 0.0
-    for name, value in angles_rad.items():
-        data.qpos[qpos_adr(model, name)] = value
+    data.qvel[:] = 0.0
+    for joint, value in deg.items():
+        data.qpos[bm.joint_qpos(model, joint)] = math.radians(value)
+    mujoco.mj_forward(model, data)
 
 
-def holding_torques(model: mujoco.MjModel, data: mujoco.MjData,
-                    shoulder: str, elbow: str) -> tuple[float, float]:
-    """Gravity holding torque at (shoulder, elbow) with zero velocity."""
+def holding(model, data, joints) -> list[float]:
     data.qvel[:] = 0.0
     data.qacc[:] = 0.0
     mujoco.mj_inverse(model, data)
-    return (float(data.qfrc_inverse[dof_adr(model, shoulder)]),
-            float(data.qfrc_inverse[dof_adr(model, elbow)]))
+    return [float(data.qfrc_inverse[bm.joint_dof(model, j)]) for j in joints]
 
 
-def analytic_chain(segments: list[tuple[float, float, float]],
-                   q1: float, q2: float, gravity: float) -> tuple[float, float]:
-    """Holding torque of a serial chain in the sagittal plane.
-
-    segments: (mass_kg, distance_from_shoulder_m, distance_from_elbow_m).
-    The upper link has distance_from_elbow 0, so (d_s - d_e) is the proximal
-    link length for every segment. q1 is the absolute shoulder angle and q2 the
-    relative elbow angle, both from the hanging pose. Positive torque lifts.
-    """
-    sin1, sin12 = math.sin(q1), math.sin(q1 + q2)
-    shoulder = sum(m * ((d_s - d_e) * sin1 + d_e * sin12)
-                   for m, d_s, d_e in segments)
-    elbow = sum(m * d_e * sin12 for m, d_s, d_e in segments)
-    return gravity * shoulder, gravity * elbow
-
-
-def strap_load(model: mujoco.MjModel, data: mujoco.MjData, eq_index: int) -> float:
-    """Load carried by one band constraint.
-
-    The bands are joint-angle couplings, so this is a torque in Nm, not a
-    force: it is the torque the band passes from the exoskeleton to the arm.
-    """
+def strap_force(model, data, name: str) -> float:
+    """Translational force (N) carried by one weld band."""
+    eq = model.equality(name).id
     rows = [i for i in range(data.nefc)
-            if data.efc_type[i] == mujoco.mjtConstraint.mjCNSTR_EQUALITY
-            and data.efc_id[i] == eq_index]
-    if not rows:
-        return 0.0
-    return float(np.linalg.norm(data.efc_force[rows]))
+            if data.efc_type[i] == mujoco.mjtConstraint.mjCNSTR_EQUALITY and data.efc_id[i] == eq]
+    return float(np.linalg.norm(data.efc_force[rows[:3]])) if rows else 0.0
+
+
+def run_pd(model, data, targets_deg, steps, flags=0, extra_ctrl=None):
+    """Hold the two human joints with a PD; returns the final human torques."""
+    model.opt.disableflags = flags
+    acts = [model.actuator(bm.ACT_HUMAN_SHOULDER).id, model.actuator(bm.ACT_HUMAN_ELBOW).id]
+    joints = (bm.HUMAN_SHOULDER, bm.HUMAN_ELBOW)
+    gains = ((400.0, 25.0), (150.0, 10.0))
+    for _ in range(steps):
+        data.ctrl[:] = 0.0
+        if extra_ctrl:
+            for name, value in extra_ctrl.items():
+                data.ctrl[model.actuator(name).id] = value
+        for act, joint, target, (kp, kd) in zip(acts, joints, targets_deg, gains):
+            err = math.radians(target) - data.qpos[bm.joint_qpos(model, joint)]
+            data.ctrl[act] = kp * err - kd * data.qvel[bm.joint_dof(model, joint)]
+        mujoco.mj_step(model, data)
+    model.opt.disableflags = 0
+    return [float(data.actuator_force[a]) for a in acts]
 
 
 def main() -> int:
-    params = build_model.load_params()
-    d = build_model.derive(params)
-    path = build_model.write_model(d)
-    model = mujoco.MjModel.from_xml_path(str(path))
+    params_bore = bm.load_params()["mount"]["clamp_bore_fusion_xy"]["value"]
+    model, info = bm.build()
     data = mujoco.MjData(model)
+    land = info["human"]
+    print(f"MuJoCo {mujoco.__version__}, model {info['xml']}")
+    print(f"  nq={model.nq} nu={model.nu} neq={model.neq} nbody={model.nbody}")
 
-    hu, hf, hh = d["human_upper"], d["human_fore"], d["human_hand"]
-    eu, ef, em = d["exo_upper"], d["exo_fore"], d["exo_motor"]
-    gravity = d["gravity"]
+    print("\n[1] scene relations")
+    pose(model, data)
+    sh = land["shoulder"]
+    exo_sh = data.xpos[model.body(bm.EXO_UPPER_BODY).id]
+    exo_el = data.xpos[model.body(bm.EXO_FOREARM_BODY).id]
+    axis_gap = math.hypot(exo_sh[1] - sh[1], exo_sh[2] - sh[2])
+    check("exoskeleton shoulder axis passes through the human shoulder centre",
+          axis_gap < 0.005, f"in-plane gap {axis_gap * 1000:.1f} mm, lateral offset "
+          f"{(sh[0] - exo_sh[0]) * 1000:.0f} mm (exoskeleton on the right/-x side)")
+    el = land["elbow"]
+    el_gap = math.hypot(exo_el[1] - el[1], exo_el[2] - el[2])
+    check("exoskeleton elbow axis meets the human elbow (rail extended)", el_gap < 0.005,
+          f"in-plane gap {el_gap * 1000:.1f} mm, upper arm {info['exo_upper_len_after'] * 1000:.1f} mm")
+    check("exoskeleton is lateral to the right arm", exo_sh[0] < sh[0] and exo_el[0] < el[0])
+    d4 = info["seat_top_z"] - info["table_top_z"] + info["pole_length"]
+    print(f"  seat + pole {d4:.3f} m, table top to shoulder axis {sh[2] - info['table_top_z']:.3f} m")
+    hand_ys = [data.xpos[b][1] for b in range(model.nbody)
+               if model.body(b).name.endswith("_r") and data.xpos[b][2] < info["table_top_z"]]
+    if hand_ys:
+        check("hanging arm stays outside the table edge", min(hand_ys) > info["table_edge_y"],
+              f"arm parts below the table top reach y={min(hand_ys):.3f} m, edge y={info['table_edge_y']:.3f} m")
+    else:
+        check("hanging arm stays outside the table edge", True,
+              "the hanging hand is above the table top")
+    pole_xy = np.array(info["pole_xy"])
+    link_xy = np.array([exo_sh[0], exo_sh[1]])
+    check("pole runs parallel behind the hanging links with a gap",
+          np.linalg.norm(pole_xy - link_xy) > 0.05,
+          f"pole to shoulder-axis point {np.linalg.norm(pole_xy - link_xy) * 1000:.0f} mm horizontally")
+    bore_xy = np.array(info["clamp_bore_world"])
+    recorded = np.array([float(v) for v in params_bore])
+    check("pole axis goes through the 01B clamp bore", np.linalg.norm(pole_xy - bore_xy) < 1e-6,
+          f"bore at ({bore_xy[0]:.4f}, {bore_xy[1]:.4f}) m, pole on the same axis")
+    check("pole fits the bore", info["pole_radius"] < info["clamp_bore_radius"],
+          f"pole dia {2 * info['pole_radius'] * 1000:.1f} mm in a "
+          f"{2 * info['clamp_bore_radius'] * 1000:.1f} mm bore")
+    measured = np.array(info["clamp_bore_fusion_xy"])
+    check("bore centre matches params.json (Fusion frame)",
+          np.linalg.norm(measured - recorded) < 0.002,
+          f"measured {np.round(measured, 5)}, recorded {np.round(recorded, 5)}")
+    print(f"  cuff inner surface to bone axis: upper {info['upper_cuff_offset'] * 1000:.1f} mm "
+          f"(section 56), forearm {info['forearm_cuff_offset'] * 1000:.1f} mm (section 37)")
 
-    print(f"MuJoCo {mujoco.__version__}, model {path}")
-    print(f"  nq={model.nq} neq={model.neq} nu={model.nu} nsensor={model.nsensor}")
+    print("\n[2] masses")
+    for name, mass in info["exo_body_mass"].items():
+        print(f"  {name:24s} {mass:.3f} kg")
+    print(f"  human arm {land['upper_mass']:.3f} kg (forearm + hand {land['forearm_mass']:.3f} kg)")
+    check("exoskeleton moving mass is the STL estimate, not the package placeholder",
+          info["exo_body_mass"][bm.EXO_UPPER_BODY] < 1.0 and info["exo_body_mass"][bm.EXO_FOREARM_BODY] < 0.5)
 
-    print("\n[1] scene and strap attachment")
-    mujoco.mj_forward(model, data)
-    table_top = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, "table_top")
-    top_z = float(data.geom_xpos[table_top][2] + model.geom_size[table_top][2])
-    shoulder = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "exo_upper")
-    sx, sy, sz = (float(v) for v in data.body("exo_upper").xpos)
-    print(f"  table top z={top_z:.3f} m, exoskeleton shoulder axis "
-          f"({sx:.3f}, {sy:.3f}, {sz:.3f}) m")
-    elbow_z = float(data.body("human_fore").xpos[2])
-    hand_z = float(data.body("human_hand").xpos[2])
-    print(f"  hanging pose: human elbow z={elbow_z:.3f} m, wrist z={hand_z:.3f} m")
-    check("hanging arm clears the desk front face",
-          sx + hu["radius"] < d["edge_x"],
-          f"upper arm surface at x={sx + hu['radius']:.3f} m, desk edge "
-          f"{d['edge_x']:.3f} m")
-    check("table top at params height", abs(top_z - d["table_height"]) < 1e-6,
-          f"{top_z:.4f} vs {d['table_height']:.4f}")
-    check("shoulder axis height = table + column",
-          abs(sz - (d["table_height"] + d["column_height"])) < 1e-6,
-          f"{sz:.4f} m")
-
-    # Cuffs are compliant welds with an explicit assembly pose, so at q = 0 the
-    # constraint must be satisfied (zero violation) rather than the two marker
-    # sites coinciding: the exoskeleton plane sits outside the arm.
-    equality_rows = [i for i in range(data.nefc)
-                     if data.efc_type[i] == mujoco.mjtConstraint.mjCNSTR_EQUALITY]
-    violation = float(np.max(np.abs(data.efc_pos[equality_rows]))) if equality_rows else 0.0
-    check("cuff constraints start satisfied at q=0", violation < 1e-6,
-          f"max |efc_pos| {violation:.2e} over {len(equality_rows)} rows")
-
-    exo_y = float(data.body("exo_upper").xpos[1])
-    human_y = float(data.body("human_upper").xpos[1])
-    clearance = abs(exo_y - human_y) - (hu["radius"] + eu["radius"])
-    check("exoskeleton plane clears the arm", clearance > 0.0,
-          f"lateral gap {clearance * 1e3:.0f} mm (offset {abs(exo_y - human_y) * 1e3:.0f} mm "
-          f"- radii {1000 * (hu['radius'] + eu['radius']):.0f} mm)")
-
-    exo_mass = sum(float(model.body_mass[mujoco.mj_name2id(
-        model, mujoco.mjtObj.mjOBJ_BODY, n)]) for n in ("exo_upper", "exo_elbow", "exo_fore"))
-    human_mass = sum(float(model.body_mass[mujoco.mj_name2id(
-        model, mujoco.mjtObj.mjOBJ_BODY, n)]) for n in ("human_upper", "human_fore", "human_hand"))
-    check("exoskeleton moving mass", abs(exo_mass - (eu["mass"] + ef["mass"] + em["mass"])) < 1e-6,
-          f"{exo_mass:.3f} kg")
-    check("human arm mass", abs(human_mass - (hu["mass"] + hf["mass"] + hh["mass"])) < 1e-6,
-          f"{human_mass:.3f} kg")
-
-    exo_segments = [
-        (eu["mass"], eu["com"], 0.0),
-        (em["mass"], eu["length"], 0.0),
-        (ef["mass"], eu["length"] + ef["com"], ef["com"]),
-    ]
-    human_segments = [
-        (hu["mass"], hu["com"], 0.0),
-        (hf["mass"], hu["length"] + hf["com"], hf["com"]),
-        (hh["mass"], hu["length"] + hf["length"] + hh["com"], hf["length"] + hh["com"]),
-    ]
-
-    print("\n[2] gravity torque, straps off (each chain on its own)")
-    # Contacts are disabled as well: the pose set sweeps over the desk volume,
-    # and a contact would put its reaction into qfrc_inverse. Pure gravity is
-    # what this section compares against the formula.
-    model.opt.disableflags |= int(mujoco.mjtDisableBit.mjDSBL_EQUALITY)
-    model.opt.disableflags |= int(mujoco.mjtDisableBit.mjDSBL_CONTACT)
-    print("  pose shoulder/elbow deg | exo shoulder, exo elbow | human shoulder, human elbow")
-    worst = 0.0
-    for sh_deg, el_deg in ((0, 0), (30, 0), (60, 0), (90, 0), (0, 90), (60, 90)):
-        q1, q2 = math.radians(sh_deg), math.radians(el_deg)
-        set_pose(model, data, exo_shoulder=q1, exo_elbow=q2,
-                 human_shoulder=q1, human_elbow=q2)
-        exo_sh, exo_el = holding_torques(model, data, "exo_shoulder", "exo_elbow")
-        hum_sh, hum_el = holding_torques(model, data, "human_shoulder", "human_elbow")
-        a_exo_sh, a_exo_el = analytic_chain(exo_segments, q1, q2, gravity)
-        a_hum_sh, a_hum_el = analytic_chain(human_segments, q1, q2, gravity)
-        row_diff = max(abs(exo_sh - a_exo_sh), abs(exo_el - a_exo_el),
-                       abs(hum_sh - a_hum_sh), abs(hum_el - a_hum_el))
-        worst = max(worst, row_diff)
-        print(f"  {sh_deg:3d}/{el_deg:3d}            | "
-              f"{exo_sh:+7.3f} {a_exo_sh:+7.3f} {exo_el:+7.3f} {a_exo_el:+7.3f} | "
-              f"{hum_sh:+7.3f} {a_hum_sh:+7.3f} {hum_el:+7.3f} {a_hum_el:+7.3f}")
-    check("mj_inverse matches the two-link formula", worst < 0.01,
-          f"max deviation {worst:.2e} Nm")
-
-    set_pose(model, data, exo_shoulder=math.pi / 2, exo_elbow=0.0,
-             human_shoulder=0.0, human_elbow=0.0)
-    exo_peak, _ = holding_torques(model, data, "exo_shoulder", "exo_elbow")
-    print(f"\n[3] exoskeleton shoulder peak at horizontal: {exo_peak:.3f} Nm "
-          f"(firmware s5_site.c model {FIRMWARE_SHOULDER_PEAK_NM:.2f} Nm)")
-    check("firmware 1.64 Nm is the exoskeleton self weight only",
-          abs(exo_peak - FIRMWARE_SHOULDER_PEAK_NM) < 0.05,
-          f"deviation {abs(exo_peak - FIRMWARE_SHOULDER_PEAK_NM):.3f} Nm")
-
-    model.opt.disableflags &= ~int(mujoco.mjtDisableBit.mjDSBL_EQUALITY)
-    model.opt.disableflags &= ~int(mujoco.mjtDisableBit.mjDSBL_CONTACT)
+    print("\n[3] gravity torques, straps and contacts off")
+    model.opt.disableflags = int(mujoco.mjtDisableBit.mjDSBL_EQUALITY) | int(mujoco.mjtDisableBit.mjDSBL_CONTACT)
+    print("  shoulder/elbow deg | exo shoulder, exo elbow | human shoulder, human elbow (N*m)")
+    for s_deg, e_deg in ((0, 0), (30, 0), (60, 0), (90, 0), (60, 60), (90, 90)):
+        pose(model, data, **{bm.EXO_SHOULDER: s_deg, bm.EXO_ELBOW: e_deg,
+                             bm.HUMAN_SHOULDER: s_deg, bm.HUMAN_ELBOW: e_deg})
+        es, ee = holding(model, data, (bm.EXO_SHOULDER, bm.EXO_ELBOW))
+        hs, he = holding(model, data, (bm.HUMAN_SHOULDER, bm.HUMAN_ELBOW))
+        print(f"  {s_deg:3d}/{e_deg:3d}             | {es:+7.3f} {ee:+7.3f}        | {hs:+7.3f} {he:+7.3f}")
+    pose(model, data, **{bm.EXO_SHOULDER: 90})
+    peak, _ = holding(model, data, (bm.EXO_SHOULDER, bm.EXO_ELBOW))
+    pose(model, data, **{bm.HUMAN_SHOULDER: 90})
+    human_peak, _ = holding(model, data, (bm.HUMAN_SHOULDER, bm.HUMAN_ELBOW))
+    model.opt.disableflags = 0
+    print(f"  exoskeleton self weight at horizontal {peak:.3f} N*m (firmware model "
+          f"{FIRMWARE_SHOULDER_PEAK_NM:.2f}); human arm at horizontal {human_peak:.3f} N*m")
+    check("exoskeleton self-weight torque has a sensible size", 0.5 < peak < 3.0, f"{peak:.3f} N*m")
+    check("human arm torque has a sensible size", 5.0 < human_peak < 20.0, f"{human_peak:.3f} N*m")
 
     print("\n[4] straps on, passive 2 s from the hanging pose")
     mujoco.mj_resetData(model, data)
     for _ in range(2000):
         mujoco.mj_step(model, data)
-    max_vel = float(np.max(np.abs(data.qvel)))
-    max_angle = float(np.max(np.abs(data.qpos)))
-    check("passive model stays put", max_vel < 0.02 and max_angle < math.radians(2.0),
-          f"max|qvel|={max_vel:.2e} rad/s, max|q|={math.degrees(max_angle):.3f} deg")
+    yaw = math.degrees(data.qpos[bm.joint_qpos(model, bm.EXO_YAW)])
+    check("passive model stays put", float(np.max(np.abs(data.qvel))) < 0.05,
+          f"max|qvel| {np.max(np.abs(data.qvel)):.2e} rad/s, turntable {yaw:+.2f} deg")
 
-    print("\n[5] worn effects at 60 deg shoulder, 0 deg elbow (forward dynamics)")
-    # Inverse dynamics cannot show this: with the pose prescribed on both
-    # chains the straps need no force. The exoskeleton joints are passive, so
-    # its weight only reaches the arm if it is allowed to hang. Both human
-    # joints are held by a stiff PD (the elbow must be held too, otherwise the
-    # forearm just hangs vertically); the steady actuator torque is the effort.
-    hold = (math.radians(60.0), 0.0)
-    human_motors = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
-                    for name in ("human_shoulder_motor", "human_elbow_motor")]
-    human_joints = ("human_shoulder", "human_elbow")
-    gains = ((400.0, 20.0), (100.0, 8.0))
+    print("\n[5] worn and unpowered vs bare arm, PD hold 60 deg shoulder / 0 deg elbow, 6 s")
+    mujoco.mj_resetData(model, data)
+    pose(model, data, **{bm.HUMAN_SHOULDER: 60, bm.EXO_SHOULDER: 60})
+    c1 = run_pd(model, data, (60, 0), 6000)
+    mujoco.mj_resetData(model, data)
+    pose(model, data, **{bm.HUMAN_SHOULDER: 60})
+    c0 = run_pd(model, data, (60, 0), 6000, flags=int(mujoco.mjtDisableBit.mjDSBL_EQUALITY))
+    print(f"  human shoulder {c0[0]:.3f} -> {c1[0]:.3f} N*m (+{c1[0] - c0[0]:.3f}), "
+          f"elbow {c0[1]:.3f} -> {c1[1]:.3f} N*m")
+    check("worn and unpowered is heavier than the bare arm", c1[0] > c0[0] + 0.3,
+          f"extra {c1[0] - c0[0]:.3f} N*m vs exoskeleton {peak * math.sin(math.radians(60)):.3f} N*m")
 
-    def hold_torques(straps: bool) -> tuple[float, float, float]:
-        flags = int(mujoco.mjtDisableBit.mjDSBL_CONTACT)
-        if not straps:
-            flags |= int(mujoco.mjtDisableBit.mjDSBL_EQUALITY)
-        model.opt.disableflags = flags
-        mujoco.mj_resetData(model, data)
-        data.qpos[qpos_adr(model, "human_shoulder")] = hold[0]
-        for _ in range(8000):
-            data.ctrl[:] = 0.0
-            for index, (joint, target, (kp, kd)) in enumerate(
-                    zip(human_joints, hold, gains)):
-                torque = (kp * (target - data.qpos[qpos_adr(model, joint)])
-                          - kd * data.qvel[dof_adr(model, joint)])
-                data.ctrl[human_motors[index]] = max(-40.0, min(40.0, torque))
-            mujoco.mj_step(model, data)
-        shoulder = math.degrees(data.qpos[qpos_adr(model, "human_shoulder")])
-        return (float(data.ctrl[human_motors[0]]),
-                float(data.ctrl[human_motors[1]]), shoulder)
-
-    c1_sh, c1_el, c1_angle = hold_torques(straps=True)
-    c0_sh, c0_el, c0_angle = hold_torques(straps=False)
+    print("\n[6] coupling through the straps, exoskeleton unpowered (contacts off: "
+          "only the bands are tested)")
+    model.opt.disableflags = int(mujoco.mjtDisableBit.mjDSBL_CONTACT)
+    mujoco.mj_resetData(model, data)
+    data.ctrl[:] = 0.0
+    data.ctrl[model.actuator(bm.ACT_HUMAN_SHOULDER).id] = 12.0
+    for _ in range(1000):
+        mujoco.mj_step(model, data)
+    h = math.degrees(data.qpos[bm.joint_qpos(model, bm.HUMAN_SHOULDER)])
+    e = math.degrees(data.qpos[bm.joint_qpos(model, bm.EXO_SHOULDER)])
+    print(f"  12 N*m human shoulder, 1 s: human {h:.1f} deg, exoskeleton {e:.1f} deg, "
+          f"upper strap {strap_force(model, data, bm.STRAP_UPPER):.1f} N")
+    check("exoskeleton follows the arm", h > 15.0 and abs(h - e) < 5.0, f"difference {abs(h - e):.1f} deg")
+    mujoco.mj_resetData(model, data)
+    data.ctrl[:] = 0.0
+    data.ctrl[model.actuator(bm.ACT_HUMAN_ELBOW).id] = 3.0
+    for _ in range(1000):
+        mujoco.mj_step(model, data)
+    h = math.degrees(data.qpos[bm.joint_qpos(model, bm.HUMAN_ELBOW)])
+    e = math.degrees(data.qpos[bm.joint_qpos(model, bm.EXO_ELBOW)])
+    print(f"  3 N*m human elbow, 1 s: human {h:.1f} deg, exoskeleton {e:.1f} deg, "
+          f"forearm strap {strap_force(model, data, bm.STRAP_FOREARM):.1f} N")
+    check("elbow bends freely with the exoskeleton", h > 20.0 and abs(h - e) < 5.0,
+          f"difference {abs(h - e):.1f} deg")
     model.opt.disableflags = 0
-    expected_extra = 1.638 * math.sin(math.radians(c1_angle))
-    print(f"  hold {c0_angle:.2f} deg (bare) / {c1_angle:.2f} deg (worn):")
-    print(f"    shoulder {c0_sh:.3f} -> {c1_sh:.3f} Nm "
-          f"(+{100.0 * (c1_sh / c0_sh - 1.0):.1f}%), "
-          f"elbow {c0_el:.3f} -> {c1_el:.3f} Nm")
-    check("worn and unpowered is heavier than bare arm",
-          c1_sh > c0_sh * 1.05, f"{c1_sh:.3f} > {c0_sh:.3f} Nm")
-    check("worn extra shoulder effort is the exoskeleton weight",
-          abs((c1_sh - c0_sh) - expected_extra) < 0.15,
-          f"extra {c1_sh - c0_sh:.3f} Nm vs exoskeleton {expected_extra:.3f} Nm")
 
-    print("\n[6] coupling: 8 Nm on the human shoulder, exoskeleton unpowered, 1 s")
+    print("\n[7] table collision is live (test only: table moved 15 cm back under the hand "
+          "and 5 cm up)")
+    table_geoms = {model.geom("table_top").id, model.geom("table_pedestal").id}
+    table_body = model.body("table").id
+    saved = model.body_pos[table_body].copy()
+    model.body_pos[table_body] += np.array([0.0, 0.15, 0.05])
     mujoco.mj_resetData(model, data)
-    data.ctrl[:] = 0.0
-    data.ctrl[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR,
-                               "human_shoulder_motor")] = 8.0
-    for _ in range(1000):
+    for _ in range(500):
         mujoco.mj_step(model, data)
-    h_sh = math.degrees(data.qpos[qpos_adr(model, "human_shoulder")])
-    e_sh = math.degrees(data.qpos[qpos_adr(model, "exo_shoulder")])
-    gap = abs(h_sh - e_sh)
-    print(f"  human shoulder {h_sh:.2f} deg, exoskeleton shoulder {e_sh:.2f} deg, "
-          f"band torque {strap_load(model, data, 0):.2f} Nm")
-    check("human arm lifted against gravity", h_sh > 20.0, f"{h_sh:.1f} deg")
-    check("exoskeleton follows the arm through the straps", gap < 2.0,
-          f"difference {gap:.2f} deg")
+    hits = [c for c in data.contact[:data.ncon] if c.geom1 in table_geoms or c.geom2 in table_geoms]
+    model.body_pos[table_body] = saved
+    print(f"  {len(hits)} arm-table contact(s)")
+    check("arm-table contact is generated", len(hits) > 0)
 
-    print("\n[7] coupling: 2 Nm on the human elbow, exoskeleton unpowered, 1 s")
-    mujoco.mj_resetData(model, data)
-    data.ctrl[:] = 0.0
-    data.ctrl[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR,
-                               "human_elbow_motor")] = 2.0
-    for _ in range(1000):
-        mujoco.mj_step(model, data)
-    h_el = math.degrees(data.qpos[qpos_adr(model, "human_elbow")])
-    e_el = math.degrees(data.qpos[qpos_adr(model, "exo_elbow")])
-    print(f"  human elbow {h_el:.2f} deg, exoskeleton elbow {e_el:.2f} deg, "
-          f"band torque {strap_load(model, data, 1):.2f} Nm")
-    check("human elbow bent", h_el > 5.0, f"{h_el:.1f} deg")
-    check("exoskeleton elbow follows", e_el > 5.0, f"{e_el:.1f} deg")
+    print("\n[8] first table contact in a kinematic forward sweep")
+    first_straight = None
+    for elbow_deg in (0, 45, 90):
+        first = None
+        for s_deg in np.arange(0.0, 110.5, 0.5):
+            pose(model, data, **{bm.HUMAN_SHOULDER: float(s_deg), bm.HUMAN_ELBOW: elbow_deg,
+                                 bm.EXO_SHOULDER: float(s_deg), bm.EXO_ELBOW: elbow_deg})
+            if any(c.geom1 in table_geoms or c.geom2 in table_geoms for c in data.contact[:data.ncon]):
+                first = float(s_deg)
+                break
+        print(f"  elbow {elbow_deg:3d} deg: " + (f"arm touches the table at shoulder {first:.1f} deg"
+                                                if first is not None else "no table contact up to 110 deg"))
+        if elbow_deg == 0:
+            first_straight = first
+    check("straight-arm lift is stopped by the table (expected at 0.90 m)",
+          first_straight is not None and first_straight < 20.0,
+          f"stops at {first_straight:.1f} deg" if first_straight is not None else "no contact")
 
     print()
     if FAILURES:
         print(f"FAILED: {len(FAILURES)} check(s): {', '.join(FAILURES)}")
         return 1
-    print("all M1 static checks passed")
+    print("all M1b checks passed")
     return 0
 
 

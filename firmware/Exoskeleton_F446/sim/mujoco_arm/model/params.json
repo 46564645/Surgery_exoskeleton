@@ -1,237 +1,63 @@
 {
   "_readme": [
-    "Physical model parameters for the MuJoCo arm simulation. Single source of truth:",
-    "controller parameters are NOT stored here, they come from App/application/s5_site.c",
-    "and the firmware CMake options through the bridge DLL (M2b).",
-    "status: measured = real measurement, estimated = rough estimate from a document,",
-    "assumed = modelling assumption, derived = computed from other entries in this file.",
-    "Every entry carries source and status; nothing here is validated on hardware."
+    "Physical model parameters for the MuJoCo arm simulation (M1 rework, 2026-10-27).",
+    "Single source of truth for the physical model. Controller parameters are NOT stored here;",
+    "they come from App/application/s5_site.c and the firmware CMake options through the bridge DLL.",
+    "status: measured = real measurement or read from the user's CAD, estimated = rough estimate,",
+    "assumed = modelling assumption, user = user decision. Nothing here is validated on hardware.",
+    "Human = MyoSim 0.2.3 myoarm_r; exoskeleton = user's Fusion export model/orthoease/orthoease.xml (read-only copy)."
   ],
   "meta": {
-    "model_version": "M1 (2026-10-26)",
-    "coordinate_convention": "Sagittal plane x-z. Hanging arm = q 0 rad. Positive joint angle = forward flexion (+x), matching the firmware zero and sign (s5_site.c gravity_zero_rad = 0).",
-    "gravity_m_s2": {
-      "value": 9.81,
-      "status": "assumed",
-      "source": "standard gravity"
-    },
-    "timestep_s": {
-      "value": 0.001,
-      "status": "assumed",
-      "source": "physics step only; controller periods are added in M3"
-    }
-  },
-  "table": {
-    "height_m": {
-      "value": 0.75,
-      "status": "assumed",
-      "source": "D4 user decision 2026-10-26: everyday desk height"
-    },
-    "top_thickness_m": {
-      "value": 0.05,
-      "status": "assumed",
-      "source": "typical desk top"
-    },
-    "top_length_m": {
-      "value": 0.80,
-      "status": "assumed",
-      "source": "typical desk depth, only used to place the collision surface"
-    },
-    "top_width_m": {
-      "value": 0.60,
-      "status": "assumed",
-      "source": "typical desk width"
-    },
-    "edge_x_m": {
-      "value": 0.05,
-      "status": "assumed",
-      "source": "front edge of the table top, measured from the world origin where the arm hangs"
-    },
-    "collision_enabled": {
-      "value": false,
-      "status": "assumed",
-      "source": "M1 keeps the desk as the mount only. With the shoulder 0.30 m above the top and a 0.77 m arm, a straight forward sweep passes through the desk above ~25 deg, so the S5 free-air sweep and a desk in front cannot both exist. Enable for the T5 desk task after the sitting posture is decided."
-    }
-  },
-  "mount": {
-    "column_height_m": {
-      "value": 0.30,
-      "status": "estimated",
-      "source": "D4 user decision 2026-10-26: seat shoulder height minus desk height; also the table-edge-to-shoulder-axis height, so one number keeps both aligned"
-    },
-    "column_radius_m": {
-      "value": 0.02,
-      "status": "assumed",
-      "source": "support post size, not modelled from the drawing"
-    },
-    "shoulder_offset_x_m": {
-      "value": 0.20,
-      "status": "assumed",
-      "source": "horizontal bracket from the post top back to the shoulder axis: the user sits about 0.2 m behind the desk edge, so the hanging upper arm clears the desk front face"
-    }
-  },
-  "exo": {
-    "upper_link_m": {
-      "value": 0.27,
-      "status": "measured",
-      "source": "2026-10-08 user measurement, shoulder axis to elbow axis (L1)"
-    },
-    "upper_mass_kg": {
-      "value": 0.380,
-      "status": "estimated",
-      "source": "3MF volume 2026-10-08 x ABS 1.1 g/cm3, 100% infill; screws/bearings/straps not included"
-    },
-    "upper_com_fraction": {
-      "value": 0.5,
-      "status": "assumed",
-      "source": "uniform link, centre of mass at mid length"
-    },
-    "forearm_link_m": {
-      "value": 0.175,
-      "status": "measured",
-      "source": "2026-10-08 user measurement, elbow axis to the outermost forearm cuff (L2)"
-    },
-    "forearm_mass_kg": {
-      "value": 0.233,
-      "status": "estimated",
-      "source": "3MF volume 2026-10-08 x ABS 1.1 g/cm3, 100% infill"
-    },
-    "forearm_com_fraction": {
-      "value": 0.5,
-      "status": "assumed",
-      "source": "uniform link, centre of mass at mid length"
-    },
-    "elbow_motor_mass_kg": {
-      "value": 0.120,
-      "status": "estimated",
-      "source": "bare M3508 mass, hardware reference 6.2; sits on the elbow axis"
-    },
-    "upper_radius_m": {
-      "value": 0.035,
-      "status": "assumed",
-      "source": "visual only, exoskeleton does not collide in M1"
-    },
-    "forearm_radius_m": {
-      "value": 0.030,
-      "status": "assumed",
-      "source": "visual only"
-    },
-    "lateral_offset_y_m": {
-      "value": 0.10,
-      "status": "assumed",
-      "source": "User SolidWorks view 2026-10-26: the links run along the outside of the arm and the cuffs wrap it, so the exoskeleton plane is offset from the arm axis. Must stay above arm radius + link half width (0.045 + 0.035) to avoid interpenetration; 0.10 m is a placeholder until measured on the bench."
-    }
+    "model_version": "M1b (2026-10-27): MyoArm + Fusion OrthoEase",
+    "coordinate_convention": "MyoArm world frame: z up, the person faces -y, right side = -x. Joint angles: 0 = arm hanging straight, positive = flexion (shoulder forward, elbow bend), matching the firmware zero and sign.",
+    "gravity_m_s2": {"value": 9.81, "status": "assumed", "source": "standard gravity"},
+    "timestep_s": {"value": 0.001, "status": "assumed", "source": "physics step; controller periods come from the bridge"}
   },
   "human": {
-    "body_mass_kg": {
-      "value": 70.0,
-      "status": "assumed",
-      "source": "default until the user provides height and mass"
-    },
-    "height_m": {
-      "value": 1.75,
-      "status": "assumed",
-      "source": "default until the user provides height and mass"
-    },
-    "upper_arm": {
-      "length_fraction_of_height": {
-        "value": 0.186,
-        "status": "estimated",
-        "source": "Winter, Biomechanics and Motor Control of Human Movement, Table 4.1 / Drillis-Contini segment length ratios"
-      },
-      "mass_fraction_of_body": {
-        "value": 0.028,
-        "status": "estimated",
-        "source": "Winter Table 4.1 (Dempster)"
-      },
-      "com_fraction_from_proximal": {
-        "value": 0.436,
-        "status": "estimated",
-        "source": "Winter Table 4.1 (Dempster)"
-      },
-      "radius_m": {
-        "value": 0.045,
-        "status": "assumed",
-        "source": "collision radius for the table contact, visual only otherwise"
-      }
-    },
-    "forearm": {
-      "length_fraction_of_height": {
-        "value": 0.146,
-        "status": "estimated",
-        "source": "Winter Table 4.1 / Drillis-Contini segment length ratios"
-      },
-      "mass_fraction_of_body": {
-        "value": 0.016,
-        "status": "estimated",
-        "source": "Winter Table 4.1 (Dempster)"
-      },
-      "com_fraction_from_proximal": {
-        "value": 0.430,
-        "status": "estimated",
-        "source": "Winter Table 4.1 (Dempster)"
-      },
-      "radius_m": {
-        "value": 0.035,
-        "status": "assumed",
-        "source": "collision radius for the table contact"
-      }
-    },
-    "hand": {
-      "length_fraction_of_height": {
-        "value": 0.108,
-        "status": "estimated",
-        "source": "Winter Table 4.1 / Drillis-Contini segment length ratios"
-      },
-      "mass_fraction_of_body": {
-        "value": 0.006,
-        "status": "estimated",
-        "source": "Winter Table 4.1 (Dempster)"
-      },
-      "com_fraction_from_proximal": {
-        "value": 0.506,
-        "status": "estimated",
-        "source": "Winter Table 4.1 (Dempster)"
-      },
-      "radius_m": {
-        "value": 0.020,
-        "status": "assumed",
-        "source": "collision radius for the table contact"
-      }
-    }
+    "myo_sim_model": {"value": "myoarm_r", "status": "user", "source": "user 2026-10-26: use the MuJoCo/MyoSuite human model (MyoSim 0.2.3, Apache-2.0)"},
+    "shoulder_plane_rad": {"value": 1.5707963, "status": "assumed", "source": "MoBL elv_angle 90 deg = elevation in the flexion (sagittal) plane; baked into the body orientation"},
+    "lock_shoulder_girdle": {"value": true, "status": "assumed", "source": "MyoArm couples clavicle/scapula to shoulder_elv, moving the shoulder centre ~3.8 cm over 0-90 deg; locked so the exoskeleton shoulder axis stays coaxial (first version)"},
+    "remove_muscles": {"value": true, "status": "user", "source": "user 2026-10-26: first version without muscles; human effort = joint torque"},
+    "upper_arm_radius_m": {"value": 0.056, "status": "measured", "source": "inner arc of cuff 03C in model/orthoease/docs/cuff_sections.png (chord ~66 mm, sagitta ~10.8 mm); distance from arm centre to the cuff inner surface"},
+    "forearm_radius_m": {"value": 0.037, "status": "measured", "source": "inner arc of cuff 08A in cuff_sections.png (chord ~53 mm, sagitta ~11 mm)"},
+    "shoulder_torque_limit_nm": {"value": 80.0, "status": "assumed", "source": "actuator range for the human joint torque, only bounds the PD controller"},
+    "elbow_torque_limit_nm": {"value": 40.0, "status": "assumed", "source": "same as above"}
+  },
+  "exo": {
+    "package_xml": {"value": "model/orthoease/orthoease.xml", "status": "user", "source": "user Fusion export 2026-10-27 (copied read-only, F0)"},
+    "abs_density_kg_m3": {"value": 1100.0, "status": "estimated", "source": "UltiMaker ABS TDS v5, 1.1 g/cm3; print list asks for 100% infill (Q4 user decision: STL volume x ABS)"},
+    "shoulder_motor_mass_kg": {"value": 0.388, "status": "estimated", "source": "GIM6010-8 388 g, hardware reference 5.2; sits on the passive turntable, not on the shoulder link"},
+    "elbow_motor_mass_kg": {"value": 0.120, "status": "estimated", "source": "bare M3508 120 g, hardware reference 6.2; whole motor lumped on the upper-arm link at the housing mesh"},
+    "match_human_upper_arm": {"value": true, "status": "user", "source": "Q1 user 2026-10-27: lengthen along the 04 adjustment rail so the exoskeleton elbow axis meets the MyoArm elbow (0.257 -> ~0.29 m); real rail travel not verified"},
+    "shoulder_damping_nms_rad": {"value": 0.02, "status": "assumed", "source": "package value 2 N*m*s/rad is a placeholder that would drag the arm; GIM6010-8 back-drive friction unknown, calibrate in M5"},
+    "elbow_damping_nms_rad": {"value": 0.02, "status": "assumed", "source": "package placeholder 1.5 replaced; unknown, calibrate in M5"},
+    "joint_armature_kgm2": {"value": 0.0, "status": "assumed", "source": "reflected rotor inertia unknown"},
+    "yaw_damping_nms_rad": {"value": 0.1, "status": "assumed", "source": "Q2 user 2026-10-27: passive turntable J01 stays free with a small damping"},
+    "shoulder_range_deg": {"value": [-20.0, 110.0], "status": "estimated", "source": "upper 110 = power-off free range measured 2026-10-16 (package uses 0-110); lower -20 = firmware s5_site.c soft edge, the 0 mark is not a mechanical stop"},
+    "elbow_range_deg": {"value": [-30.0, 110.0], "status": "estimated", "source": "upper 110 measured free range; lower -30 = firmware lower edge (hanging forearm reached -8.9 deg on the bench)"},
+    "motor_torque_limit_nm": {"value": 50.0, "status": "assumed", "source": "simulation actuator range only; the firmware caps (205 mNm rotor x 8, 20 A x 0.02) are applied by the bridge"}
+  },
+  "table": {
+    "height_m": {"value": 0.90, "status": "user", "source": "user 2026-10-27 (second decision): back to the 0.90 m operating-table height and keep the stand pole; a straight-arm forward swing then meets the table edge at about 6.5 deg, which the lift sequence shows"},
+    "top_thickness_m": {"value": 0.05, "status": "assumed", "source": "typical table top"},
+    "width_x_m": {"value": 1.00, "status": "assumed", "source": "left-right size"},
+    "depth_y_m": {"value": 0.60, "status": "assumed", "source": "front-back size, extends forward (-y) from the near edge"},
+    "center_x_m": {"value": -0.10, "status": "assumed", "source": "table centred slightly right of the body so the stand block sits on it"},
+    "edge_clearance_m": {"value": 0.03, "status": "assumed", "source": "gap between the hanging arm surface and the table near edge"},
+    "collision_enabled": {"value": true, "status": "user", "source": "user 2026-10-27: keep the collision and accept that a straight-arm lift meets the table (no more layout tuning for it). Set false only for a deliberate free-space task, e.g. reproducing the S5 straight sweep"}
+  },
+  "mount": {
+    "block_height_m": {"value": 0.05, "status": "assumed", "source": "fixed seat on the table edge (user sketch 2026-10-26)"},
+    "block_width_m": {"value": 0.06, "status": "assumed", "source": "fixed seat width"},
+    "block_inset_m": {"value": 0.08, "status": "assumed", "source": "length of the seat resting on the table behind the near edge"},
+    "block_tail_m": {"value": 0.03, "status": "assumed", "source": "seat length beyond the pole"},
+    "pole_diameter_m": {"value": 0.014, "status": "user", "source": "user 2026-10-27: the stand tube is 14 mm and fits the 01B clamp bore"},
+    "clamp_bore_fusion_xy": {"value": [0.10784, 0.01981], "status": "measured", "source": "01b_stand_clamp.stl cross-section: round enclosed hole (circularity 1.01, radius 7.5 mm = dia 15.0 mm) at the same centre in all 12 z slices; `build_model.clamp_bore()` recomputes it and `check_static.py` compares. The pole axis goes through it"},
+    "note": "The pole runs vertically through the 01B clamp bore of the Fusion model down to the seat; its length is derived (table top + seat to the clamp), so the seat + pole height equals the table-to-shoulder-axis height (D4)."
   },
   "straps": {
-    "model_note": "Each cuff is a soft ball joint (equality connect) at the centre of the band. The human-side attachment point is placed in the band plane (y = lateral offset), so the two points coincide at q = 0 and the constraint starts without a pull. A ball joint is deliberate: a rigid weld cannot work because the exoskeleton elbow axis sits 5.5 cm above the human elbow, which locks elbow bending.",
-    "upper_arm": {
-      "distance_from_shoulder_m": {
-        "value": 0.15,
-        "status": "assumed",
-        "source": "band around the middle of the upper arm"
-      }
-    },
-    "forearm": {
-      "human_distance_from_elbow_m": {
-        "value": 0.10,
-        "status": "assumed",
-        "source": "band on the proximal half of the human forearm"
-      },
-      "exo_distance_from_elbow_m": {
-        "value": 0.1555,
-        "status": "derived",
-        "source": "human 0.3255 + 0.10 - exo upper link 0.27; keeps the exoskeleton marker level with the human one at q = 0"
-      }
-    },
-    "band": {
-      "solref_timeconst_s": {
-        "value": 0.02,
-        "status": "assumed",
-        "source": "soft band; lower = stiffer, 0.02 s is roughly a stiff velcro band"
-      },
-      "solref_dampratio": {
-        "value": 1.0,
-        "status": "assumed",
-        "source": "critically damped constraint; the stiffness is a placeholder, so the interaction-force level must be scanned in M5 before quoting any force"
-      }
-    }
+    "solref_timeconst_s": {"value": 0.02, "status": "assumed", "source": "Fusion package README suggestion; soft velcro band, scan in M5 before quoting forces"},
+    "solref_dampratio": {"value": 1.0, "status": "assumed", "source": "Fusion package README suggestion"},
+    "torquescale": {"value": 0.03, "status": "assumed", "source": "Fusion package README suggestion: the band mostly transmits force, little torque"}
   }
 }

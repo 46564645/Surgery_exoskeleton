@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="orthoease_upper_limb_exoskeleton">
+  <compiler angle="degree" meshdir="." autolimits="true" />
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast" />
+  <size memory="64M" />
+  <visual>
+    <global azimuth="135" elevation="-15" />
+    <headlight ambient="0.35 0.35 0.35" diffuse="0.7 0.7 0.7" />
+  </visual>
+  <default>
+    <joint damping="1.5" armature="0.01" limited="true" />
+    <geom friction="0.8 0.1 0.01" />
+  </default>
+  <asset>
+    <texture name="sky" type="skybox" builtin="gradient" rgb1="0.95 0.97 1" rgb2="0.55 0.62 0.70" width="512" height="3072" />
+    <material name="floor_mat" rgba="0.72 0.74 0.76 1" reflectance="0.15" />
+    <mesh name="01b_stand_clamp" file="assets/01b_stand_clamp.stl" inertia="convex" />
+    <mesh name="01a_passive_rotary_base" file="assets/01a_passive_rotary_base.stl" inertia="convex" />
+    <mesh name="04_upper_arm_adjustment_rail" file="assets/04_upper_arm_adjustment_rail.stl" inertia="convex" />
+    <mesh name="02b_upper_arm_beam" file="assets/02b_upper_arm_beam.stl" inertia="convex" />
+    <mesh name="02e_shoulder_motor_mount" file="assets/02e_shoulder_motor_mount.stl" inertia="convex" />
+    <mesh name="02d_shoulder_output_link" file="assets/02d_shoulder_output_link.stl" inertia="convex" />
+    <mesh name="02c_shoulder_driven_rotor" file="assets/02c_shoulder_driven_rotor.stl" inertia="convex" />
+    <mesh name="03_upper_arm_magnetic_interface" file="assets/03_upper_arm_magnetic_interface.stl" inertia="convex" />
+    <mesh name="03c_upper_arm_cuff" file="assets/03c_upper_arm_cuff.stl" inertia="convex" />
+    <mesh name="05d_elbow_motor_mount" file="assets/05d_elbow_motor_mount.stl" inertia="convex" />
+    <mesh name="05c_elbow_fixed_output_disc" file="assets/05c_elbow_fixed_output_disc.stl" inertia="convex" />
+    <mesh name="05a_elbow_driven_fork" file="assets/05a_elbow_driven_fork.stl" inertia="convex" />
+    <mesh name="06_triple_head_link" file="assets/06_triple_head_link.stl" inertia="convex" />
+    <mesh name="08b_forearm_magnetic_interface" file="assets/08b_forearm_magnetic_interface.stl" inertia="convex" />
+    <mesh name="08a_forearm_cuff" file="assets/08a_forearm_cuff.stl" inertia="convex" />
+    <mesh name="shoulder_motor_gim6010" file="assets/shoulder_motor_gim6010.stl" inertia="convex" />
+    <mesh name="shoulder_motor_gim6010_2" file="assets/shoulder_motor_gim6010_2.stl" inertia="convex" />
+    <mesh name="elbow_motor_housing" file="assets/elbow_motor_housing.stl" inertia="convex" />
+  </asset>
+  <worldbody>
+    <light name="key" pos="0 -1 1.2" dir="0 1 -1" directional="true" />
+    <geom name="floor" type="plane" pos="0 0 -0.35" size="1 1 0.02" material="floor_mat" />
+    <camera name="overview" pos="0.75 -0.85 0.55" xyaxes="0.75 0.66 0 -0.25 0.29 0.92" />
+    <body name="stand_base">
+      <geom name="vis_01b_stand_clamp" type="mesh" mesh="01b_stand_clamp" rgba="0.48 0.78 0.86 1" group="2" contype="0" conaffinity="0" mass="0" />
+      <body name="stand_rotary" pos="0.07658662 0.02668663 0.281">
+        <joint name="stand_passive_yaw" type="hinge" axis="0 0 -1" range="-90 90" damping="3" />
+        <inertial pos="0 0 0" mass="2.0" diaginertia="0.01 0.01 0.01" />
+        <geom name="vis_01a_passive_rotary_base" type="mesh" mesh="01a_passive_rotary_base" rgba="0.44 0.58 0.84 1" group="2" contype="0" conaffinity="0" mass="0" />
+        <geom name="vis_02e_shoulder_motor_mount" type="mesh" mesh="02e_shoulder_motor_mount" rgba="0.48 0.62 0.34 1" group="2" contype="0" conaffinity="0" mass="0" />
+        <geom name="vis_shoulder_motor_gim6010" type="mesh" mesh="shoulder_motor_gim6010" rgba="0.72 0.72 0.68 1" group="2" contype="0" conaffinity="0" mass="0" />
+        <geom name="vis_shoulder_motor_gim6010_2" type="mesh" mesh="shoulder_motor_gim6010_2" rgba="0.72 0.72 0.68 1" group="2" contype="0" conaffinity="0" mass="0" />
+        <body name="upper_arm_drive" pos="-0.07628675 -0.01145893 0.00272052">
+          <joint name="shoulder_motor" type="hinge" axis="0 1 0" range="0 110" damping="2" armature="0.02" />
+          <inertial pos="0.001183776 -0.006144288 -0.123226589" mass="2.5" diaginertia="0.035 0.006 0.035" />
+          <geom name="vis_04_upper_arm_adjustment_rail" type="mesh" mesh="04_upper_arm_adjustment_rail" rgba="0.92 0.92 0.92 1" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_02b_upper_arm_beam" type="mesh" mesh="02b_upper_arm_beam" rgba="0.85 0.85 0.85 1" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_02d_shoulder_output_link" type="mesh" mesh="02d_shoulder_output_link" rgba="0.78 0.63 0.38 1" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_02c_shoulder_driven_rotor" type="mesh" mesh="02c_shoulder_driven_rotor" rgba="0.72 0.55 0.30 1" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_03_upper_arm_magnetic_interface" type="mesh" mesh="03_upper_arm_magnetic_interface" rgba="0.70 0.58 0.82 0.92" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_03c_upper_arm_cuff" type="mesh" mesh="03c_upper_arm_cuff" rgba="0.61 0.43 0.74 0.78" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_05d_elbow_motor_mount" type="mesh" mesh="05d_elbow_motor_mount" rgba="0.82 0.30 0.26 1" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_05c_elbow_fixed_output_disc" type="mesh" mesh="05c_elbow_fixed_output_disc" rgba="0.78 0.20 0.18 1" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="vis_elbow_motor_housing" type="mesh" mesh="elbow_motor_housing" rgba="0.91 0.72 0.30 1" group="2" contype="0" conaffinity="0" mass="0" />
+          <geom name="col_upper_arm" type="capsule" fromto="0 0 0 0.0024662 -0.0128006 -0.25672206" size="0.025" rgba="0.3 0.5 0.8 0" group="3" />
+          <site name="upper_arm_human_bind" type="sphere" pos="0.00270013 -0.0567277 -0.13238052" size="0.008" rgba="0.1 1 0.2 0.9" group="3" />
+          <body name="forearm_drive" pos="0.0024662 -0.0128006 -0.25672206">
+            <joint name="elbow_motor" type="hinge" axis="0 1 0" range="0 110" damping="1.5" armature="0.015" />
+            <inertial pos="0.0001286615 -0.024159905 -0.067099153" mass="1.2" diaginertia="0.012 0.002 0.012" />
+            <geom name="vis_05a_elbow_driven_fork" type="mesh" mesh="05a_elbow_driven_fork" rgba="0.48 0.05 0.16 1" group="2" contype="0" conaffinity="0" mass="0" />
+            <geom name="vis_06_triple_head_link" type="mesh" mesh="06_triple_head_link" rgba="0.46 0.66 0.90 1" group="2" contype="0" conaffinity="0" mass="0" />
+            <geom name="vis_08b_forearm_magnetic_interface" type="mesh" mesh="08b_forearm_magnetic_interface" rgba="0.86 0.80 0.35 1" group="2" contype="0" conaffinity="0" mass="0" />
+            <geom name="vis_08a_forearm_cuff" type="mesh" mesh="08a_forearm_cuff" rgba="0.82 0.35 0.08 0.88" group="2" contype="0" conaffinity="0" mass="0" />
+            <geom name="col_forearm" type="capsule" fromto="0 0 0 0.00023393 -0.0439271 -0.12199846" size="0.022" rgba="0.8 0.5 0.2 0" group="3" />
+            <site name="forearm_human_bind" type="sphere" pos="0.00023393 -0.0439271 -0.12199846" size="0.008" rgba="1 0.45 0.05 0.9" group="3" />
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="stand_rotary" body2="upper_arm_drive" />
+    <exclude body1="upper_arm_drive" body2="forearm_drive" />
+  </contact>
+  <actuator>
+    <position name="shoulder_position" joint="shoulder_motor" kp="120" kv="12" ctrlrange="0 1.91986218" forcelimited="true" forcerange="-30 30" />
+    <position name="elbow_position" joint="elbow_motor" kp="80" kv="8" ctrlrange="0 1.91986218" forcelimited="true" forcerange="-20 20" />
+  </actuator>
+  <sensor>
+    <jointpos name="stand_passive_yaw_position" joint="stand_passive_yaw" />
+    <jointvel name="stand_passive_yaw_velocity" joint="stand_passive_yaw" />
+    <jointpos name="shoulder_motor_position" joint="shoulder_motor" />
+    <jointvel name="shoulder_motor_velocity" joint="shoulder_motor" />
+    <jointpos name="elbow_motor_position" joint="elbow_motor" />
+    <jointvel name="elbow_motor_velocity" joint="elbow_motor" />
+    <framepos name="upper_bind_world_position" objtype="site" objname="upper_arm_human_bind" />
+    <framepos name="forearm_bind_world_position" objtype="site" objname="forearm_human_bind" />
+  </sensor>
+  <keyframe>
+    <key name="home" qpos="0 0 0" ctrl="0 0" />
+    <key name="mid_flexion" qpos="0 0.959931089 0.959931089" ctrl="0.959931089 0.959931089" />
+    <key name="max_flexion" qpos="0 1.91986218 1.91986218" ctrl="1.91986218 1.91986218" />
+  </keyframe>
+</mujoco>

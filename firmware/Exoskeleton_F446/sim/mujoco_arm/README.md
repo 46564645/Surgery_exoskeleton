@@ -5,7 +5,7 @@
 ## 环境（M0，2026-10-26 建立）
 
 - Python 3.13.9（`H:\app\python.exe`），虚拟环境 `firmware/Exoskeleton_F446/build/sim-venv/`（已忽略，不提交）。
-- 依赖全部固定在 [requirements.txt](requirements.txt)，主要为 `mujoco==3.16.0`、`numpy==2.4.6`、`matplotlib==3.10.9`。
+- 依赖全部固定在 [requirements.txt](requirements.txt)，主要为 `mujoco==3.16.0`、`myo_sim==0.2.3`（人体模型，2026-10-27 加入）、`numpy==2.4.6`、`matplotlib==3.10.9`。
 
 在 `firmware/Exoskeleton_F446` 目录的 PowerShell 中执行（临时目录与 pip 缓存放 H 盘）：
 
@@ -27,37 +27,45 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\smoke_env.py --viewer 5
 
 **查看器状态（2026-10-26）**：当天早些时候 Intel Iris Xe 与 RTX 3060 都处于设备管理器 Code 43，桌面由 ToDesk 虚拟显示输出、没有 OpenGL，查看器与离屏渲染都失败。同日晚显卡恢复（两块均正常，Iris Xe 驱动 2560×1600），实测 `--viewer` 能开窗、`mujoco.Renderer` 能离屏出图，两条路径都可用。此前"Windows 版只支持 WGL"的结论不变，只是现在 WGL 有可用的驱动。
 
-## 场景可视化（2026-10-26 补）
+## M1b 模型：MyoArm + Fusion OrthoEase + 桌子（2026-10-27 返工）
 
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,30
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,30 --hide human
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --viewer 10
-```
+旧 M1（自绘胶囊人体、外骨骼在手臂内侧、关节角耦合绑带）已按用户指出的实物关系废弃，改为：
 
-默认输出三个视角的 PNG 到 `build/sim/scene/`，并打印关键body位置。**外骨骼与人臂同轴且更细，正常视角下人臂会完全挡住外骨骼**，看外骨骼用 `--hide human`（仅渲染时把人臂设为透明，不改模型）。`--viewer` 打开真正的交互窗口。
-
-## M1 模型（2026-10-26 建立）
-
-| 文件 | 作用 |
+| 来源 | 内容 |
 |---|---|
-| [model/params.json](model/params.json) | 唯一物理参数源，每项带 `status`（measured/estimated/assumed/derived）与 `source` |
-| [model/build_model.py](model/build_model.py) | 由参数生成 MJCF，输出 `build/sim/arm_exo_table.xml`；检查绑带两点在 q=0 重合 |
-| [scripts/check_static.py](scripts/check_static.py) | 无界面静态检查：场景尺寸、质量、`mj_inverse` 与二连杆公式、固件 1.64 N·m 对照、被动稳定性、穿戴后更累、绑带随动 |
+| [model/orthoease/](model/orthoease/) | 用户 Fusion 导出包（只读副本：入口 `orthoease.xml`、18 个 STL、`metadata/`）。外骨骼外形、运动链和两个绑定点以它为准 |
+| MyoSim 0.2.3 `myoarm_r` | 站立人体（固定躯干 + 右臂骨骼）；去掉肌肉，锁住肩带和远端关节，只留 `shoulder_elv_r`（前屈）与 `elbow_flexion_r`（屈肘），抬臂平面 90° 直接写进刚体姿态 |
+| [model/params.json](model/params.json) | 唯一物理参数源（每项带 status/source）：桌高、支架、密度、阻尼、绑带软度等 |
+| [model/build_model.py](model/build_model.py) | 用 MjSpec 组装并写出 `build/sim/arm_exo_table.xml`；对 Fusion 模型的修改全部在这里完成 |
+| [scripts/check_static.py](scripts/check_static.py) | 场景关系、质量、重力矩、穿戴不通电更累、绑带随动、桌面接触 |
+| [scripts/plot_scene.py](scripts/plot_scene.py) | front/right/back/top/oblique 五个视角 PNG 到 `build/sim/scene/`，可 `--hide human/exo`、`--viewer` |
+
+组装规则：
+- 外骨骼绕 z 转 +90° 后平移：肩轴穿过 MyoArm 肩关节中心；侧向位置使上臂绑带内侧离肱骨轴 56 mm（截面图内弧半径）。
+- 沿 04 调节轨把肘部以下加长 34.8 mm，使外骨骼肘轴对准人肘（0.257→0.2905 m，调节轨实际行程未核实）。
+- 质量按 STL 体积×ABS 1.1 g/cm³，M3508 0.120 kg，GIM6010-8 0.388 kg；关节阻尼改为 0.02 N·m·s/rad（假设）；杆顶转台 J01 被动可转，阻尼 0.1（假设）。
+- 两条绑带为 site-to-site 软 `weld`（solref 0.02、torquescale 0.03，取自 Fusion 包 README）。
+- 人站立；桌高 0.90 m（用户 2026-10-27 最终决定）；竖杆直径 14 mm，**轴线穿过 01B 夹持座的孔**（`build_model.clamp_bore()`从 STL 截面算出孔径中心，Fusion 坐标 (0.10784, 0.01981) m、孔约 15.0 mm），从方块向上接到夹持座，方块伸出桌沿；手臂下垂时在桌沿外侧。人体只与桌面碰撞。
 
 ```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\model\build_model.py      # 只生成模型
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\check_static.py   # 生成 + 全部检查
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\model\build_model.py       # 生成模型并打印几何
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\check_static.py    # 全部检查
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,60
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,60 --hide human
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --viewer 10
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\lift_contact.py      # 抬臂到碰桌，出拼图
 ```
 
-场景：地面、0.75 m 桌面（含立柱与水平支架）、外骨骼两连杆（肩轴在桌面上方 0.30 m）、人体固定躯干 + 上臂/前臂/手、两条绑带。**外骨骼整体侧移 0.10 m 贴着手臂外侧**（用户 2026-10-26 SolidWorks 视图：连杆在臂外侧、绑带环箍住手臂），关节轴仍沿 y，矢状面力学不变。绑带用**关节角 1:1 耦合**（`equality joint`），不是两点重合：外骨骼肘轴比人体肘轴高 5.5 cm，弯肘时两个绑点在几何上无法同时重合（90° 时差约 4 cm），点约束或刚性焊都会产生虚假的巨大阻力（实测肘力矩饱和 40 N·m 只弯到 42°）。控制参数不在模型里：肩 1.64 N·m、肘 mA×kT、限幅与周期都留在固件，M2b 通过 DLL 读同一份。
+`plot_scene.py`除五个视角外还有`pole`视角：近距离看竖杆穿过 01B 夹持座孔。`lift_contact.py`用人肩 PD 抬起手臂，打印首次接触的时间/角度/接触部件，并输出整景+手部特写两行拼图。
+
+**当前数值（2026-10-27，模型假设下）**：外骨骼上臂组 0.656 kg、前臂组 0.177 kg、转台 0.499 kg；外骨骼水平自重力矩 1.728 N·m（固件模型 1.64）；人臂水平 10.5 N·m；穿戴不通电 60° 保持时人肩力矩 9.37→10.65 N·m；前臂绑带内侧离尺骨轴 41.5 mm（截面 37 mm）。
 
 **已知边界**
 
-- 桌面碰撞默认关闭（`table.collision_enabled=false`）：肩轴只在桌面上方 0.30 m，而整臂 0.77 m，直臂前屈超过约 25° 就会穿过桌面。S5 那种自由空间扫动与"桌子在正前方"不能同时成立，T5 桌面动作需要先定坐姿再打开。
-- 绑带是角度耦合，**不直接给出绑带力**；`check_static.py` 打印的是约束传递的力矩（N·m）。HX711 力触发要用到真实绑带力时，需要更细的绑带模型（或从台架标定反推），这属于 M5 的范畴。
-- 侧向偏置 0.10 m 是占位假设（大于臂半径 0.045 + 连杆半径 0.035，保证不穿模），实物值待量。
-- 人体尺寸/质量、桌子几何、外骨骼质心均为估计或假设，见 `params.json` 的 `status`。
+- 桌高 0.90 m 时，直臂前屈约 **6.6°** 拇指尖就碰到桌面靠人一侧的前下棱（接触点 z=0.85 m、y=−0.068 m）；肘 45° 时下垂姿态即接触，肘 90° 时前屈到 110° 都不碰。用`lift_contact.py`可复现并出图。**用户 2026-10-27 决定不再为这个干涉调整布局**：保留碰撞、接受直臂会碰桌；M4 动作按能做的范围设计，若确实需要自由空间扫动，把`params.json`的`table.collision_enabled`临时设为 false。
+- 绑带 solref/torquescale、关节阻尼、调节轨行程、侧向距离都是假设；绑带力只看量级，M5 之前不当作真实力。
+- 外骨骼两根轴是"方正"的（沿 x），人体解剖轴与之差 3–4°，由软绑带吸收。
+- 控制参数不在模型里：肩 1.64 N·m、肘 mA×kT、限幅与周期都留在固件，M2b 通过 DLL 读同一份。
 
 ## M2 接入固件控制代码（2026-10-26）
 

@@ -2,6 +2,8 @@
 # 2026-10-26; every release was published at least 7 days earlier.
 mujoco==3.16.0
 numpy==2.4.6
+# MyoSim human models (MyoArm, legacy myoelbow exo), Apache-2.0, 2026-09-16
+myo_sim==0.2.3
 matplotlib==3.10.9
 # mujoco dependencies
 absl-py==2.5.1

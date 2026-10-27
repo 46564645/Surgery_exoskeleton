@@ -1,0 +1,215 @@
+{
+  "source_document": "final model",
+  "coordinate_mapping": "MuJoCo XYZ [m] = (Fusion X, Fusion Z, -Fusion Y) [cm] * 0.01",
+  "joint_origins_world_m": {
+    "stand_passive_yaw": [
+      0.07658662,
+      0.026686629999999996,
+      0.281
+    ],
+    "shoulder_motor": [
+      0.00029986999999998226,
+      0.015227699999999995,
+      0.2837205199999999
+    ],
+    "elbow_motor": [
+      0.002766070000000136,
+      0.0024271000000000067,
+      0.02699845999999999
+    ]
+  },
+  "human_binding_sites_world_home_m": {
+    "upper_arm_human_bind": [
+      0.003,
+      -0.0415,
+      0.15134
+    ],
+    "forearm_human_bind": [
+      0.003,
+      -0.0415,
+      -0.095
+    ]
+  },
+  "parts": [
+    {
+      "asset": "01b_stand_clamp",
+      "file": "assets/01b_stand_clamp.stl",
+      "fusion_path": "01B_台架杆夹持座_固定到台架杆:1",
+      "fusion_body": "01_B",
+      "rigid_body": "base",
+      "vertices": 10445,
+      "triangles": 20898,
+      "visual_only": true
+    },
+    {
+      "asset": "01a_passive_rotary_base",
+      "file": "assets/01a_passive_rotary_base.stl",
+      "fusion_path": "01A_台架杆上端转盘_固定和01b在连接处有180自由度:1",
+      "fusion_body": "01_A",
+      "rigid_body": "stand",
+      "vertices": 16159,
+      "triangles": 32374,
+      "visual_only": true
+    },
+    {
+      "asset": "04_upper_arm_adjustment_rail",
+      "file": "assets/04_upper_arm_adjustment_rail.stl",
+      "fusion_path": "02B_肩侧上臂杆受到02c驱动 和02c在圆孔连接 固定连接:1+04_上臂调节轨:1",
+      "fusion_body": "04_A",
+      "rigid_body": "upper",
+      "vertices": 950,
+      "triangles": 1932,
+      "visual_only": true
+    },
+    {
+      "asset": "02b_upper_arm_beam",
+      "file": "assets/02b_upper_arm_beam.stl",
+      "fusion_path": "02B_肩侧上臂杆受到02c驱动 和02c在圆孔连接 固定连接:1",
+      "fusion_body": "02_B",
+      "rigid_body": "upper",
+      "vertices": 15252,
+      "triangles": 30532,
+      "visual_only": true
+    },
+    {
+      "asset": "02e_shoulder_motor_mount",
+      "file": "assets/02e_shoulder_motor_mount.stl",
+      "fusion_path": "02E_肩电机固定座和01a:1",
+      "fusion_body": "02_E",
+      "rigid_body": "stand",
+      "vertices": 2269,
+      "triangles": 4558,
+      "visual_only": true
+    },
+    {
+      "asset": "02d_shoulder_output_link",
+      "file": "assets/02d_shoulder_output_link.stl",
+      "fusion_path": "02C_肩关节圆柱件 由肩部电机直接驱动 动:1+02D_肩输出连杆:1",
+      "fusion_body": "02_D",
+      "rigid_body": "upper",
+      "vertices": 2928,
+      "triangles": 5908,
+      "visual_only": true
+    },
+    {
+      "asset": "02c_shoulder_driven_rotor",
+      "file": "assets/02c_shoulder_driven_rotor.stl",
+      "fusion_path": "02C_肩关节圆柱件 由肩部电机直接驱动 动:1",
+      "fusion_body": "02_C",
+      "rigid_body": "upper",
+      "vertices": 5176,
+      "triangles": 10348,
+      "visual_only": true
+    },
+    {
+      "asset": "03_upper_arm_magnetic_interface",
+      "file": "assets/03_upper_arm_magnetic_interface.stl",
+      "fusion_path": "03_上臂磁吸接口 固定连接和04 受02c驱动:1",
+      "fusion_body": "03_LINK_A",
+      "rigid_body": "upper",
+      "vertices": 33677,
+      "triangles": 67482,
+      "visual_only": true
+    },
+    {
+      "asset": "03c_upper_arm_cuff",
+      "file": "assets/03c_upper_arm_cuff.stl",
+      "fusion_path": "03C_上臂磁吸绑带_可拆 和03属性一样受驱动 连接手臂:1",
+      "fusion_body": "03_CUFF_A",
+      "rigid_body": "upper",
+      "vertices": 9834,
+      "triangles": 19680,
+      "visual_only": true
+    },
+    {
+      "asset": "05d_elbow_motor_mount",
+      "file": "assets/05d_elbow_motor_mount.stl",
+      "fusion_path": "05D_肘电机固定盘 固定相对于肘部驱动固定 但受到肩部传动驱动02b（连接02b）:1",
+      "fusion_body": "05_D",
+      "rigid_body": "upper",
+      "vertices": 2292,
+      "triangles": 4604,
+      "visual_only": true
+    },
+    {
+      "asset": "05c_elbow_fixed_output_disc",
+      "file": "assets/05c_elbow_fixed_output_disc.stl",
+      "fusion_path": "05C_肘输出转盘 固定相对于肘部驱动 与05d:1",
+      "fusion_body": "05_C",
+      "rigid_body": "upper",
+      "vertices": 5499,
+      "triangles": 11030,
+      "visual_only": true
+    },
+    {
+      "asset": "05a_elbow_driven_fork",
+      "file": "assets/05a_elbow_driven_fork.stl",
+      "fusion_path": "05B_肘输出转子盘 由肘部电机直接驱动:1+05A_肘关节叉形座_固定于上臂:1",
+      "fusion_body": "05_A",
+      "rigid_body": "forearm",
+      "vertices": 18012,
+      "triangles": 36028,
+      "visual_only": true
+    },
+    {
+      "asset": "06_triple_head_link",
+      "file": "assets/06_triple_head_link.stl",
+      "fusion_path": "06_三头公公链节_单节 和05b连接通过圆孔:1",
+      "fusion_body": "06_A",
+      "rigid_body": "forearm",
+      "vertices": 1420,
+      "triangles": 2860,
+      "visual_only": true
+    },
+    {
+      "asset": "08b_forearm_magnetic_interface",
+      "file": "assets/08b_forearm_magnetic_interface.stl",
+      "fusion_path": "08B_前臂磁吸接口 受05b:1",
+      "fusion_body": "08_B",
+      "rigid_body": "forearm",
+      "vertices": 14925,
+      "triangles": 29886,
+      "visual_only": true
+    },
+    {
+      "asset": "08a_forearm_cuff",
+      "file": "assets/08a_forearm_cuff.stl",
+      "fusion_path": "08A_前臂末端臂箍 和08b:1",
+      "fusion_body": "08_A",
+      "rigid_body": "forearm",
+      "vertices": 56323,
+      "triangles": 112734,
+      "visual_only": true
+    },
+    {
+      "asset": "shoulder_motor_gim6010",
+      "file": "assets/shoulder_motor_gim6010.stl",
+      "fusion_path": "GIM6010-8_厂家参考电机_肩侧:1+6010-8安装尺寸图-驱动盖可拆:1+6010-8_简化_1:1",
+      "fusion_body": "实体1",
+      "rigid_body": "stand",
+      "vertices": 20981,
+      "triangles": 19236,
+      "visual_only": true
+    },
+    {
+      "asset": "shoulder_motor_gim6010_2",
+      "file": "assets/shoulder_motor_gim6010_2.stl",
+      "fusion_path": "GIM6010-8_厂家参考电机_肩侧:1+6010-8安装尺寸图-驱动盖可拆:1+V15驱动盖:1",
+      "fusion_body": "实体1",
+      "rigid_body": "stand",
+      "vertices": 1478,
+      "triangles": 1378,
+      "visual_only": true
+    },
+    {
+      "asset": "elbow_motor_housing",
+      "file": "assets/elbow_motor_housing.stl",
+      "fusion_path": "肘部电机_机壳固定到05D_随肩部运动:1",
+      "fusion_body": "肘部电机_几何检测",
+      "rigid_body": "upper",
+      "vertices": 4910,
+      "triangles": 9816,
+      "visual_only": true
+    }
+  ]
+}

@@ -12,7 +12,7 @@
 
 写任何仿真代码前，按以下顺序找可以照搬的东西，前一级能用就不往下找：
 
-1. **本项目现有实现**：固件 `App/control/*.c`、`App/application/s5_site.c` 与 CMake 选项、`tests/run_host_tests.py` 的 MSVC 编译方式、`tests/host` 的桩、`tests/live_monitor` 的出图与 CSV 格式。仿真必须调用这些原代码，不在 Python 里重写一份控制算法。
+1. **本项目现有实现**：用户 Fusion 外骨骼包 `model/orthoease/`（外形、运动链、绑定点）；固件 `App/control/*.c`、`App/application/s5_site.c` 与 CMake 选项、`tests/run_host_tests.py` 的 MSVC 编译方式、`tests/host` 的桩、`tests/live_monitor` 的出图与 CSV 格式。仿真必须调用这些原代码，不在 Python 里重写一份控制算法。
 2. **ExoKit**（`Open-source projects/ExoKit-main`）：关节/手臂/动作/条件/反应的划分、Amplify 等动作逻辑。
 3. **参考项目**：[开源借鉴索引](<../../../../Open-source projects/开源项目借鉴索引表.md>)第 33 行（MuJoCo、myo_sim 肘外骨骼模型、MyoSuite `myoarm_relocate.xml` 桌子场景、MyoAssist/assist_sim、rehyb_mujoco）及其他对应行。
 4. **网上开源项目与经验帖**：GitHub/Gitee 等仓库、MuJoCo 官方文档与论坛、技术博客。
@@ -68,7 +68,8 @@
 | `README.md` | 环境搭建与运行命令 |
 | `requirements.txt` | 固定版本的 Python 依赖（新依赖选发布满 7 天的版本） |
 | `scripts/` | 冒烟、检查、构建桥接等小脚本 |
-| `model/` | `params.json` 与模型生成脚本（M1） |
+| `model/` | `params.json` 与模型生成脚本`build_model.py`（M1b） |
+| `model/orthoease/` | 用户 Fusion 导出的外骨骼包（2026-10-27），**只读副本**；改动一律写在`build_model.py`里，Fusion 重新导出时整体替换此目录 |
 | `bridge/` | 调用固件控制代码的 C 桥接（M2b） |
 | `sim/` | Python 仿真模块（M3–M4） |
 | `../../build/sim-venv/` | 虚拟环境（已被固件 `.gitignore` 忽略） |

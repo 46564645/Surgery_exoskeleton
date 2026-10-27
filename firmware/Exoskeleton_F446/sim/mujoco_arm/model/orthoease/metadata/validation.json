@@ -1,0 +1,153 @@
+{
+  "mujoco": "3.17.0",
+  "counts": {
+    "nq": 3,
+    "nu": 2,
+    "nmesh": 18,
+    "ngeom": 21
+  },
+  "joint_ranges_deg": [
+    [
+      -90.0,
+      90.0
+    ],
+    [
+      0.0,
+      110.0
+    ],
+    [
+      0.0,
+      110.0
+    ]
+  ],
+  "ctrl_ranges_deg": [
+    [
+      0.0,
+      110.0
+    ],
+    [
+      0.0,
+      110.0
+    ]
+  ],
+  "keyframes": {
+    "home": {
+      "qpos_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "upper_bind_m": [
+        0.003,
+        -0.0415,
+        0.15134
+      ],
+      "forearm_bind_m": [
+        0.003,
+        -0.0415,
+        -0.095
+      ]
+    },
+    "mid_flexion": {
+      "qpos_deg": [
+        0.0,
+        55.0,
+        55.0
+      ],
+      "upper_bind_m": [
+        -0.106591,
+        -0.0415,
+        0.205578
+      ],
+      "forearm_bind_m": [
+        -0.323301,
+        -0.0415,
+        0.175957
+      ]
+    },
+    "max_flexion": {
+      "qpos_deg": [
+        0.0,
+        110.0,
+        110.0
+      ],
+      "upper_bind_m": [
+        -0.125021,
+        -0.0415,
+        0.32646
+      ],
+      "forearm_bind_m": [
+        -0.163544,
+        -0.0415,
+        0.462814
+      ]
+    }
+  },
+  "tests": [
+    {
+      "target_deg": [
+        0,
+        0
+      ],
+      "qpos_deg": [
+        0.0,
+        0.027,
+        0.001
+      ],
+      "stable": true,
+      "within_limits": true
+    },
+    {
+      "target_deg": [
+        55,
+        55
+      ],
+      "qpos_deg": [
+        0.019,
+        52.37,
+        54.458
+      ],
+      "stable": true,
+      "within_limits": true
+    },
+    {
+      "target_deg": [
+        110,
+        0
+      ],
+      "qpos_deg": [
+        0.042,
+        106.869,
+        -0.047
+      ],
+      "stable": true,
+      "within_limits": false
+    },
+    {
+      "target_deg": [
+        0,
+        110
+      ],
+      "qpos_deg": [
+        0.008,
+        -0.011,
+        109.466
+      ],
+      "stable": true,
+      "within_limits": false
+    },
+    {
+      "target_deg": [
+        110,
+        110
+      ],
+      "qpos_deg": [
+        0.048,
+        107.468,
+        110.036
+      ],
+      "stable": true,
+      "within_limits": false
+    }
+  ]
+}
