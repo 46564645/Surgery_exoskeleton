@@ -67,6 +67,40 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\lift_contact.py      # 
 - 外骨骼两根轴是"方正"的（沿 x），人体解剖轴与之差 3–4°，由软绑带吸收。
 - 控制参数不在模型里：肩 1.64 N·m、肘 mA×kT、限幅与周期都留在固件，M2b 通过 DLL 读同一份。
 
+## M4 实验运行器（2026-10-27）
+
+一条命令跑同一动作的三种条件，输出人的用力对照：
+
+| 条件 | 含义 |
+|---|---|
+| C0 | 裸臂：不绑外骨骼（约束关掉），人只承担自己的手臂 |
+| C1 | 穿戴但外骨骼不通电：人还要承担外骨骼重量 |
+| C2 | 穿戴且由固件控制库驱动（每 50 ms 调用一次，参数取自`s5_site.c`） |
+
+```powershell
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task T2slow
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task T1,T2slow,T2fast,T3 --duration 20
+```
+
+| 文件 | 作用 |
+|---|---|
+| [sim/tasks.py](sim/tasks.py) | 参考动作：T1 静态保持、T2slow/T2fast 抬放、T3 自由变姿态；段间用最小加加速度曲线。默认肘 90°（直臂会碰桌） |
+| [sim/runner.py](sim/runner.py) | 仿真循环：人体 PD 跟踪参考（力矩即“人的用力”），C2 时按固件周期调用 DLL |
+| [sim/metrics.py](sim/metrics.py) | 分肩/肘的 RMS、峰值、绝对值积分、跟踪误差、绑带力、桌面接触步数；抬/放分段；相对 C1 的省力率 |
+| [sim/plots.py](sim/plots.py) | 四联图：肩力矩、肘力矩、绑带力、各条件 RMS 柱状图 |
+| [run_experiment.py](run_experiment.py) | 命令行入口，写`build/sim-runs/<时间>/`的`samples_*.csv`、`summary_*.json`、`figure_*.png` |
+
+**首次结果（2026-10-27，模型假设下，T1 与 T2slow 一致）**：
+
+| 对比 | 肩 RMS | 肘 RMS | 总用力 |
+|---|---|---|---|
+| C1 相对 C0 | +13% | +8% | +11%（穿戴不通电更累） |
+| C2 相对 C1 | −10% | −1.5% | −7%（固件助力收回的部分） |
+
+结论：现有固件参数大约抵消了外骨骼**肩侧**的自重，但**前臂连杆**（0.177 kg）仍压在人臂上——固件肘通道的幅值是`S5_R5_ELBOW_SUPPORT_MA×0.02 N·m/A`（2 A 时仅 0.04 N·m），远小于前臂连杆自重矩（约 0.15–0.2 N·m）。要把省力率提上去，需要改肘通道幅值或让肩模型包含前臂连杆，这属于控制设计变更，待决定。
+
+绑带软度按 0.05 s 时间常数（Fusion 包建议的 0.02 s 会让绑带与 3–4° 轴倾角对抗，90° 屈肘时产生 164/70 N；0.05 s 下为 25/11 N）。
+
 ## M2 接入固件控制代码（2026-10-26）
 
 固件侧先做了一步纯搬移（M2a）：`s5_follow.c` 中 `compute_target()` 的合成部分移到 [App/control/s5_assist_compose.c](../../App/control/s5_assist_compose.c)，顺序与数值不变；`s5_follow.c` 只负责取站点数值和力样本。主机用例 124 个全过，`WindowsDebug` 与 R5 双轴配置都能编译（未刷写）。

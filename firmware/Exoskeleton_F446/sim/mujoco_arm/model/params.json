@@ -56,7 +56,7 @@
     "note": "The pole runs vertically through the 01B clamp bore of the Fusion model down to the seat; its length is derived (table top + seat to the clamp), so the seat + pole height equals the table-to-shoulder-axis height (D4)."
   },
   "straps": {
-    "solref_timeconst_s": {"value": 0.02, "status": "assumed", "source": "Fusion package README suggestion; soft velcro band, scan in M5 before quoting forces"},
+    "solref_timeconst_s": {"value": 0.05, "status": "assumed", "source": "the Fusion README's 0.02 s makes the band fight the 3-4 deg axis tilt between the planar exoskeleton and the anatomical arm: 164/70 N at 90 deg elbow for a ~1 cm mismatch. 0.05 s gives 25/11 N, the order of a padded cuff strap. Scan in M5 before quoting forces"},
     "solref_dampratio": {"value": 1.0, "status": "assumed", "source": "Fusion package README suggestion"},
     "torquescale": {"value": 0.03, "status": "assumed", "source": "Fusion package README suggestion: the band mostly transmits force, little torque"}
   }

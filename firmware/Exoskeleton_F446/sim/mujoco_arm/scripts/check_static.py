@@ -128,6 +128,16 @@ def main() -> int:
     print(f"  cuff inner surface to bone axis: upper {info['upper_cuff_offset'] * 1000:.1f} mm "
           f"(section 56), forearm {info['forearm_cuff_offset'] * 1000:.1f} mm (section 37)")
 
+    print("\n[1b] band force at a prescribed elbow bend (the bands must not fight the arm)")
+    for deg in (30, 60, 90):
+        pose(model, data, **{bm.HUMAN_ELBOW: deg, bm.EXO_ELBOW: deg})
+        upper = strap_force(model, data, bm.STRAP_UPPER)
+        forearm = strap_force(model, data, bm.STRAP_FOREARM)
+        print(f"  elbow {deg:2d} deg: upper band {upper:5.1f} N, forearm band {forearm:5.1f} N")
+        if deg == 90:
+            check("band force at 90 deg elbow stays in the tens of newtons",
+                  upper < 60.0 and forearm < 60.0, f"{upper:.0f}/{forearm:.0f} N")
+
     print("\n[2] masses")
     for name, mass in info["exo_body_mass"].items():
         print(f"  {name:24s} {mass:.3f} kg")
