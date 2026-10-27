@@ -101,6 +101,24 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task T1,T2s
 
 绑带软度按 0.05 s 时间常数（Fusion 包建议的 0.02 s 会让绑带与 3–4° 轴倾角对抗，90° 屈肘时产生 164/70 N；0.05 s 下为 25/11 N）。
 
+### 肘通道幅值扫描（2026-10-27）
+
+固件肘通道 = `MA × 0.02 N·m × max(0, sin(q_sh+q_el))`，`MA` 是编译选项`S5_R5_ELBOW_SUPPORT_MA`。用 T1 动作、只重建控制库（不改源码、不刷写）：
+
+```powershell
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\sweep_elbow_ma.py
+```
+
+| MA | 肘幅值 | 总省力（相对 C1） | 肩 | 肘 | 电流含义 |
+|---:|---:|---:|---:|---:|---|
+| 2000（当前） | 0.04 N·m | +6.9% | +10.0% | +1.5% | 2 A |
+| 6000 | 0.12 N·m | +7.9% | +10.0% | +4.3% | 6 A |
+| 10000 | 0.20 N·m | +8.8% | +10.1% | +7.1% | 10 A（M3508 额定） |
+| 14000 | 0.28 N·m | +9.7% | +10.1% | +9.8% | 14 A |
+| 20000 | 0.40 N·m | +11.1% | +10.1% | +14.0% | 20 A（C620 命令上限） |
+
+MA=20000 时穿戴加助力的总用力 7.07 N·m，与裸臂 7.09 N·m 基本相同，即外骨骼自重被完全抵消；但 20 A 是命令上限，连续运行会过热。MA=10000（额定 10 A）能拿到约 2/3 的收益。
+
 ## M2 接入固件控制代码（2026-10-26）
 
 固件侧先做了一步纯搬移（M2a）：`s5_follow.c` 中 `compute_target()` 的合成部分移到 [App/control/s5_assist_compose.c](../../App/control/s5_assist_compose.c)，顺序与数值不变；`s5_follow.c` 只负责取站点数值和力样本。主机用例 124 个全过，`WindowsDebug` 与 R5 双轴配置都能编译（未刷写）。
