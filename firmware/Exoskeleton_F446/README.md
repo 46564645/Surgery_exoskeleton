@@ -1,5 +1,22 @@
 # Exoskeleton_F446 固件入口
 
+## 保守助力设置：肘 10 A、肩 gain 1.5、肩上限 300 mNm（2026-10-27，已编译未刷写）
+
+用户按仿真扫描结果选择"保守"一档：
+
+| 选项 | 原值 | 现值 | 含义 |
+|---|---|---|---|
+| `S5_R5_ELBOW_SUPPORT_MA` | 2000 | **10000** | 肘通道 10 A（M3508 额定） |
+| `S5_R5_SHOULDER_GAIN` | 1.0 | **1.5** | 肩通道连人臂的一部分也补 |
+| `S5_R5_SHOULDER_CAP_MNM` | 205 | **300** | 肩转子上限 300 mNm = 2.4 N·m 关节侧，约额定一半 |
+| `send_interval_ms` | 50 | **10** | 输出 100 Hz |
+
+- 构建：`cmake --preset WindowsDebug -B build/r5-conservative -DS5_R5_DUAL_FOLLOW=ON -DS5_R5_ELBOW_SUPPORT_SIGN=1 -DS5_R5_ELBOW_SUPPORT_MA=10000 -DS5_R5_SHOULDER_AMPLIFY_MNM=0 -DS5_R5_SHOULDER_GAIN=1.5 -DS5_R5_SHOULDER_CAP_MNM=300`
+- 产物：`build/r5-conservative/Exoskeleton_F446.elf` / `.bin`，FLASH 141896 B、RAM 12928 B、0 警告；BIN SHA256 `ED91221D95D7D4898FA2FFE57528CABBD0A2CDD9FAAB8D6603010690F462743C`。
+- 验证：主机测试 124 项通过；**未刷写、未上板**。
+- 仿真预期（模型假设下）：三个手术姿势省力 P1 11.3%、P4 15.1%、P5 17.6%（原 8.2/10.6/12.2%）；爆发动作仍只有 0.6–3.1%，因为爆发峰值力矩以惯性为主。
+- 台架注意：2.4 N·m 约为 GDS68 旧 24 V 额定的一半，热裕量比满额大；小角度（肩 10–20°）时留意手臂是否被顶起。
+
 ## 肘通道幅值 2000 → 10000（2026-10-27，已编译未刷写）
 
 用户按仿真扫描结果决定把 R5 肘通道幅值由 2 A 提到 **10 A**（M3508 额定电流）。仿真（T1 动作，模型假设下）显示总省力由 6.9% 升到 8.8%、肘部由 1.5% 升到 7.1%；肩侧在所有幅值下都稳定在 10%，说明剩余缺口只在肘侧。

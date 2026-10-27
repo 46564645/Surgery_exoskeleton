@@ -8,13 +8,13 @@
 #if defined(S5_R5_DUAL_FOLLOW)
 #define S5_ELBOW_MOTOR_KT_NM_PER_A 0.020f
 #if !defined(S5_R5_SHOULDER_GAIN)
-#define S5_R5_SHOULDER_GAIN 1.0f
+#define S5_R5_SHOULDER_GAIN 1.5f
 #endif
 /* Rotor-torque cap for the shoulder channel. 205 mNm (2026-10-16) covers the
  * exoskeleton's own weight; larger values ask the GDS68 to carry part of the
  * human arm too (575 mNm = 4.6 N*m joint-side, the old-24V rating / 8). */
 #if !defined(S5_R5_SHOULDER_CAP_MNM)
-#define S5_R5_SHOULDER_CAP_MNM 205
+#define S5_R5_SHOULDER_CAP_MNM 300
 #endif
 #if S5_R5_SHOULDER_CAP_MNM < 1 || S5_R5_SHOULDER_CAP_MNM > 575
 #error "R5 shoulder rotor cap must be 1..575 mNm"

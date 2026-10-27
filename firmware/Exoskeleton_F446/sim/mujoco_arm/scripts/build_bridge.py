@@ -105,9 +105,12 @@ def build_macos(defines: list[str], out: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gain", default="1.0", help="S5_R5_SHOULDER_GAIN (0.001..3.0)")
-    parser.add_argument("--cap-mnm", default="205",
-                        help="S5_R5_SHOULDER_CAP_MNM (1..575); 575 = GDS68 rating / 8")
+    parser.add_argument("--gain", default="1.5",
+                        help="S5_R5_SHOULDER_GAIN (0.001..3.0); 1.5 = the 2026-10-27 "
+                             "production choice")
+    parser.add_argument("--cap-mnm", default="300",
+                        help="S5_R5_SHOULDER_CAP_MNM (1..575); 575 = GDS68 rating / 8, "
+                             "300 = 2.4 N*m joint (production choice)")
     parser.add_argument("--ma", default="10000",
                         help="S5_R5_ELBOW_SUPPORT_MA (1..20000); 10000 = the 2026-10-27 "
                              "production choice (10 A, M3508 rated)")
