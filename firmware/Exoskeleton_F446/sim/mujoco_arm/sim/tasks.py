@@ -87,6 +87,14 @@ TASKS = {
     "T3": Task("T3", _holds(((10.0, 70.0), (30.0, 80.0), (50.0, 60.0),
                              (25.0, 100.0), (45.0, 70.0)), 3.0, 2.5),
                "free repositioning through five flexed poses"),
+    # Stage B: the three surgical postures, 60 s static hold each (the hold
+    # doubles as the fatigue proxy: drift and error growth are measured in it).
+    "B_P1": Task("B_P1", _holds(((20.0, 100.0),), 60.0, 0.0),
+                 "surgical P1: instrument parallel to the table, shoulder 20 / elbow 100 deg, 60 s"),
+    "B_P4": Task("B_P4", _holds(((30.0, 110.0),), 60.0, 0.0),
+                 "surgical P4: close to the body, shoulder 30 / elbow 110 deg, 60 s"),
+    "B_P5": Task("B_P5", _holds(((60.0, 70.0),), 60.0, 0.0),
+                 "surgical P5: far reach, shoulder 60 / elbow 70 deg, 60 s"),
 }
 
 
