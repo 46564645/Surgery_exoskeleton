@@ -137,6 +137,32 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\sweep_elbow_ma.py
 
 MA=20000 时穿戴加助力的总用力 7.07 N·m，与裸臂 7.09 N·m 基本相同，即外骨骼自重被完全抵消；但 20 A 是命令上限，连续运行会过热。MA=10000（额定 10 A）能拿到约 2/3 的收益。
 
+## M6 肌肉激活量（第二个省力指标，2026-10-27）
+
+动态仿真仍用肩、肘两个理想力矩驱动；M6 把 MyoArm 的 63 块肌肉**接回来只做后处理**：对每个记录样本，用静态优化（min Σa²，约束 R·(F_active·a) = τ − R·F_passive，0≤a≤1）求出"要产生当时那个人体力矩，肌肉需要多大激活"。
+
+| 文件 | 作用 |
+|---|---|
+| [sim/muscles.py](sim/muscles.py) | `MuscleEffort`：读肌肉长度/张力、数值差分求力臂、活动集法解静态优化 |
+| [scripts/activation_report.py](scripts/activation_report.py) | 从`run_experiment.py`的输出算激活量，写`activation.json`与`report_activation.png` |
+
+```powershell
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\activation_report.py --run build\sim-runs\final2-20261027
+```
+
+结果（所有肌肉激活量之和，越低越省力；括号内为相对裸臂）：
+
+| 动作 | C0 裸臂 | C1 穿戴不通电 | C2 穿戴+助力 |
+|---|---:|---:|---:|
+| T1 | 0.500 | 0.523（+4.7%） | 0.501（+0.3%） |
+| T2slow | 0.454 | 0.477（+5.1%） | 0.455（+0.2%） |
+| T2fast | 0.421 | 0.448（+6.6%） | 0.424（+0.9%） |
+| T3 | 0.509 | 0.540（+6.0%） | 0.511（+0.4%） |
+
+与力矩指标一致：穿上不通电更费肌肉（+5–7%），10 A 助力后肌肉激活基本回到裸臂水平（+0.2–0.9%）。力矩指标显示还剩约 3% 的差距，激活指标显示几乎为零——因为剩余负载集中在肘部，那里的力臂较有利。
+
+实现要点：MuJoCo 报的肌肉执行器力是"沿肌肉长度方向的负值"，取绝对值才是张力；第一版没取绝对值，导致优化把伸肌当成屈肌用（`LAT2` 被选来产生屈曲力矩），已修正。力臂用肌肉长度对关节角的中心差分（±1e-4 rad）。
+
 ## M2 接入固件控制代码（2026-10-26）
 
 固件侧先做了一步纯搬移（M2a）：`s5_follow.c` 中 `compute_target()` 的合成部分移到 [App/control/s5_assist_compose.c](../../App/control/s5_assist_compose.c)，顺序与数值不变；`s5_follow.c` 只负责取站点数值和力样本。主机用例 124 个全过，`WindowsDebug` 与 R5 双轴配置都能编译（未刷写）。

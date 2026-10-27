@@ -190,13 +190,21 @@ def stl_volume_centroid(path: Path) -> tuple[float, np.ndarray, np.ndarray, np.n
 # Human: MyoArm without muscles, two degrees of freedom.
 # --------------------------------------------------------------------------
 
-def build_human_spec(params: dict) -> mujoco.MjSpec:
+def build_human_spec(params: dict, keep_muscles: bool = False) -> mujoco.MjSpec:
+    """MyoArm with only the two flexion joints; muscles optional.
+
+    ``keep_muscles=True`` is for the M6 activation metric only: the same
+    kinematics and scene, but the 63 muscle actuators stay so their moment
+    arms and forces can be read. The dynamic runs use keep_muscles=False.
+    """
     human = params["human"]
-    if not _v(human["lock_shoulder_girdle"]) or not _v(human["remove_muscles"]):
-        raise NotImplementedError("M1b only supports a locked girdle without muscles")
+    if not _v(human["lock_shoulder_girdle"]):
+        raise NotImplementedError("M1b only supports a locked shoulder girdle")
     spec = myo_sim.load_spec(_v(human["myo_sim_model"]))
-    for group in (spec.actuators, spec.tendons, spec.equalities, spec.pairs,
-                  spec.excludes, spec.sensors, spec.keys):
+    drop = [spec.equalities, spec.pairs, spec.excludes, spec.sensors, spec.keys]
+    if not keep_muscles:
+        drop += [spec.actuators, spec.tendons]
+    for group in drop:
         for element in list(group):
             spec.delete(element)
 
@@ -220,12 +228,15 @@ def build_human_spec(params: dict) -> mujoco.MjSpec:
         if geom.contype or geom.conaffinity:
             geom.contype, geom.conaffinity = 2, 0
 
-    for name, joint, limit in ((ACT_HUMAN_SHOULDER, HUMAN_SHOULDER, human["shoulder_torque_limit_nm"]),
-                               (ACT_HUMAN_ELBOW, HUMAN_ELBOW, human["elbow_torque_limit_nm"])):
-        act = spec.add_actuator(name=name, target=joint, trntype=mujoco.mjtTrn.mjTRN_JOINT)
-        act.set_to_motor()
-        act.ctrllimited = mujoco.mjtLimited.mjLIMITED_TRUE
-        act.ctrlrange = [-float(_v(limit)), float(_v(limit))]
+    if not keep_muscles:
+        for name, joint, limit in ((ACT_HUMAN_SHOULDER, HUMAN_SHOULDER,
+                                    human["shoulder_torque_limit_nm"]),
+                                   (ACT_HUMAN_ELBOW, HUMAN_ELBOW,
+                                    human["elbow_torque_limit_nm"])):
+            act = spec.add_actuator(name=name, target=joint, trntype=mujoco.mjtTrn.mjTRN_JOINT)
+            act.set_to_motor()
+            act.ctrllimited = mujoco.mjtLimited.mjLIMITED_TRUE
+            act.ctrlrange = [-float(_v(limit)), float(_v(limit))]
     return spec
 
 
@@ -468,9 +479,10 @@ def _add_scene(spec: mujoco.MjSpec, params: dict, land: dict, info: dict) -> Non
                  "seat_overhang": y1 - edge_y})
 
 
-def build(params: dict | None = None, write: bool = True) -> tuple[mujoco.MjModel, dict]:
+def build(params: dict | None = None, write: bool = True,
+          keep_muscles: bool = False) -> tuple[mujoco.MjModel, dict]:
     params = params or load_params()
-    spec = build_human_spec(params)
+    spec = build_human_spec(params, keep_muscles=keep_muscles)
     land = human_landmarks(spec)
     exo_spec, info = build_exo_spec(params, land)
     info["human"] = land
@@ -495,6 +507,15 @@ def build(params: dict | None = None, write: bool = True) -> tuple[mujoco.MjMode
         act.set_to_motor()
         act.ctrllimited = mujoco.mjtLimited.mjLIMITED_TRUE
         act.ctrlrange = [-limit, limit]
+
+    if keep_muscles:
+        # The M6 metric model is never integrated, so it needs no sensors.
+        if write:
+            OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+            OUT_PATH.write_text(spec.to_xml(), encoding="utf-8")
+        model = spec.compile()
+        info["exo_body_mass"] = {}
+        return model, info
 
     # Human cuff sites at the exoskeleton binding sites (cuff inner surface)
     # in the home pose, so both welds start without violation (F5).
