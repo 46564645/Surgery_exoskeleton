@@ -106,25 +106,29 @@ def run_muscle_burst(burst: Burst, condition: str, controller: Controller | None
         now_ms = data.time * 1000.0
 
         if now_ms + 1e-9 >= next_control_ms:
-            # torque the task asks for, then the muscle activations that give it
-            scratch = mujoco.MjData(model)
-            scratch.qpos[:] = 0.0
-            scratch.qpos[bm.joint_qpos(model, bm.HUMAN_SHOULDER)] = ref_sh
-            scratch.qpos[bm.joint_qpos(model, bm.HUMAN_ELBOW)] = ref_el
-            mujoco.mj_forward(model, scratch)
-            feedforward = [float(scratch.qfrc_bias[bm.joint_dof(model, bm.HUMAN_SHOULDER)]),
-                           float(scratch.qfrc_bias[bm.joint_dof(model, bm.HUMAN_ELBOW)])]
-            demand = []
-            for index, (joint, target, (kp, kd)) in enumerate(
-                    zip((bm.HUMAN_SHOULDER, bm.HUMAN_ELBOW), (ref_sh, ref_el), PD_GAINS)):
+            # Computed-muscle-control style demand: set the desired joint
+            # acceleration and let mj_inverse give the generalized force that
+            # produces it, so the mass matrix, the bias, the passive muscle
+            # forces and the strap constraint are all included. This is the
+            # approach MyoSuite documents (tutorials 3.3/3.4) and the one the
+            # maintainers recommend for muscle models.
+            desired = []
+            for joint, target, (kp, kd) in zip((bm.HUMAN_SHOULDER, bm.HUMAN_ELBOW),
+                                               (ref_sh, ref_el), PD_GAINS):
                 error = target - data.qpos[bm.joint_qpos(model, joint)]
-                integral[index] = float(np.clip(
-                    integral[index] + KI_GAINS[index] * error * CONTROL_PERIOD_MS / 1000.0,
-                    -INTEGRAL_LIMIT_NM, INTEGRAL_LIMIT_NM))
-                wanted = (feedforward[index] + integral[index] + kp * error
-                          - kd * data.qvel[bm.joint_dof(model, joint)])
-                applied[index] += alpha * (wanted - applied[index])
-                demand.append(applied[index])
+                desired.append(kp * error - kd * data.qvel[bm.joint_dof(model, joint)])
+            # tau = M(q) a_des + bias - passive - constraint. mj_inverse is not
+            # used: in this MuJoCo version it leaves qfrc_inverse at zero
+            # unless the discrete flag is set, and that changes the meaning.
+            mass = np.zeros((model.nv, model.nv))
+            mujoco.mj_fullM(model, data, mass)
+            acceleration = np.zeros(model.nv)
+            acceleration[bm.joint_dof(model, bm.HUMAN_SHOULDER)] = desired[0]
+            acceleration[bm.joint_dof(model, bm.HUMAN_ELBOW)] = desired[1]
+            required = (mass @ acceleration + data.qfrc_bias - data.qfrc_passive
+                        - data.qfrc_constraint)
+            demand = [float(required[bm.joint_dof(model, bm.HUMAN_SHOULDER)]),
+                      float(required[bm.joint_dof(model, bm.HUMAN_ELBOW)])]
             every_actuator, _ = effort.activations(
                 float(data.qpos[bm.joint_qpos(model, bm.HUMAN_SHOULDER)]),
                 float(data.qpos[bm.joint_qpos(model, bm.HUMAN_ELBOW)]),
