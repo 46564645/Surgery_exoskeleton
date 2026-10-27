@@ -43,12 +43,15 @@ class MuscleRun:
     q: list[float] = field(default_factory=list)
     q_dot: list[float] = field(default_factory=list)
     human_nm: list[float] = field(default_factory=list)
+    human_sh_nm: list[float] = field(default_factory=list)
+    human_el_nm: list[float] = field(default_factory=list)
     activation_sum: list[float] = field(default_factory=list)
     exo_nm: list[float] = field(default_factory=list)
 
     def arrays(self) -> dict[str, np.ndarray]:
         return {name: np.asarray(getattr(self, name), dtype=float)
-                for name in ("time", "q", "q_dot", "human_nm", "activation_sum", "exo_nm")}
+                for name in ("time", "q", "q_dot", "human_nm", "human_sh_nm", "human_el_nm",
+                             "activation_sum", "exo_nm")}
 
 
 def run_muscle_burst(burst: Burst, condition: str, controller: Controller | None = None,
@@ -161,6 +164,8 @@ def run_muscle_burst(burst: Burst, condition: str, controller: Controller | None
             result.q.append(float(data.qpos[bm.joint_qpos(model, joint)]))
             result.q_dot.append(float(data.qvel[dof]))
             result.human_nm.append(float(data.qfrc_actuator[dof]))
+            result.human_sh_nm.append(float(data.qfrc_actuator[bm.joint_dof(model, bm.HUMAN_SHOULDER)]))
+            result.human_el_nm.append(float(data.qfrc_actuator[bm.joint_dof(model, bm.HUMAN_ELBOW)]))
             result.activation_sum.append(float(np.sum(data.act[muscle_act])))
             result.exo_nm.append(float(data.actuator_force[exo_sh if joint == bm.HUMAN_SHOULDER
                                                            else exo_el]))

@@ -43,6 +43,10 @@ class Burst:
     move_s: float
     repeats: int
     description: str
+    # Static hold: when both are set the reference is this fixed pose and
+    # start_deg/end_deg/joint are ignored.
+    fixed_shoulder_deg: float | None = None
+    fixed_elbow_deg: float | None = None
 
     @property
     def period_s(self) -> float:
@@ -69,6 +73,8 @@ def reference(burst: Burst, t: float) -> tuple[float, float]:
     return stroke to the start over the same move_s, so the reference is
     continuous from one repeat to the next.
     """
+    if burst.fixed_shoulder_deg is not None and burst.fixed_elbow_deg is not None:
+        return math.radians(burst.fixed_shoulder_deg), math.radians(burst.fixed_elbow_deg)
     period = burst.period_s
     k = min(int(t // period), burst.repeats - 1)
     local = t - k * period
