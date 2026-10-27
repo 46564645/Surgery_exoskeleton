@@ -27,6 +27,7 @@ static float assist_scale[SAFETY_JOINT_COUNT];
 static bool assist_quiet[SAFETY_JOINT_COUNT], assist_paused[SAFETY_JOINT_COUNT];
 static uint32_t assist_quiet_ms[SAFETY_JOINT_COUNT], assist_scale_ms[SAFETY_JOINT_COUNT];
 static ShoulderAmplify amplify;
+static ShoulderAmplify elbow_amplify;
 static ForceAssistState force_state;
 static bool assist_enabled = true;
 
@@ -53,6 +54,7 @@ static void reset_assist_pause(uint32_t now_ms)
         assist_quiet_ms[axis] = assist_scale_ms[axis] = now_ms;
     }
     ShoulderAmplify_Reset(&amplify, now_ms);
+    ShoulderAmplify_Reset(&elbow_amplify, now_ms);
 }
 
 /* ExoKit AmplifyReaction::runLoop() owns one joint: the joint that exceeds its
@@ -307,6 +309,7 @@ static bool compute_target(const S3SiteSample *sample, uint32_t now_ms,
         .elbow_gravity = &site->elbow_gravity,
         .elbow_support = &site->elbow_support,
         .shoulder_amplify = &site->shoulder_amplify,
+        .elbow_amplify = &site->elbow_amplify,
         .force_assist = &site->force_assist,
         .shoulder_gain = site->shoulder_gain,
         .elbow_motor_kt_nm_per_a = site->elbow_motor_kt_nm_per_a,
@@ -328,7 +331,8 @@ static bool compute_target(const S3SiteSample *sample, uint32_t now_ms,
     S5AssistComposeOutput command;
     if (!S5AssistCompose_Update(&config, &sample->joint[0], &sample->joint[1],
                                 assist_enabled, force_valid, force_n,
-                                &amplify, &force_state, now_ms, &command)) { return false; }
+                                &amplify, &elbow_amplify, &force_state, now_ms,
+                                &command)) { return false; }
     effort->shoulder_rotor_nm = command.shoulder_rotor_nm;
     effort->elbow_current_a = command.elbow_current_a;
     return true;

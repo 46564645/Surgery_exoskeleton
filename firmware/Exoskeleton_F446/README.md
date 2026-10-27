@@ -1,5 +1,25 @@
 # Exoskeleton_F446 固件入口
 
+## 助力（Amplify）接入肘通道 + 肩增量 300 mNm（2026-10-27，已编译未刷写）
+
+爆发测试要验证的是固件的助力功能，因此：
+
+- **肘通道也加 Amplify**：新增`S5_R5_ELBOW_AMPLIFY_MA`（0..20000 mA，默认 **5000**）。复用`ShoulderAmplify`模块：以肘角速度的**绝对值**判触发（>20°/s），增量符号**跟随运动方向**，所以快速伸展（锤击）和快速屈曲都会被助力；400 ms 换向暂停、200 ms 斜坡与肩通道一致。
+- **肩 Amplify** 由 0 改为 **300 mNm**（2.4 N·m 关节侧），上限放开到 575。
+- `S5AssistCompose_Update` 增加肘 Amplify 的配置与状态参数；`s5_follow.c`、`s5_site.{c,h}`、仿真桥接同步；新增主机用例`compose_elbow_amplify`（正/负速度符号、斜坡进/出）。
+
+| 选项 | 值 |
+|---|---|
+| `S5_R5_ELBOW_SUPPORT_MA` | 10000（10 A） |
+| `S5_R5_SHOULDER_GAIN` / `CAP_MNM` | 1.5 / 300 |
+| `S5_R5_SHOULDER_AMPLIFY_MNM` | **300** |
+| `S5_R5_ELBOW_AMPLIFY_MA` | **5000** |
+| `send_interval_ms` | 10 |
+
+- 产物：`build/r5-assist/Exoskeleton_F446.elf` / `.bin`，FLASH 142136 B、RAM 12960 B、0 警告；BIN SHA256 `41D8D8CAE4CEE1F6FCABC70A7F8F01ED31BC123B4717B27393670A2C5FB5502F`。
+- 验证：主机测试 **125 项**通过（含新用例）；**未刷写、未上板**。
+- 仿真结果（肌肉驱动爆发）：肘 Amplify 0→5000→10000→20000 mA 时，G1 锤击峰值力矩相对穿戴不通电由 −3.1% 改善到 −4.0% / −4.6% / −5.6%；肩主导的 G2 不受影响（肘通道帮不到肩）。功口径几乎不变，因为肘命令总幅值会撞到 20 A 上限。
+
 ## 保守助力设置：肘 10 A、肩 gain 1.5、肩上限 300 mNm（2026-10-27，已编译未刷写）
 
 用户按仿真扫描结果选择"保守"一档：

@@ -12,6 +12,7 @@ typedef struct {
     GravityCompensationConfig shoulder_gravity; /* S4 local shoulder model. */
     float shoulder_gain;
     ShoulderAmplifyConfig shoulder_amplify;     /* Dual only; zero increment = off. */
+    ShoulderAmplifyConfig elbow_amplify;        /* Dual only; increment in C620 A. */
     S5ElbowSupportConfig elbow_support;         /* Local command in C620 A. */
     GravityCompensationConfig elbow_gravity;
     float elbow_motor_kt_nm_per_a;

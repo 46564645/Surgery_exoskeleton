@@ -5,6 +5,7 @@
 
 static const S5SiteProfile *site;
 static ShoulderAmplify amplify;
+static ShoulderAmplify elbow_amplify;
 static ForceAssistState force_state;
 
 static bool dual(void)
@@ -14,6 +15,7 @@ SIM_EXPORT void SimBridge_Reset(uint32_t now_ms)
 {
     site = S5Site_GetProfile();
     ShoulderAmplify_Reset(&amplify, now_ms);
+    ShoulderAmplify_Reset(&elbow_amplify, now_ms);
     ForceAssist_Reset(&force_state, now_ms);
 }
 
@@ -34,6 +36,7 @@ SIM_EXPORT int32_t SimBridge_Step(const SimBridgeInput *in, SimBridgeOutput *out
         .elbow_gravity = &site->elbow_gravity,
         .elbow_support = &site->elbow_support,
         .shoulder_amplify = &site->shoulder_amplify,
+        .elbow_amplify = &site->elbow_amplify,
         .force_assist = &site->force_assist,
         .shoulder_gain = site->shoulder_gain,
         .elbow_motor_kt_nm_per_a = site->elbow_motor_kt_nm_per_a,
@@ -44,7 +47,7 @@ SIM_EXPORT int32_t SimBridge_Step(const SimBridgeInput *in, SimBridgeOutput *out
     S5AssistComposeOutput command;
     if (!S5AssistCompose_Update(&config, &shoulder, &elbow,
                                 in->assist_enabled != 0, in->force_valid != 0,
-                                in->force_n, &amplify, &force_state,
+                                in->force_n, &amplify, &elbow_amplify, &force_state,
                                 in->now_ms, &command)) { return 0; }
     out->shoulder_rotor_nm = command.shoulder_rotor_nm;
     out->elbow_current_a = command.elbow_current_a;

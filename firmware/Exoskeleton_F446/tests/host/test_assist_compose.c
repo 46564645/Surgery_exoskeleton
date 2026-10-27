@@ -23,9 +23,11 @@ typedef struct {
     GravityCompensationConfig elbow_gravity;
     S5ElbowSupportConfig elbow_support;
     ShoulderAmplifyConfig amplify;
+    ShoulderAmplifyConfig elbow_amplify;
     ForceAssistConfig force;
     S5AssistComposeConfig config;
     ShoulderAmplify amplify_state;
+    ShoulderAmplify elbow_amplify_state;
     ForceAssistState force_state;
 } Fixture;
 
@@ -38,6 +40,8 @@ static void fixture_init(Fixture *f)
     f->elbow_gravity = (GravityCompensationConfig){0.04f, 0.0f, 1, true};
     f->elbow_support = (S5ElbowSupportConfig){1.0f, 2.0f, true};
     f->amplify = (ShoulderAmplifyConfig){0.0f, 0.34906585f, 400U, 200U};
+    /* Elbow Amplify off in the existing cases; one case below turns it on. */
+    f->elbow_amplify = (ShoulderAmplifyConfig){0.0f, 0.34906585f, 400U, 200U};
     f->force = (ForceAssistConfig){0};
     f->config = (S5AssistComposeConfig){
         .dual = true,
@@ -45,6 +49,7 @@ static void fixture_init(Fixture *f)
         .elbow_gravity = &f->elbow_gravity,
         .elbow_support = &f->elbow_support,
         .shoulder_amplify = &f->amplify,
+        .elbow_amplify = &f->elbow_amplify,
         .force_assist = &f->force,
         .shoulder_gain = 1.0f,
         .elbow_motor_kt_nm_per_a = 0.02f,
@@ -53,6 +58,7 @@ static void fixture_init(Fixture *f)
         .elbow_current_cap_a = 20.0f
     };
     ShoulderAmplify_Reset(&f->amplify_state, 0U);
+    ShoulderAmplify_Reset(&f->elbow_amplify_state, 0U);
     ForceAssist_Reset(&f->force_state, 0U);
 }
 
@@ -62,7 +68,7 @@ static bool update(Fixture *f, JointState shoulder, JointState elbow,
 {
     return S5AssistCompose_Update(&f->config, &shoulder, &elbow, assist_enabled,
                                   force_valid, force_n, &f->amplify_state,
-                                  &f->force_state, now_ms, out);
+                                  &f->elbow_amplify_state, &f->force_state, now_ms, out);
 }
 
 static void gravity_baseline(void)
@@ -86,6 +92,35 @@ static void gravity_baseline(void)
     assert(update(&f, joint(0.0f, 0.0f), joint(PI / 2.0f, 0.0f), true, false, 0.0f, 0U, &out));
     assert(out.shoulder_rotor_nm == 0.0f);
     assert(fabsf(out.elbow_current_a - 2.0f) < 1e-5f);
+}
+
+/* Elbow Amplify: same module as the shoulder, increment in amps, sign follows
+ * the elbow movement, so a strike (extension, negative velocity) is helped. */
+static void elbow_amplify_follows_movement(void)
+{
+    Fixture f;
+    fixture_init(&f);
+    f.elbow_amplify.increment_rotor_nm = 3.0f;   /* 3 A */
+    S5AssistComposeOutput out;
+
+    /* Fast extension (a strike): the increment ramps in over ramp_ms and
+     * follows the negative velocity. */
+    for (uint32_t t = 0U; t <= 400U; t += 20U) {
+        assert(update(&f, joint(0.0f, 0.0f), joint(0.0f, -1.0f), true, false, 0.0f, t, &out));
+    }
+    assert(fabsf(out.elbow_current_a + 3.0f) < 1e-4f);
+
+    /* Fast flexion: the sign follows the movement. */
+    for (uint32_t t = 420U; t <= 900U; t += 20U) {
+        assert(update(&f, joint(0.0f, 0.0f), joint(0.0f, 1.0f), true, false, 0.0f, t, &out));
+    }
+    assert(fabsf(out.elbow_current_a - 3.0f) < 1e-4f);
+
+    /* Standing still: the increment ramps back out. */
+    for (uint32_t t = 920U; t <= 1600U; t += 20U) {
+        assert(update(&f, joint(0.0f, 0.0f), joint(0.0f, 0.0f), true, false, 0.0f, t, &out));
+    }
+    assert(fabsf(out.elbow_current_a) < 1e-4f);
 }
 
 static void output_caps(void)
@@ -183,7 +218,8 @@ static void invalid_inputs(void)
     const JointState shoulder = joint(0.0f, 0.0f);
     const JointState elbow = joint(0.0f, 0.0f);
     assert(!S5AssistCompose_Update(NULL, &shoulder, &elbow, true, false, 0.0f,
-                                   &f.amplify_state, &f.force_state, 0U, &out));
+                                   &f.amplify_state, &f.elbow_amplify_state,
+                                   &f.force_state, 0U, &out));
     JointState bad = joint(0.0f, 0.0f);
     bad.valid = false;
     assert(!update(&f, bad, elbow, true, false, 0.0f, 0U, &out));
@@ -200,6 +236,7 @@ void TestAssistCompose_Run(const char *scenario)
     else if (!strcmp(scenario, "compose_caps")) { output_caps(); }
     else if (!strcmp(scenario, "compose_assist_off")) { assist_gate(); }
     else if (!strcmp(scenario, "compose_amplify")) { amplify_increment(); }
+    else if (!strcmp(scenario, "compose_elbow_amplify")) { elbow_amplify_follows_movement(); }
     else if (!strcmp(scenario, "compose_force")) { force_gain(); }
     else if (!strcmp(scenario, "compose_single")) { single_axis(); }
     else { assert(!strcmp(scenario, "compose_invalid")); invalid_inputs(); }

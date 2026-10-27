@@ -153,6 +153,7 @@ cases = ["s3_chain_relative_anchor", "s3_chain_relative_rejects", "s3_chain_rela
              "force_assist_config", "force_assist_model", "force_assist_trigger",
              "force_assist_hold", "force_assist_reference",
              "compose_gravity", "compose_caps", "compose_assist_off", "compose_amplify",
+             "compose_elbow_amplify",
              "compose_force", "compose_single", "compose_invalid",
               "s3_codec", "s3_mapping", "s3_default", "s3_lifecycle", "s3_interlocks", "s3_transport", "s3_bxcan", "s3_prepare", "s3_gds", "s3_cli", "s3_axes", "s3_observations", "s3_shoulder_console", "s3_standstill", "s3_elbow_session_angle", "s3_elbow_session_bench", "s3_bench_stop_policy", "s3_bench_stop_cli"]
 if r4_defines:

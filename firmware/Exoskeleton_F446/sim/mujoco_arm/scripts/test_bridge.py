@@ -72,7 +72,11 @@ def main() -> int:
     check("elbow mapping 1:1", near(site["elbow_rotor_per_joint"], 1.0))
     check("elbow torque constant 0.02 Nm/A", near(site["elbow_motor_kt_nm_per_a"], 0.02))
     check("shoulder model 1.64 Nm joint", near(site["shoulder_gravity_amplitude_nm"], 1.64))
-    check("send interval 50 ms", site["send_interval_ms"] == 50)
+    # The site owns the period; it moved from 50 to 10 ms on 2026-10-27. Only
+    # check that the value is inside the gateway's limits.
+    check("send interval inside the gateway limits",
+          0 < site["send_interval_ms"] < site["feedback_timeout_ms"],
+          f"{site['send_interval_ms']} ms")
     check("feedback timeout 250 ms", site["feedback_timeout_ms"] == 250)
     check("dual axis build", site["dual"])
 

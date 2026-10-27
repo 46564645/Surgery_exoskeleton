@@ -25,6 +25,11 @@ typedef struct {
     const GravityCompensationConfig *elbow_gravity;  /* dual only */
     const S5ElbowSupportConfig *elbow_support;       /* elbow-only mode */
     const ShoulderAmplifyConfig *shoulder_amplify;   /* dual only, 0 = off */
+    /* Elbow Amplify, dual only. The same module drives it with the magnitude
+     * of the elbow velocity and the increment expressed in C620 amps; the
+     * sign follows the movement, so a fast extension (a strike) is assisted
+     * as well as a fast flexion. 0 = off. */
+    const ShoulderAmplifyConfig *elbow_amplify;
     const ForceAssistConfig *force_assist;           /* dual only, off = unconfirmed */
     float shoulder_gain;
     float elbow_motor_kt_nm_per_a;
@@ -44,7 +49,8 @@ typedef struct {
 bool S5AssistCompose_Update(const S5AssistComposeConfig *config,
                             const JointState *shoulder, const JointState *elbow,
                             bool assist_enabled, bool force_valid, float force_n,
-                            ShoulderAmplify *amplify, ForceAssistState *force,
+                            ShoulderAmplify *amplify, ShoulderAmplify *elbow_amplify,
+                            ForceAssistState *force,
                             uint32_t now_ms, S5AssistComposeOutput *out);
 
 #endif

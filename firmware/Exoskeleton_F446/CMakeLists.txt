@@ -108,7 +108,8 @@ option(S5_R4_ELBOW_FOLLOW "Build the isolated elbow-only FOLLOW candidate" OFF)
 option(S5_R5_DUAL_FOLLOW "Build the isolated low-pose dual-axis FOLLOW candidate" OFF)
 set(S5_R5_ELBOW_SUPPORT_SIGN "" CACHE STRING "R5 dual FOLLOW elbow-current sign, explicitly 1 or -1 after direction observation")
 set(S5_R5_ELBOW_SUPPORT_MA "" CACHE STRING "R5 dual FOLLOW posture-curve current peak in mA, explicitly 1..20000; protocol cap is 20 A")
-set(S5_R5_SHOULDER_AMPLIFY_MNM "0" CACHE STRING "R5 shoulder Amplify rotor-torque increment while raising, 0..575 mNm; 0 = off. 575 mNm = 4.6 N*m joint (GDS68 rating / 8); the increment is added before the shoulder cap")
+set(S5_R5_SHOULDER_AMPLIFY_MNM "300" CACHE STRING "R5 shoulder Amplify rotor-torque increment while raising, 0..575 mNm; 0 = off. 575 mNm = 4.6 N*m joint (GDS68 rating / 8); the increment is added before the shoulder cap. Default 300 = user choice 2026-10-27")
+set(S5_R5_ELBOW_AMPLIFY_MA "5000" CACHE STRING "R5 elbow Amplify increment in C620 mA while the elbow moves, 0..20000; sign follows the movement (a strike extends). Default 5000 = 0.1 N*m, user choice 2026-10-27")
 option(S5_R5_FORCE_ASSIST "Enable interaction-force triggered bounded boost (needs calibrated F0)" OFF)
 set(S5_R5_FORCE_BOOST_PCT "50" CACHE STRING "Force-triggered boost, percent of the gravity baseline, 1..50")
 set(S5_R5_SHOULDER_GAIN "1.5" CACHE STRING "R5 shoulder gravity gain, 0.001..3.0; 0.001 builds the assist-off baseline for A/B bench comparison; >1 asks the shoulder channel to carry part of the human arm as well as the exoskeleton. Default 1.5 = user choice 2026-10-27 (conservative step)")
@@ -128,6 +129,10 @@ if(S5_R5_DUAL_FOLLOW)
         OR S5_R5_SHOULDER_AMPLIFY_MNM GREATER 575)
         message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_SHOULDER_AMPLIFY_MNM=0..575")
     endif()
+    if(NOT "${S5_R5_ELBOW_AMPLIFY_MA}" MATCHES "^(0|[1-9][0-9]*)$"
+        OR S5_R5_ELBOW_AMPLIFY_MA GREATER 20000)
+        message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_ELBOW_AMPLIFY_MA=0..20000")
+    endif()
     if(S5_R5_SHOULDER_GAIN LESS 0.001 OR S5_R5_SHOULDER_GAIN GREATER 3.0)
         message(FATAL_ERROR "R5 dual FOLLOW requires S5_R5_SHOULDER_GAIN=0.001..3.0")
     endif()
@@ -141,6 +146,7 @@ if(S5_R5_DUAL_FOLLOW)
         S5_R5_DUAL_FOLLOW S5_R5_ELBOW_SUPPORT_SIGN=${S5_R5_ELBOW_SUPPORT_SIGN}
         S5_R5_ELBOW_SUPPORT_MA=${S5_R5_ELBOW_SUPPORT_MA}
         S5_R5_SHOULDER_AMPLIFY_MNM=${S5_R5_SHOULDER_AMPLIFY_MNM}
+        S5_R5_ELBOW_AMPLIFY_MA=${S5_R5_ELBOW_AMPLIFY_MA}
         S5_R5_SHOULDER_GAIN=${S5_R5_SHOULDER_GAIN}
         S5_R5_SHOULDER_CAP_MNM=${S5_R5_SHOULDER_CAP_MNM}
         S5_R5_FORCE_BOOST_PCT=${S5_R5_FORCE_BOOST_PCT})

@@ -34,7 +34,13 @@
 #define S5_R5_SHOULDER_AMPLIFY_MNM 0
 #endif
 #if S5_R5_SHOULDER_AMPLIFY_MNM < 0 || S5_R5_SHOULDER_AMPLIFY_MNM > 575
-#error "R5 shoulder Amplify increment must be 0..100 mNm (0 = off)"
+#error "R5 shoulder Amplify increment must be 0..575 mNm (0 = off)"
+#endif
+#if !defined(S5_R5_ELBOW_AMPLIFY_MA)
+#define S5_R5_ELBOW_AMPLIFY_MA 0
+#endif
+#if S5_R5_ELBOW_AMPLIFY_MA < 0 || S5_R5_ELBOW_AMPLIFY_MA > 20000
+#error "R5 elbow Amplify increment must be 0..20000 mA (0 = off)"
 #endif
 /* Isolated dual candidate. The operator measured 0..110 degrees without
  * interference on each axis with power off, and will set both RAM zeroes at
@@ -120,6 +126,13 @@ static const S5SiteProfile site = {
     .shoulder_gain = S5_R5_SHOULDER_GAIN,
     .shoulder_amplify = {
         .increment_rotor_nm = 0.001f * S5_R5_SHOULDER_AMPLIFY_MNM,
+        .starting_velocity_rad_s = 0.34906585f, /* 20 deg/s */
+        .suspension_ms = 400U, .ramp_ms = 200U
+    },
+    /* Elbow Amplify: same module, increment in C620 amps, sign follows the
+     * elbow movement (2026-10-27 user decision: assist the elbow channel too). */
+    .elbow_amplify = {
+        .increment_rotor_nm = 0.001f * S5_R5_ELBOW_AMPLIFY_MA,
         .starting_velocity_rad_s = 0.34906585f, /* 20 deg/s */
         .suspension_ms = 400U, .ramp_ms = 200U
     },
@@ -306,6 +319,12 @@ static bool base_ready(const S5SiteProfile *p)
     if (!ShoulderAmplify_ConfigValid(amp) || amp->increment_rotor_nm > sh->max_motor_command
         || (amp->increment_rotor_nm > 0.0f && p->soft_speed_rad_s[0] > 0.0f
             && amp->starting_velocity_rad_s >= p->soft_speed_rad_s[0])) { return false; }
+    /* Elbow Amplify is expressed in C620 amps; it must stay inside the elbow
+     * command cap and below the soft speed gate of that joint. */
+    const ShoulderAmplifyConfig *eamp = &p->elbow_amplify;
+    if (!ShoulderAmplify_ConfigValid(eamp) || eamp->increment_rotor_nm > e->max_motor_command
+        || (eamp->increment_rotor_nm > 0.0f && p->soft_speed_rad_s[1] > 0.0f
+            && eamp->starting_velocity_rad_s >= p->soft_speed_rad_s[1])) { return false; }
     return S3ShoulderService_ReadProfileReady(s)
         && s->coordinates[0] == S3_ASSEMBLED_JOINT
         && isfinite(sh->mapping.rotor_zero_rad)
