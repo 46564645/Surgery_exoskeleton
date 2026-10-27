@@ -33,7 +33,7 @@
 #if !defined(S5_R5_SHOULDER_AMPLIFY_MNM)
 #define S5_R5_SHOULDER_AMPLIFY_MNM 0
 #endif
-#if S5_R5_SHOULDER_AMPLIFY_MNM < 0 || S5_R5_SHOULDER_AMPLIFY_MNM > 100
+#if S5_R5_SHOULDER_AMPLIFY_MNM < 0 || S5_R5_SHOULDER_AMPLIFY_MNM > 575
 #error "R5 shoulder Amplify increment must be 0..100 mNm (0 = off)"
 #endif
 /* Isolated dual candidate. The operator measured 0..110 degrees without
