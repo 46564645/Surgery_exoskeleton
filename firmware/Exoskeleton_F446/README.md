@@ -1,5 +1,14 @@
 # Exoskeleton_F446 固件入口
 
+## 肘通道幅值 2000 → 10000（2026-10-27，已编译未刷写）
+
+用户按仿真扫描结果决定把 R5 肘通道幅值由 2 A 提到 **10 A**（M3508 额定电流）。仿真（T1 动作，模型假设下）显示总省力由 6.9% 升到 8.8%、肘部由 1.5% 升到 7.1%；肩侧在所有幅值下都稳定在 10%，说明剩余缺口只在肘侧。
+
+- 构建：`cmake --preset WindowsDebug -B build/r5-ma10000 -DS5_R5_DUAL_FOLLOW=ON -DS5_R5_ELBOW_SUPPORT_SIGN=1 -DS5_R5_ELBOW_SUPPORT_MA=10000 -DS5_R5_SHOULDER_AMPLIFY_MNM=0`，其余选项与板上镜像相同。
+- 产物：`build/r5-ma10000/Exoskeleton_F446.elf` 与 `.bin`，FLASH 141896 B、RAM 12928 B、0 警告；BIN SHA256 `5D461E3935CBF6FDD81F4ABA8DB7C732990E91AA312553463825137FA7F2C4A4`。
+- 验证：主机测试 124 项通过；**未刷写、未上板**，板上仍是下方 2026-10-21 的 `MA=2000` 镜像。刷写时按既有流程做一次有界窗口（备份→写入→独立读回）。
+- 扫描工具：`sim/mujoco_arm/scripts/sweep_elbow_ma.py`（只重建仿真用控制库，不改源码）。
+
 ## HX711 临时力值与去皮（2026-10-17）
 
 当前板上为 [R5 肘姿态相关重力补偿 + 放宽限值候选](build/s5-r5-limit45-20261021/Exoskeleton_F446.elf)（2026-10-21 刷入），BIN SHA256 `241c006a71d42ecf814e75a3b36188b0f4d129b2aa885d8bbdc368a2ddc80cf2`，已刷写并独立读回一致，上电 `phase=1`。R5 构建选项 `S5_R5_DUAL_FOLLOW=ON`、`S5_R5_ELBOW_SUPPORT_SIGN=1`、`S5_R5_ELBOW_SUPPORT_MA=2000`（sin 曲线峰值）、`S5_R5_SHOULDER_AMPLIFY_MNM=0`。肘电流为 `峰值 × sin(肩角+肘角)`：垂臂约 0 A，前臂抬平方向达峰值。

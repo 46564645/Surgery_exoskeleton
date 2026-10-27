@@ -105,7 +105,9 @@ def build_macos(defines: list[str], out: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--gain", default="1.0", help="S5_R5_SHOULDER_GAIN (0.001..1.0)")
-    parser.add_argument("--ma", default="2000", help="S5_R5_ELBOW_SUPPORT_MA (1..20000)")
+    parser.add_argument("--ma", default="10000",
+                        help="S5_R5_ELBOW_SUPPORT_MA (1..20000); 10000 = the 2026-10-27 "
+                             "production choice (10 A, M3508 rated)")
     parser.add_argument("--sign", default="1", help="S5_R5_ELBOW_SUPPORT_SIGN (1 or -1)")
     parser.add_argument("--amplify-mnm", default="0", help="S5_R5_SHOULDER_AMPLIFY_MNM (0..100)")
     parser.add_argument("--force-assist", action="store_true", help="S5_R5_FORCE_ASSIST")
