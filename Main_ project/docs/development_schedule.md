@@ -127,7 +127,7 @@ HX711 10 SPS+延迟+噪声、量化                             肘A×0.02 N·m/
 | M2 接入控制代码 | 1–2 | 用与`tests/run_host_tests.py`相同的MSVC把`App/control/*.c`与小桥接文件编成DLL，Python用ctypes调用。先把`s5_follow.c`中`compute_target()`的“重力+Amplify+力触发+限幅”合成移成`App/control`纯函数，固件与仿真调用同一份（单独一步，主机测试保持全绿），避免复制逻辑 | Python能调用DLL，助力命令与固件公式对得上；固件仍能编译 |
 | M3 传感器/执行器时序 | 1 | 按固件实际周期模拟反馈刷新、延迟、量化、HX711 10 SPS，执行器限幅与滞后 | 时序参数集中在一个配置文件，可单独开关 |
 | M4 实验运行器 | 1–2 | `run_experiment.py --task T2 --duration 60 --cond C0,C1,C2`一条命令跑完并出图/汇总 | 首份省力对照结果（标注“模型假设下”） |
-| M5 与台架对标 | 1 | T4回放已有台架日志：DLL算出的目标与台架记录目标比对，验证接入正确；用实测趋势修正质量/摩擦，写明“仿真可信范围” | 一份仿真-台架差异表 |
+| ~~M5 与台架对标~~ | — | **用户2026-10-27决定取消**：不需要和实物板子对标，仿真结论按“模型假设下”自洽即可 | — |
 | M6（可选） | 2–3 | 应用层SIL：`s5_follow`+`output_gateway`+`safety_supervisor`配合现有`tests/host`的CAN/HAL模拟件闭环跑状态机与超时；MyoSuite肘肌肉激活作为第二省力指标 | 状态机与故障撤权能在仿真里复现和回归 |
 
 **之后的迭代流程**：改控制代码 → 主机测试 → 仿真跑固定任务集，和上一版对比看省力效果和有无异常 → 要真正刷到硬件运行时再做一次有界台架窗口。
@@ -198,7 +198,7 @@ HX711 10 SPS+延迟+噪声、量化                             肘A×0.02 N·m/
 | **M2b 仿真桥接DLL**（1） | `SIM/bridge/sim_bridge.{c,h}`、`SIM/scripts/build_bridge.py`、`SIM/sim/controller.py`（ctypes封装）、`SIM/scripts/test_bridge.py` | DLL链接`joint_state.c`、`gravity_compensation.c`、`s5_elbow_support.c`、`shoulder_amplify.c`、`force_assist.c`、`s5_assist_compose.c`、`safety_supervisor.c`及`s5_site.c`（与主机测试同样的头文件桩），用`/D S5_R5_DUAL_FOLLOW`及肘符号/电流、肩增益、Amplify、力触发等编译选项生成，保证参数只来自`s5_site.c`；导出`SimBridge_Reset/Step`，全部用明确宽度类型与`float` | Python能调用DLL，给几个姿态算出的助力命令与固件公式对得上 |
 | **M3 传感器/执行器/时序**（1） | `SIM/sim/io_model.py`、`SIM/sim/timing.json` | 物理步长1 ms；控制器按固件周期调用：肩角按50 ms读取并保持、肘反馈1 ms、输出每50 ms更新并零阶保持；执行器：肩转子N·m×8→关节、肘A×0.02 N·m/A，可选一阶滞后与黏性/库仑摩擦（缺省0，扫描用）；HX711：10 SPS、约100 ms延迟、噪声σ≈0.001 N（2026-10-21静止统计），安装在与实物相同的支撑连杆位置 | 仿真里能看到按50 ms更新的阶梯输出和10 SPS力采样 |
 | **M4 实验运行器**（1.5） | `SIM/run_experiment.py`、`SIM/sim/human_controller.py`、`SIM/sim/tasks.py`、`SIM/sim/metrics.py`、`SIM/sim/plots.py` | `python run_experiment.py --task T2 --cond C0,C1,C2 --duration 60 --seed 1`；人体执行器用PD+前馈跟踪T1–T5参考轨迹，以执行器实际输出力矩为“人体用力”，再用`mj_inverse`离线复核；输出到`BLD/sim-runs/<时间>/`：`samples.csv`、`summary.json`（分抬/保持/放阶段的RMS/峰值/积分、省力率、跟踪误差、绑带力、饱和占比、暂停/故障数）、图（PDF/PNG） | 一条命令跑出C0/C1/C2对照图，能看出有/无助力时人体用力的差别 |
-| **M5 台架对标**（1） | `SIM/scripts/replay_bench.py` | 先核对`build/live-*/samples.csv`实际列名，再把实测角度序列喂给DLL，比较DLL目标与台架记录目标；差异超出量化/采样误差时先查根因，不调参数凑结果 | 仿真命令曲线与台架记录大体重合，差得多再查原因 |
+| ~~M5 台架对标~~ | — | **用户2026-10-27决定取消**（同上）：不与台架日志比对，仿真结论按“模型假设下”自洽 | — |
 | 汇报点 | — | 汇总C0/C1/C2与增益扫描结果，特别是1.2.5节“肩模型只含外骨骼自重、不随肘角”的量化影响 | 由你决定是否修改控制模型（届时按2.1节另议） |
 
 M6（应用层完整闭环、肌肉模型）保持可选，不在本次批准范围。预计M0–M5合计约7–9个工作单元。
