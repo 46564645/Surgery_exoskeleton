@@ -122,7 +122,12 @@ static const S5SiteProfile site = {
     .elbow_motor_kt_nm_per_a = S5_ELBOW_MOTOR_KT_NM_PER_A,
     .release_slew_per_s = {.shoulder_rotor_nm = 0.120f,
                            .elbow_current_a = 25.0f},
-    .send_interval_ms = 50U,
+    /* 2026-10-27 user decision: 50 -> 10 ms (100 Hz). The simulation showed
+     * the assist is frozen during a 180-250 ms burst at 50 ms; the running
+     * target bypasses the slew (direct_target), so the update period is the
+     * dominant latency. Still below service_limit_ms (100) and max_request_ms
+     * (250), and the gateway's ramp budget checks hold. Not bench-verified. */
+    .send_interval_ms = 10U,
     .session_ms = 45000U,
     .ramp_max_ms = 2000U,
     .shoulder_zero_dwell_ms = 1U,

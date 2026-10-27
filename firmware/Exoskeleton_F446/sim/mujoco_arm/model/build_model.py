@@ -508,15 +508,6 @@ def build(params: dict | None = None, write: bool = True,
         act.ctrllimited = mujoco.mjtLimited.mjLIMITED_TRUE
         act.ctrlrange = [-limit, limit]
 
-    if keep_muscles:
-        # The M6 metric model is never integrated, so it needs no sensors.
-        if write:
-            OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-            OUT_PATH.write_text(spec.to_xml(), encoding="utf-8")
-        model = spec.compile()
-        info["exo_body_mass"] = {}
-        return model, info
-
     # Human cuff sites at the exoskeleton binding sites (cuff inner surface)
     # in the home pose, so both welds start without violation (F5).
     model = spec.compile()
@@ -540,6 +531,16 @@ def build(params: dict | None = None, write: bool = True,
         data_vec = np.array(eq.data)
         data_vec[10] = float(_v(straps["torquescale"]))
         eq.data = data_vec
+
+    if keep_muscles:
+        # Muscle-driven variant: the straps and the exoskeleton are the same,
+        # but there are no human torque actuators, so only the joint sensors.
+        if write:
+            OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+            OUT_PATH.write_text(spec.to_xml(), encoding="utf-8")
+        model = spec.compile()
+        info["exo_body_mass"] = {}
+        return model, info
 
     for joint in (EXO_YAW, EXO_SHOULDER, EXO_ELBOW, HUMAN_SHOULDER, HUMAN_ELBOW):
         spec.add_sensor(name=joint + "_pos", type=mujoco.mjtSensor.mjSENS_JOINTPOS,

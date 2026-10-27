@@ -24,9 +24,15 @@ EPS = 1e-4
 
 
 class MuscleEffort:
-    def __init__(self, params: dict | None = None) -> None:
+    def __init__(self, params: dict | None = None,
+                 model=None) -> None:
         self.params = params or bm.load_params()
-        self.model, _ = bm.build(self.params, write=False, keep_muscles=True)
+        if model is None:
+            self.model, _ = bm.build(self.params, write=False, keep_muscles=True)
+        else:
+            self.model = model
+        # Its own scratch state: activations() must never touch the running
+        # simulation's data.
         self.data = __import__("mujoco").MjData(self.model)
         self.muscles = [self.model.actuator(i).name for i in range(self.model.nu)]
         self.shoulder_dof = bm.joint_dof(self.model, bm.HUMAN_SHOULDER)
