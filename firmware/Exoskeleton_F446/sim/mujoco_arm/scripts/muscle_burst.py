@@ -52,6 +52,12 @@ def metrics(run, burst) -> dict:
     # end of the run is the return stroke, so the last samples are at the start).
     hold = (t >= burst.move_s + 0.6) & (t <= burst.move_s + 1.9)
     steady = float(np.degrees(np.abs(q[hold] - end).mean())) if hold.any() else float("nan")
+    # Work is the right metric for a burst: the peak torque is dominated by
+    # inertia (gravity is only ~9 % of it at 250 ms), so peak torque cannot
+    # show a gravity-compensation benefit. Positive power only.
+    dt = float(np.median(np.diff(t))) if t.size > 1 else 0.0
+    human_work = float(np.sum(np.clip(a["human_nm"] * a["q_dot"], 0, None)) * dt)
+    exo_work = float(np.sum(np.clip(a["exo_nm"] * a["q_dot"], 0, None)) * dt)
     return {
         "condition": run.condition,
         "peak_torque_nm": float(np.abs(a["human_nm"]).max()),
@@ -60,6 +66,8 @@ def metrics(run, burst) -> dict:
         "activation_sum_peak": float(a["activation_sum"].max()),
         "movement_time_ms": move_ms,
         "steady_error_deg": steady,
+        "human_positive_work_j": human_work,
+        "exo_positive_work_j": exo_work,
     }
 
 
@@ -106,7 +114,9 @@ def main() -> int:
                   f"peak vel {m['peak_velocity_rad_s']:5.2f} rad/s, "
                   f"act sum {m['activation_sum_mean']:5.2f} (peak {m['activation_sum_peak']:5.2f}), "
                   f"move {m['movement_time_ms']:5.0f} ms, "
-                  f"steady err {m['steady_error_deg']:4.1f} deg, {elapsed:4.1f} s wall")
+                  f"steady err {m['steady_error_deg']:4.1f} deg, "
+                  f"work {m['human_positive_work_j']:6.2f} J (exo {m['exo_positive_work_j']:5.2f} J), "
+                  f"{elapsed:4.1f} s wall")
         results[name] = per_condition
 
     (out_dir / "muscle_burst.json").write_text(json.dumps(
