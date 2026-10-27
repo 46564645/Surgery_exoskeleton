@@ -60,25 +60,30 @@ def _holds(points: tuple[tuple[float, float], ...], hold_s: float,
     return tuple(out)
 
 
-def _cycles(shoulder_deg: float, elbow_deg: float, period_s: float,
+def _cycles(low_deg: float, high_deg: float, elbow_deg: float, period_s: float,
             cycles: int) -> tuple[tuple[float, float, float], ...]:
     out, t = [], 0.0
-    out.append((t, 0.0, elbow_deg))
+    out.append((t, low_deg, elbow_deg))
     for _ in range(cycles):
         t += period_s / 2
-        out.append((t, shoulder_deg, elbow_deg))
+        out.append((t, high_deg, elbow_deg))
         t += period_s / 2
-        out.append((t, 0.0, elbow_deg))
+        out.append((t, low_deg, elbow_deg))
     return tuple(out)
 
 
+# The lower end is 5 deg, not 0: MyoArm's shoulder range starts at 0, so a
+# hanging arm would rest on the joint limit and the limit, not the muscles,
+# would carry the load.
+LOW_DEG = 5.0
+
 TASKS = {
-    "T1": Task("T1", _holds(((0.0, 90.0), (20.0, 90.0), (40.0, 90.0)), 6.0, 3.0),
-               "static holds at shoulder 0/20/40 deg, elbow 90 deg"),
-    "T2slow": Task("T2slow", _cycles(40.0, 90.0, 4.0, 3),
-                   "lift/lower shoulder 0-40 deg, elbow 90 deg, 4 s cycle"),
-    "T2fast": Task("T2fast", _cycles(40.0, 90.0, 2.0, 5),
-                   "lift/lower shoulder 0-40 deg, elbow 90 deg, 2 s cycle"),
+    "T1": Task("T1", _holds(((LOW_DEG, 90.0), (25.0, 90.0), (45.0, 90.0)), 6.0, 3.0),
+               "static holds at shoulder 5/25/45 deg, elbow 90 deg"),
+    "T2slow": Task("T2slow", _cycles(LOW_DEG, 45.0, 90.0, 4.0, 3),
+                   "lift/lower shoulder 5-45 deg, elbow 90 deg, 4 s cycle"),
+    "T2fast": Task("T2fast", _cycles(LOW_DEG, 45.0, 90.0, 2.0, 5),
+                   "lift/lower shoulder 5-45 deg, elbow 90 deg, 2 s cycle"),
     "T3": Task("T3", _holds(((10.0, 70.0), (30.0, 80.0), (50.0, 60.0),
                              (25.0, 100.0), (45.0, 70.0)), 3.0, 2.5),
                "free repositioning through five flexed poses"),
