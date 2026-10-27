@@ -53,6 +53,7 @@ def build_defines(args: argparse.Namespace) -> list[str]:
         f"S5_R5_ELBOW_SUPPORT_MA={args.ma}",
         f"S5_R5_SHOULDER_AMPLIFY_MNM={args.amplify_mnm}",
         f"S5_R5_SHOULDER_GAIN={args.gain}",
+        f"S5_R5_SHOULDER_CAP_MNM={args.cap_mnm}",
     ] + (["S5_R5_FORCE_ASSIST", f"S5_R5_FORCE_BOOST_PCT={args.boost_pct}"]
          if args.force_assist else [])
 
@@ -104,7 +105,9 @@ def build_macos(defines: list[str], out: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gain", default="1.0", help="S5_R5_SHOULDER_GAIN (0.001..1.0)")
+    parser.add_argument("--gain", default="1.0", help="S5_R5_SHOULDER_GAIN (0.001..3.0)")
+    parser.add_argument("--cap-mnm", default="205",
+                        help="S5_R5_SHOULDER_CAP_MNM (1..575); 575 = GDS68 rating / 8")
     parser.add_argument("--ma", default="10000",
                         help="S5_R5_ELBOW_SUPPORT_MA (1..20000); 10000 = the 2026-10-27 "
                              "production choice (10 A, M3508 rated)")

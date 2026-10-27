@@ -10,6 +10,15 @@
 #if !defined(S5_R5_SHOULDER_GAIN)
 #define S5_R5_SHOULDER_GAIN 1.0f
 #endif
+/* Rotor-torque cap for the shoulder channel. 205 mNm (2026-10-16) covers the
+ * exoskeleton's own weight; larger values ask the GDS68 to carry part of the
+ * human arm too (575 mNm = 4.6 N*m joint-side, the old-24V rating / 8). */
+#if !defined(S5_R5_SHOULDER_CAP_MNM)
+#define S5_R5_SHOULDER_CAP_MNM 205
+#endif
+#if S5_R5_SHOULDER_CAP_MNM < 1 || S5_R5_SHOULDER_CAP_MNM > 575
+#error "R5 shoulder rotor cap must be 1..575 mNm"
+#endif
 #if !defined(S5_R5_FORCE_BOOST_PCT)
 #define S5_R5_FORCE_BOOST_PCT 50
 #endif
@@ -69,7 +78,8 @@ static const S5SiteProfile site = {
                             .direction = 1, .confirmed = true},
                 .lower_rad = -0.34906585f, .upper_rad = 1.83259571f,
                 .max_speed_rad_s = 2.61799388f,
-                .max_motor_command = 0.205f, .motor_slew_per_s = 0.100f,
+                .max_motor_command = 0.001f * S5_R5_SHOULDER_CAP_MNM,
+                .motor_slew_per_s = 0.100f,
                 .limits_confirmed = true, .feedback_confirmed = true,
                 .protocol_confirmed = true
             },
@@ -304,7 +314,7 @@ static bool base_ready(const S5SiteProfile *p)
         && isfinite(g->amplitude_nm) && g->amplitude_nm > 0.0f
         && (g->sign_g == 1 || g->sign_g == -1)
         && isfinite(p->shoulder_gain) && p->shoulder_gain > 0.0f
-        && p->shoulder_gain <= 1.0f
+        && p->shoulder_gain <= 3.0f
         && isfinite(p->release_slew_per_s.shoulder_rotor_nm)
         && p->release_slew_per_s.shoulder_rotor_nm > 0.0f
         && ShoulderStandstill_ConfigValid(&s->shoulder_standstill)
