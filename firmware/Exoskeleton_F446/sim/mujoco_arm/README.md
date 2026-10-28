@@ -248,6 +248,22 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\burst_report.py
 - 肘幅值 10 A→20 A 在肘主导的锤击里把收益从 3.5% 提到 6.8%（肌肉驱动模型），但同样不影响肩主导动作。
 - 风险：4.6 N·m 已到 GDS68 旧 24 V 额定值，没有热裕量；低抬臂姿态可能"帮过头"（A 阶段热力图已显示该区域激活反而上升），需要小角度实测确认。
 
+## 一键出全套肌肉驱动结果（2026-10-27）
+
+```powershell
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\report_muscle_all.py
+```
+
+依次跑静态保持、爆发动作、三个姿势的场景图，汇总到`build/sim-runs/report-muscle-<时间>/`：
+
+| 文件 | 内容 |
+|---|---|
+| `report.png` | 静态与爆发两张结果图上下拼合 |
+| `static/muscle_static.png` / `.json` | 三个手术姿势的激活量与人体力矩（C0/C1/C2） |
+| `burst/muscle_burst.png` / `.json` | 首次爆发的激活量与角速度曲线、含正功指标 |
+| `scenes/` | P1（20/100）、P4（30/110）、P5（60/70）三个姿势的场景图 |
+| `README.md` | 各文件说明 + 从控制库读回的固件设置 |
+
 ## 肌肉驱动的爆发仿真（2026-10-27）
 
 ```powershell

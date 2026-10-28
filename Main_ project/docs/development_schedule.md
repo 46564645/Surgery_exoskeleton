@@ -3001,3 +3001,10 @@ M6（应用层完整闭环、肌肉模型）保持可选，不在本次批准范
   - 出图：`build/sim-runs/muscle-static-final/muscle_static.png`（静态激活与力矩柱状）、`build/sim-runs/muscle-burst-final2/muscle_burst.png`（G1/G2 激活与角速度曲线）、`build/sim-runs/muscle-final-scenes/`（三个手术姿势的场景图）。
 - 参数/接线变化：固件默认肘 Amplify 10 A；未刷写。
 - 遗留与下一步：等台架窗口时重点看肘 10 A 基线与 10 A Amplify 叠加后是否常撞 20 A 命令上限。
+
+### 2026-10-27｜一键出全套肌肉驱动结果
+
+- 用户同意把报告脚本接到肌肉驱动版本。
+- 本次完成：新增`scripts/report_muscle_all.py`：依次调用`muscle_static.py`、`muscle_burst.py`与`plot_scene.py`（P1/P4/P5），把静态图与爆发图拼成`report.png`，并写`README.md`（各文件说明 + 从控制库读回的固件设置：输出周期、肩增益/上限、肘幅值、肩 Amplify）。README 增用法。
+- 实际结果：一条命令约 40 s 跑完，输出`build/sim-runs/report-muscle-final/`（`report.png`、`static/`、`burst/`、`scenes/`、`README.md`）。主机测试 125 项仍通过。
+- 参数/接线变化：无（仅新增报告脚本与文档）。
