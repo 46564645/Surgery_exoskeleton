@@ -21,7 +21,7 @@ from docx.shared import Cm, Pt, RGBColor
 
 DOCS = Path(__file__).resolve().parent
 FIGURES = DOCS / "figures"
-OUT = DOCS / "validation_report_bilingual.docx"
+OUT = DOCS / "validation_report_bilingual.docx"   # override with --out
 
 ZH_FONT = "Microsoft YaHei"
 EN_FONT = "Calibri"
@@ -452,5 +452,8 @@ def build() -> Path:
 
 
 if __name__ == "__main__":
+    import sys
+    if "--out" in sys.argv:
+        OUT = Path(sys.argv[sys.argv.index("--out") + 1])
     path = build()
     print(f"wrote {path}")

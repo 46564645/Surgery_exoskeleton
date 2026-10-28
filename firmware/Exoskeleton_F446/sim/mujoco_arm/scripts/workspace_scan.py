@@ -165,30 +165,47 @@ def main() -> int:
     benefit = 100.0 * (1.0 - t2 / t1)
     act_cost = 100.0 * (grid("act_C1") / grid("act_C0") - 1.0)
     act_benefit = 100.0 * (1.0 - grid("act_C2") / grid("act_C1"))
+    # A percentage against a near-zero baseline (activation 0.004) is noise:
+    # one such cell gave -85 % and flattened the whole panel. Cells whose
+    # unpowered activation is below 0.01 are left blank instead.
+    act_benefit = np.where(grid("act_C1") >= 0.01, act_benefit, np.nan)
 
     with (out_dir / "workspace.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.2), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.8), constrained_layout=True)
     panels = (
-        (cost, "wearing it, unpowered\n(+% effort vs bare)", "RdBu_r", None),
-        (benefit, "firmware assist\n(% effort back vs unpowered)", "RdYlGn", None),
-        (act_benefit, "assist, muscle activation\n(% back vs unpowered)", "RdYlGn", None),
+        (cost, "wearing it, unpowered\n(+% effort vs bare arm)"),
+        (benefit, "firmware assist\n(% effort back vs unpowered)"),
+        (act_benefit, "assist, muscle activation\n(% back vs unpowered)"),
     )
-    for ax, (values, title, cmap, _) in zip(axes, panels):
-        limit = float(np.nanpercentile(np.abs(values), 95)) or 1.0
-        image = ax.imshow(values, origin="lower", aspect="auto", cmap=cmap,
-                          vmin=-limit, vmax=limit,
-                          extent=[elbows[0], elbows[-1], shoulders[0], shoulders[-1]])
+    for ax, (values, title) in zip(axes, panels):
+        # pcolormesh keeps every sample at its own grid point, so the printed
+        # numbers sit in the middle of their cells (imshow's extent put them on
+        # the cell borders). Colours span this panel's own range, otherwise the
+        # cost map (10-19 %) saturates against a symmetric +/-15 scale.
+        finite = values[np.isfinite(values)]
+        low, high = (float(np.percentile(finite, 2)), float(np.percentile(finite, 98))
+                     if finite.size else (0.0, 1.0))
+        if low < 0.0 < high:
+            limit = max(abs(low), abs(high))
+            low, high = -limit, limit
+        cmap = plt.get_cmap("RdYlGn").copy()
+        cmap.set_bad("0.85")
+        mesh = ax.pcolormesh(elbows, shoulders, values, cmap=cmap,
+                             vmin=low, vmax=high, shading="nearest")
         ax.set(xlabel="elbow  deg", ylabel="shoulder  deg", title=title)
-        fig.colorbar(image, ax=ax, label="%")
-        for sh_deg in shoulders:
-            for el_deg in elbows:
-                value = values[int(np.where(shoulders == sh_deg)[0][0]),
-                               int(np.where(elbows == el_deg)[0][0])]
-                ax.text(el_deg, sh_deg, f"{value:+.0f}", ha="center", va="center", fontsize=6)
+        ax.set_xticks(elbows[::2])
+        ax.set_yticks(shoulders[::2])
+        fig.colorbar(mesh, ax=ax, label="%")
+        for row, sh_deg in enumerate(shoulders):
+            for column, el_deg in enumerate(elbows):
+                value = values[row, column]
+                text = "n/a" if not np.isfinite(value) else f"{value:+.0f}"
+                ax.text(el_deg, sh_deg, text, ha="center", va="center",
+                        fontsize=6.2, color="black" if np.isfinite(value) else "0.35")
     fig.savefig(out_dir / "workspace_map.png", dpi=150)
     plt.close(fig)
 
