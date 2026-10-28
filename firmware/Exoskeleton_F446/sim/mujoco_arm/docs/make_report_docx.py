@@ -447,6 +447,116 @@ def build() -> Path:
            ["figures/06–08_p1/p4/p5.png", "三个姿势的场景图 / scene stills"]],
           widths=[6.0, 10.0])
 
+    # ---- 10 implementation references ------------------------------------
+    heading(doc, "10. 程序实现参考", "10. Implementation References")
+    bi(doc, "本项目遵循“先复用现有实现，再参考开源项目，最后才自行编写”的顺序。"
+            "下表列出实际读过的源码或文档，以及我们拿走了什么、改了什么。"
+            "只列真正用到的，未使用的参考不列入。",
+       "The project follows one order: reuse our own code first, then the referenced "
+       "open-source projects, and only then write new code. The table lists the sources "
+       "actually read, what was taken and what had to be adapted. Only what was used is listed.")
+    table(doc,
+          ["模块 / Module", "参考来源 / Source", "拿走了什么 / Taken", "改了什么 / Adapted"],
+          [["动作放大（Amplify）", "ExoKit `AmplifyReaction::runLoop()`",
+            "速度触发、换向暂停（dirChangeSuspensionTime）的状态机",
+            "改为肩、肘两通道；增量为转子 N·m / C620 A；改为瞬时切换；新增正功率门控（默认关）"],
+           ["人体模型", "MyoSim 0.2.3 `myoarm_r`（Apache-2.0）",
+            "骨骼几何、关节定义、63 块肌肉与力臂",
+            "只保留肩前屈与屈肘两个自由度；抬臂平面烘焙进刚体姿态；去掉肌肉（度量模型保留）"],
+           ["外骨骼几何与运动链", "本项目 CAD 导出包（OrthoEase）",
+            "18 个 STL、两级转动关节、绑定点 site",
+            "只读副本；质量按 STL 体积×ABS 重算；沿调节轨加长 34.8 mm 与人肘对齐；位置执行器换力矩执行器"],
+           ["仿真引擎", "MuJoCo 3.16.0",
+            "刚体动力学、等式约束、`mj_fullM`/`qfrc_bias`/`qfrc_passive`/`qfrc_constraint`",
+            "无（只调用）"],
+           ["肌肉控制方法", "MyoSuite 教程 `3.3_Inverse_Dynamics`、`3.4_Computed_Muscle_Control`；issue #337 维护者建议",
+            "“期望加速度 → 所需广义力 → 静态优化分配肌肉”的流程",
+            "`mj_inverse` 在本版本不填 `qfrc_inverse`（除非开离散标志），改用计算力矩公式自行计算"],
+           ["桌面与场景写法", "MyoSuite/RoboHive `myoarm_relocate.xml`",
+            "静态桌子 box + contype/conaffinity 写法",
+            "桌子、方块、竖杆按本项目尺寸重建；竖杆轴线由 01B 夹持座 STL 截面算出"],
+           ["控制律结构", "OpenSim CMC（Thelen 2003）",
+            "“PD 求期望加速度 + 静态优化分配”的分层",
+            "在 MuJoCo 中实现；无残差执行器"],
+           ["固件底座与驱动", "STM32CubeF4、BetaRobot、UICRM-Embedded、Rhino-Pi-X1（见开源借鉴索引第 3/5/8/9 行）",
+            "HAL 工程组织、CAN 收发与过滤器、GDS68/C620 报文解析骨架",
+            "沿用既有固件，本次未改驱动层"],
+           ["报告工具", "python-docx 1.2.0、matplotlib 3.10.9、numpy 2.4.6",
+            "文档生成与绘图", "无"]],
+          widths=[3.2, 4.4, 4.4, 5.0], size=8)
+
+    # ---- 11 references ---------------------------------------------------
+    heading(doc, "11. 参考文献", "11. References")
+    refs = [
+        ("[1] Choi H.S., Lee S.J., In H. Development and clinical validation of passive shoulder "
+         "exoskeleton with novel gravity compensation mechanism for stabilizing arm tremor of "
+         "surgeons during minimally invasive surgery. Front. Bioeng. Biotechnol. 12 (2024). "
+         "DOI 10.3389/fbioe.2024.1418148"),
+        ("[2] Barbieri D.F., Gonzales A., Srinivasan D., Raghuraman R.N., Carbonell A.M., Cha J.S. "
+         "Evaluation of shoulder-support exoskeletons during simulated laparoscopic surgery across "
+         "representative shoulder postures. Ergonomics (2026). DOI 10.1080/00140139.2026.2721391"),
+        ("[3] Ramella G., Grazi L., et al. Evaluation of antigravitational support levels provided by "
+         "a passive upper-limb occupational exoskeleton in repetitive arm movements. "
+         "Applied Ergonomics (2024). DOI 10.1016/j.apergo.2024.104226"),
+        ("[4] J Safety Research (2024). Evaluation of a passive arm-support exoskeleton for surgical "
+         "team members: results from live surgeries. DOI 10.1016/j.jsr.2024.02.003"),
+        ("[5] Passive shoulder occupational exoskeleton reduces shoulder muscle coactivation in "
+         "repetitive arm movements. Scientific Reports 14 (2024). DOI 10.1038/s41598-024-78090-2"),
+        ("[6] Modulation of shoulder muscle and joint function using a powered upper-limb exoskeleton "
+         "(ArmeoPower). J. Biomech. (2018). PubMed 29506759."),
+        ("[7] Thelen D.G., Anderson F.C., Delp S.L. Generating dynamic simulations of movement using "
+         "computed muscle control. J. Biomech. 36(3):321-328 (2003). DOI 10.1016/S0021-9290(02)00432-3"),
+        ("[8] Maffiuletti N.A., et al. Rate of force development: physiological and methodological "
+         "considerations. Eur. J. Appl. Physiol. 116 (2016). DOI 10.1007/s00421-016-3346-6"),
+        ("[9] ASTM F3517-21. Standard Practice for Movement Tests When Using an Exoskeleton. ASTM "
+         "International (2021)."),
+        ("[10] MuJoCo 3.16.0, Google DeepMind. https://github.com/google-deepmind/mujoco"),
+        ("[11] MyoSim 0.2.3 / MyoSuite, MyoHub. https://github.com/MyoHub/myo_sim ; "
+         "https://github.com/MyoHub/myosuite"),
+        ("[12] ExoKit, HCI Lab Saarland. https://github.com/HCI-Lab-Saarland/ExoKit"),
+        ("[13] MyoSuite issue #337（肌肉模型的反解建议）. "
+         "https://github.com/MyoHub/myosuite/issues/337"),
+    ]
+    for ref in refs:
+        p = para(doc, ref, size=9, space_after=3)
+        p.paragraph_format.left_indent = Cm(0.8)
+        p.paragraph_format.first_line_indent = Cm(-0.8)
+
+    # ---- 12 work performed ----------------------------------------------
+    heading(doc, "12. 本项目完成的工作", "12. Work Performed")
+    bi(doc, "以下按“仿真环境、控制接入、实验、固件、文档”五块列出本次实际完成的内容，"
+            "以及明确没有做的事。",
+       "The list below covers what was actually delivered in five blocks (simulation "
+       "environment, control integration, experiments, firmware, documentation) and what was "
+       "deliberately not done.")
+    table(doc,
+          ["类别 / Area", "完成内容 / Delivered"],
+          [["仿真环境",
+            "MuJoCo 场景：MyoArm 人体 + CAD 外骨骼 + 0.90 m 桌子与竖杆 + 两条软绑带；"
+            "肩/肘轴对齐、调节轨加长、竖杆穿过夹持座孔；参数集中在 params.json 并标注来源"],
+           ["控制接入",
+            "把固件 App/control 与 s5_site.c 编译成主机库，仿真按 10 ms 调用；"
+            "抽出 s5_assist_compose 供固件与仿真共用；新增 125 项主机测试"],
+           ["人体模型",
+            "理想关节力矩版；肌肉驱动版（计算力矩前馈 + 静态优化 + 63 块肌肉，含激活动力学）"],
+           ["实验",
+            "工作空间扫描（12×9）；三个手术姿势各 60 s；锤击与快速抬举两个爆发动作；"
+            "T1–T3 理想力矩对照；每种条件 C0/C1/C2"],
+           ["主要结果",
+            "前三角肌相对穿戴降低 11.7–20.3%；相对裸臂约 3%；爆发 6.4%（肘）/0.7%（肩）；"
+            "查明放下阶段 +10.5% 的根因；给出惯性/重力分解（250 ms 时重力仅占 8.6%）"],
+           ["固件改动",
+            "肘幅值 2 A→10 A；肩增益 1.5、上限 300 mNm（新编译选项）；"
+            "肘通道新增 Amplify；Amplify 改瞬时切换；输出周期 50→10 ms；"
+            "正功率门控（默认关）。镜像已编译（142392 B，0 警告），**未刷写**"],
+           ["工具与文档",
+            "15 个脚本（模型、检查、实验、报告、扫描）；一键出图；"
+            "Markdown 与中英对照 Word 报告；schedule 1.2–1.4 节与逐日开发日志"],
+           ["未做 / Not done",
+            "台架对标（M5 取消）；镜像刷写与实机验证；方向相关重力基线；"
+            "跨受试者变异性；肩外展/旋转自由度"]],
+          widths=[3.0, 13.0], size=8.5)
+
     doc.save(OUT)
     return OUT
 

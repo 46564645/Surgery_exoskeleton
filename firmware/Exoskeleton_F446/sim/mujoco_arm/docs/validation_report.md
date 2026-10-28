@@ -154,7 +154,47 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\workspace_scan.py      
 build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\check_static.py        # 场景与力学检查
 ```
 
-## 9. 图索引
+## 9. 程序实现参考
+
+复用顺序：本项目现有实现 → 开源项目 → 自行编写。只列真正用到的。
+
+| 模块 | 参考来源 | 拿走了什么 | 改了什么 |
+|---|---|---|---|
+| 动作放大 | ExoKit `AmplifyReaction::runLoop()` | 速度触发、换向暂停状态机 | 肩/肘两通道；增量单位改为转子 N·m 与 C620 A；瞬时切换；新增正功率门控（默认关） |
+| 人体模型 | MyoSim 0.2.3 `myoarm_r` | 骨骼、关节、63 块肌肉 | 只留两自由度；抬臂平面烘焙；去肌肉（度量模型保留） |
+| 外骨骼 | 本项目 CAD 导出包 | 18 个 STL、两级转动关节、绑定点 | 质量按 STL×ABS 重算；调节轨加长 34.8 mm；执行器改力矩 |
+| 仿真引擎 | MuJoCo 3.16.0 | 动力学、等式约束、`mj_fullM`/`qfrc_*` | 只调用 |
+| 肌肉控制 | MyoSuite 教程 3.3/3.4、issue #337 | 期望加速度 → 广义力 → 静态优化 | `mj_inverse` 在本版本不填 `qfrc_inverse`，改用计算力矩公式 |
+| 场景写法 | `myoarm_relocate.xml` | 静态桌子 box + contype 写法 | 桌子/方块/竖杆按本项目尺寸重建；竖杆轴线由 STL 截面算出 |
+| 控制结构 | OpenSim CMC（Thelen 2003） | PD 求期望加速度 + 静态优化分层 | 在 MuJoCo 中实现，无残差执行器 |
+
+## 10. 参考文献
+
+1. Choi H.S. et al. *Front. Bioeng. Biotechnol.* 12 (2024). DOI 10.3389/fbioe.2024.1418148
+2. Barbieri D.F. et al. *Ergonomics* (2026). DOI 10.1080/00140139.2026.2721391
+3. Ramella G. et al. *Applied Ergonomics* (2024). DOI 10.1016/j.apergo.2024.104226
+4. *J. Safety Research* (2024), live surgeries. DOI 10.1016/j.jsr.2024.02.003
+5. *Scientific Reports* 14 (2024), coactivation. DOI 10.1038/s41598-024-78090-2
+6. ArmeoPower, *J. Biomech.* (2018). PubMed 29506759
+7. Thelen D.G. et al. *J. Biomech.* 36(3):321-328 (2003). DOI 10.1016/S0021-9290(02)00432-3
+8. Maffiuletti N.A. et al. *Eur. J. Appl. Physiol.* 116 (2016). DOI 10.1007/s00421-016-3346-6
+9. ASTM F3517-21（外骨骼动作测试标准实践）
+10. MuJoCo 3.16.0；MyoSim 0.2.3 / MyoSuite；ExoKit；MyoSuite issue #337
+
+## 11. 本项目完成的工作
+
+| 类别 | 内容 |
+|---|---|
+| 仿真环境 | MyoArm + CAD 外骨骼 + 0.90 m 桌子与竖杆 + 两条软绑带；轴对齐、调节轨加长、竖杆穿孔；参数集中且标注来源 |
+| 控制接入 | 固件原码编成主机库、10 ms 调用；抽出 `s5_assist_compose` 共用；125 项主机测试 |
+| 人体模型 | 理想力矩版 + 肌肉驱动版（计算力矩 + 静态优化 + 63 肌肉） |
+| 实验 | 工作空间 12×9；三姿势 ×60 s；两个爆发动作；T1–T3；C0/C1/C2 |
+| 主要结果 | 三角肌 −11.7…−20.3%（相对穿戴）；相对裸臂约 3%；爆发 6.4%/0.7%；放下阶段 +10.5% 根因查明 |
+| 固件改动 | 肘 2→10 A；肩增益 1.5/上限 300；肘 Amplify；Amplify 瞬时；输出 50→10 ms；正功率门控（关）。镜像已编译未刷写 |
+| 工具与文档 | 15 个脚本、一键出图、Markdown + 中英对照 Word、schedule 1.2–1.4 与日志 |
+| 未做 | 台架对标、刷写与实机验证、方向相关基线、跨受试者变异性、肩外展/旋转自由度 |
+
+## 12. 图索引
 
 | 文件 | 内容 |
 |---|---|
