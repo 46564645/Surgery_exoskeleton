@@ -67,11 +67,11 @@
 | `AGENTS.md` | 本约定 |
 | `README.md` | 环境搭建与运行命令 |
 | `requirements.txt` | 固定版本的 Python 依赖（新依赖选发布满 7 天的版本） |
-| `scripts/` | 冒烟、检查、构建桥接等小脚本 |
+| `scripts/` | 构建桥接、两项检查、肌肉驱动实验、工作空间扫描、出图（2026-10-28 清理后共 8 个） |
 | `model/` | `params.json` 与模型生成脚本`build_model.py`（M1b） |
 | `model/orthoease/` | 用户 Fusion 导出的外骨骼包（2026-10-27），**只读副本**；改动一律写在`build_model.py`里，Fusion 重新导出时整体替换此目录 |
 | `bridge/` | 调用固件控制代码的 C 桥接（M2b） |
-| `sim/` | Python 仿真模块（M3–M4） |
+| `sim/` | Python 仿真模块：控制库封装`controller.py`、爆发/姿势定义`burst.py`、肌肉驱动`muscle_drive.py`、肌肉激活`muscles.py` |
 | `../../build/sim-venv/` | 虚拟环境（已被固件 `.gitignore` 忽略） |
 | `../../build/sim-tmp/` | pip 缓存与临时文件 |
 | `../../build/sim/`、`../../build/sim-runs/` | 生成的模型、DLL、实验结果 |

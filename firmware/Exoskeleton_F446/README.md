@@ -46,7 +46,7 @@
 - 构建：`cmake --preset WindowsDebug -B build/r5-ma10000 -DS5_R5_DUAL_FOLLOW=ON -DS5_R5_ELBOW_SUPPORT_SIGN=1 -DS5_R5_ELBOW_SUPPORT_MA=10000 -DS5_R5_SHOULDER_AMPLIFY_MNM=0`，其余选项与板上镜像相同。
 - 产物：`build/r5-ma10000/Exoskeleton_F446.elf` 与 `.bin`，FLASH 141896 B、RAM 12928 B、0 警告；BIN SHA256 `5D461E3935CBF6FDD81F4ABA8DB7C732990E91AA312553463825137FA7F2C4A4`。
 - 验证：主机测试 124 项通过；**未刷写、未上板**，板上仍是下方 2026-10-21 的 `MA=2000` 镜像。刷写时按既有流程做一次有界窗口（备份→写入→独立读回）。
-- 扫描工具：`sim/mujoco_arm/scripts/sweep_elbow_ma.py`（只重建仿真用控制库，不改源码）。
+- 扫描工具：`sim/mujoco_arm/scripts/build_bridge.py --ma <值>` 重建仿真用控制库（不改源码），再跑 `report_muscle_all.py` 对比（它读默认控制库，扫完用默认参数再执行一次 `build_bridge.py` 恢复）；原一次性扫描脚本与理想力矩版 `run_experiment.py` 已于 2026-10-28 清理。
 
 ## HX711 临时力值与去皮（2026-10-17）
 

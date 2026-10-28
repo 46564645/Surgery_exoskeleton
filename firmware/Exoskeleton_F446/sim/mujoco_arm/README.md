@@ -16,14 +16,9 @@ H:\app\python.exe -m venv build\sim-venv
 build\sim-venv\Scripts\python.exe -m pip install --only-binary=:all: -r sim\mujoco_arm\requirements.txt
 ```
 
-## 冒烟检查
+## 环境自检
 
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\smoke_env.py              # 无界面
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\smoke_env.py --viewer 5   # 打开查看器 5 秒
-```
-
-输出 MuJoCo 版本、单摆 30° 静止所需力矩（`mj_inverse` 与公式对照）和步进 1 s 后的角度。
+`scripts/check_static.py` 加载真实模型并做几何/力学检查，可当作环境自检；`scripts/plot_scene.py --viewer 10` 打开查看器。
 
 **查看器状态（2026-10-26）**：当天早些时候 Intel Iris Xe 与 RTX 3060 都处于设备管理器 Code 43，桌面由 ToDesk 虚拟显示输出、没有 OpenGL，查看器与离屏渲染都失败。同日晚显卡恢复（两块均正常，Iris Xe 驱动 2560×1600），实测 `--viewer` 能开窗、`mujoco.Renderer` 能离屏出图，两条路径都可用。此前"Windows 版只支持 WGL"的结论不变，只是现在 WGL 有可用的驱动。
 
@@ -53,47 +48,39 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\check_static.py    # �
 build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,60
 build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --pose 60,60 --hide human
 build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\plot_scene.py --viewer 10
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\lift_contact.py      # 抬臂到碰桌，出拼图
 ```
 
-`plot_scene.py`除五个视角外还有`pole`视角：近距离看竖杆穿过 01B 夹持座孔。`lift_contact.py`用人肩 PD 抬起手臂，打印首次接触的时间/角度/接触部件，并输出整景+手部特写两行拼图。
+`plot_scene.py`除五个视角外还有`pole`视角：近距离看竖杆穿过 01B 夹持座孔。
 
 **当前数值（2026-10-27，模型假设下）**：外骨骼上臂组 0.656 kg、前臂组 0.177 kg、转台 0.499 kg；外骨骼水平自重力矩 1.728 N·m（固件模型 1.64）；人臂水平 10.5 N·m；穿戴不通电 60° 保持时人肩力矩 9.37→10.65 N·m；前臂绑带内侧离尺骨轴 41.5 mm（截面 37 mm）。
 
 **已知边界**
 
-- 桌高 0.90 m 时，直臂前屈约 **6.6°** 拇指尖就碰到桌面靠人一侧的前下棱（接触点 z=0.85 m、y=−0.068 m）；肘 45° 时下垂姿态即接触，肘 90° 时前屈到 110° 都不碰。用`lift_contact.py`可复现并出图。**用户 2026-10-27 决定不再为这个干涉调整布局**：保留碰撞、接受直臂会碰桌；M4 动作按能做的范围设计，若确实需要自由空间扫动，把`params.json`的`table.collision_enabled`临时设为 false。
+- 桌高 0.90 m 时，直臂前屈约 **6.6°** 拇指尖就碰到桌面靠人一侧的前下棱（接触点 z=0.85 m、y=−0.068 m）；肘 45° 时下垂姿态即接触，肘 90° 时前屈到 110° 都不碰。**用户 2026-10-27 决定不再为这个干涉调整布局**：保留碰撞、接受直臂会碰桌；M4 动作按能做的范围设计，若确实需要自由空间扫动，把`params.json`的`table.collision_enabled`临时设为 false。
 - 绑带 solref/torquescale、关节阻尼、调节轨行程、侧向距离都是假设；绑带力只看量级，M5 之前不当作真实力。
 - 外骨骼两根轴是"方正"的（沿 x），人体解剖轴与之差 3–4°，由软绑带吸收。
 - 控制参数不在模型里：肩 1.64 N·m、肘 mA×kT、限幅与周期都留在固件，M2b 通过 DLL 读同一份。
 
-## M4 实验运行器（2026-10-27）
+## 当前主流程（2026-10-28 清理后）
 
-一条命令跑同一动作的三种条件，输出人的用力对照：
+三种条件：C0 裸臂（绑带约束关掉）、C1 穿戴但外骨骼不通电、C2 穿戴且由固件控制库驱动（周期与参数从库里读回）。
 
-| 条件 | 含义 |
+| 用途 | 命令（在 `firmware/Exoskeleton_F446` 下） |
 |---|---|
-| C0 | 裸臂：不绑外骨骼（约束关掉），人只承担自己的手臂 |
-| C1 | 穿戴但外骨骼不通电：人还要承担外骨骼重量 |
-| C2 | 穿戴且由固件控制库驱动（每 50 ms 调用一次，参数取自`s5_site.c`） |
+| 编译控制库 | `build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\build_bridge.py` |
+| 控制库对照检查 | `build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\test_bridge.py` |
+| 模型场景检查 | `build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\check_static.py` |
+| 静态 + 爆发 + 场景图（肌肉驱动，报告主数据） | `build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\report_muscle_all.py` |
+| 工作空间热力图 | `build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\workspace_scan.py` |
+| 重新生成 Word 报告 | `build\sim-venv\Scripts\python.exe sim\mujoco_arm\docs\make_report_docx.py` |
 
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task T2slow
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task T1,T2slow,T2fast,T3 --duration 20
-```
+改控制代码或参数后的回归：`build_bridge.py`（需要时加 `--gain/--ma/--cap-mnm/...`）→ `test_bridge.py` → `report_muscle_all.py`，与报告数字对比。
 
-| 文件 | 作用 |
-|---|---|
-| [sim/tasks.py](sim/tasks.py) | 参考动作：T1 静态保持、T2slow/T2fast 抬放、T3 自由变姿态；段间用最小加加速度曲线。默认肘 90°（直臂会碰桌） |
-| [sim/runner.py](sim/runner.py) | 仿真循环：人体 PD 跟踪参考（力矩即“人的用力”），C2 时按固件周期调用 DLL |
-| [sim/metrics.py](sim/metrics.py) | 分肩/肘的 RMS、峰值、绝对值积分、跟踪误差、绑带力、桌面接触步数；抬/放分段；相对 C1 的省力率 |
-| [sim/plots.py](sim/plots.py) | 四联图：肩力矩、肘力矩、绑带力、各条件 RMS 柱状图 |
-| [run_experiment.py](run_experiment.py) | 命令行入口，写`build/sim-runs/<时间>/`的`samples_*.csv`、`summary_*.json`、`figure_*.png` |
-| [scripts/report_figures.py](scripts/report_figures.py) | 从一次运行的目录汇总出报告图（时序、柱状、场景、可选 GIF） |
+## M4 理想力矩实验（2026-10-27，历史记录）
+
+当时用`run_experiment.py`（配合`sim/runner.py`、`tasks.py`、`metrics.py`、`plots.py`和`scripts/report_figures.py`），让人体以 PD 理想力矩跟踪 T1–T3 参考动作。报告改用肌肉驱动版后，这套脚本在 2026-10-28 清理时删除；下面的数字只保留作历史对照。
 
 ### 结果汇总（2026-10-27，最终参数 MA = 10 A，模型假设下）
-
-数据：`build/sim-runs/final2-20261027/`；出图脚本`scripts/report_figures.py`。
 
 | 动作 | 时长 | C0 裸臂 | C1 穿戴不通电 | C2 穿戴+助力 | 穿戴代价 | 助力收益 |
 |---|---:|---:|---:|---:|---:|---:|
@@ -108,24 +95,11 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task T1,T2s
 - 分关节看：肩侧省力约 10%、肘侧约 7%。肩侧在所有幅值下都稳定，说明肩通道已把外骨骼肩侧自重抵消；剩余缺口在肘侧与前臂连杆。
 - 任务从 5° 起而不是 0°：MyoArm 的肩关节下限就是 0°，从 0° 起步时手臂靠在关节止挡上，止挡而不是肌肉在承力，会让对比失真。
 
-出图：
-
-| 文件 | 内容 |
-|---|---|
-| `report/report_timeseries.png` | T2slow 时序：肩力矩、肘力矩、上臂绑带力，C0/C1/C2 三条曲线加参考轨迹 |
-| `report/report_bars.png` | 四个动作的总用力柱状图 + “穿戴代价 / 助力收益” |
-| `report/report_scenes.png` | 4 个代表姿态 × 右视/斜视 的场景图 |
-| `report/lift_anim.gif` | 抬放循环动画 |
-
 绑带软度按 0.05 s 时间常数（Fusion 包建议的 0.02 s 会让绑带与 3–4° 轴倾角对抗，90° 屈肘时产生 164/70 N；0.05 s 下为 25/11 N）。
 
 ### 肘通道幅值扫描（2026-10-27）
 
-固件肘通道 = `MA × 0.02 N·m × max(0, sin(q_sh+q_el))`，`MA` 是编译选项`S5_R5_ELBOW_SUPPORT_MA`。用 T1 动作、只重建控制库（不改源码、不刷写）：
-
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\sweep_elbow_ma.py
-```
+固件肘通道 = `MA × 0.02 N·m × max(0, sin(q_sh+q_el))`，`MA` 是编译选项`S5_R5_ELBOW_SUPPORT_MA`。当时用 T1 动作、按不同 MA 只重建控制库（不改源码、不刷写）；结论已落成固件默认 10 A，一次性扫描脚本在 2026-10-28 清理时删除，重新扫描可用 `build_bridge.py --ma` 手工重建。
 
 | MA | 肘幅值 | 总省力（相对 C1） | 肩 | 肘 | 电流含义 |
 |---:|---:|---:|---:|---:|---|
@@ -155,11 +129,9 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\workspace_scan.py
 
 规律（当前默认）：抬臂越高、肘越弯，收益越大（肩 60°/肘 70–110° 处 19–24%）；**低抬臂（肩 10–15°）区域激活收益为负**（多为 −3…−5%，个别 −14%），因为补偿在该姿态下"帮过头"。旧参数下该区域记为"肩 5–20° + 肘 30–60°"，其中最极端的 −62%/−85% 是激活基线过小（约 0.04）造成的百分比假象，2026-10-28 起不再计入。
 
-### B 三个手术姿势（各 60 s）
+### B 三个手术姿势（各 60 s，理想力矩版，历史记录）
 
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task B_P1,B_P4,B_P5
-```
+当时用`run_experiment.py --task B_P1,B_P4,B_P5`跑出（脚本已于 2026-10-28 清理）；当前三个姿势的结果以肌肉驱动版`muscle_static.py`为准。
 
 | 姿势 | C0 | C1 | C2 | 穿戴代价 | 助力收益 |
 |---|---:|---:|---:|---:|---:|
@@ -169,11 +141,9 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\run_experiment.py --task B_P1,B
 
 60 s 保持期间姿势漂移很小（肩力矩峰值与均方根差 ≤0.02 N·m），说明模型里没有出现缓慢下垂；疲劳代理需要更长的保持或加入肌肉疲劳模型才有意义。
 
-### G 爆发动作
+### G 爆发动作（理想力矩版，2026-10-27）
 
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\burst_report.py
-```
+这一版人体用简化 PD + 前馈；一次性脚本`burst_report.py`在 2026-10-28 清理时删除，当前爆发结果以肌肉驱动版（`scripts/muscle_burst.py`）为准，见下文"肌肉驱动的爆发仿真"。
 
 人用"PD + 重力前馈 + 45 ms 力矩上升滞后"模拟爆发发力；每周期为"冲程→保持 2 s→返回"，1 ms 采样。
 
@@ -321,11 +291,8 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\muscle_burst.py --burst
 | 文件 | 作用 |
 |---|---|
 | [sim/muscles.py](sim/muscles.py) | `MuscleEffort`：读肌肉长度/张力、数值差分求力臂、活动集法解静态优化 |
-| [scripts/activation_report.py](scripts/activation_report.py) | 从`run_experiment.py`的输出算激活量，写`activation.json`与`report_activation.png` |
 
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\activation_report.py --run build\sim-runs\final2-20261027
-```
+当时用一次性脚本`activation_report.py`从`run_experiment.py`的输出算激活量（2026-10-28 清理时删除）；现在的肌肉激活量直接由 `scripts/muscle_static.py` / `scripts/muscle_burst.py` 在肌肉驱动仿真里给出。
 
 结果（所有肌肉激活量之和，越低越省力；括号内为相对裸臂）：
 
@@ -352,27 +319,19 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\activation_report.py --
 | [bridge/site_stub.c](bridge/site_stub.c) | 仅为链接满足 `S3ShoulderService_ReadProfileReady`（桥接不调用就绪检查） |
 | [scripts/build_bridge.py](scripts/build_bridge.py) | MSVC 编 `build/sim/sim_bridge.dll`；macOS 走 clang 编 `.dylib`；`--gain/--ma/--sign/--amplify-mnm/--force-assist` 对应固件 CMake 选项 |
 | [sim/controller.py](sim/controller.py) | ctypes 封装；8:1、kt、限幅、周期等数值由 `Controller.site` 从库里读回，不在 Python 重写 |
-| [scripts/test_bridge.py](scripts/test_bridge.py) | 与固件公式对照；`--sweep` 额外用 gain 0.6 重建并检查扫描通路 |
+| [scripts/test_bridge.py](scripts/test_bridge.py) | 与固件公式逐项对照（姿态、限幅、assist 门、失效反馈、力触发关闭） |
 
 ```powershell
 build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\build_bridge.py
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\test_bridge.py --sweep
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\test_bridge.py
 ```
 
-实测：30/60/90° 姿态下肩转子 0.1025/0.1775/0.2050 N·m、肘 1.0/1.73/2.0 A，与手算一致；assist 关为 0；肩反馈失效时返回 0；力触发默认关闭；gain 0.6 时肩命令正好 0.6 倍。
+实测：30/60/90° 姿态下肩转子 0.1025/0.1775/0.2050 N·m、肘 1.0/1.73/2.0 A，与手算一致；assist 关为 0；肩反馈失效时返回 0；力触发默认关闭。
 
-## M3 传感器 / 执行器 / 时序（2026-10-26）
+## M3 传感器 / 执行器 / 时序（2026-10-26，模型已于 2026-10-28 清理）
 
-| 文件 | 作用 |
-|---|---|
-| [sim/timing.json](sim/timing.json) | **只放固件没通过桥接暴露的模型假设**：肘 8192 tick/rev、肘滞后 49 ms、肩滞后未知(0)、HX711 10 SPS/100 ms/σ0.001 N |
-| [sim/io_model.py](sim/io_model.py) | `SensorModel`（肩 50 ms 保持 + 肘量化）、`CommandHold`（50 ms 零阶保持）、`ActuatorModel`（×8 / ×0.02 + 一阶滞后）、`ForceModel`（10 SPS + 延迟 + 噪声） |
-| [scripts/check_timing.py](scripts/check_timing.py) | 六组数值检查，含 DLL 闭环 2 s |
+当时的做法：`sim/io_model.py` + `sim/timing.json` 把肩角 50 ms 保持、肘 8192 tick/rev 量化、命令 50 ms 零阶保持、执行器一阶滞后和 HX711 10 SPS 延迟写成模型，`scripts/check_timing.py` 做六组数值检查。实测过：肩角每秒 20 次更新、肘角按 0.0439° 台阶、肘力矩 49 ms 到 63.2%、力 5 s 采 50 个样本、噪声 σ0.84 mN、闭环 2 s 稳态 1.420 N·m 与固件模型一致。
 
-```powershell
-build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\check_timing.py
-```
+**清理时删除的原因**：查代码确认 `sim/runner.py` 从未引用 `io_model`，所有实验结果都是在**无传感器延迟的理想闭环**里跑出来的；这套时序模型只服务那六组自检，对报告数字没有影响。若以后要在闭环里体现延迟/量化，应直接加在实际在用的仿真循环里（现为 `sim/muscle_drive.py`、`scripts/workspace_scan.py`；`runner.py` 已随 M4 理想力矩版一起删除），而不是恢复这份孤立模型。
 
-实测：肩角每秒 20 次更新且两次之间保持不变；命令每秒 20 次更新；肘角按 0.0439° 台阶；肘力矩 49 ms 到 63.2%；力 5 s 采 50 个样本、阶跃延迟 100 ms、噪声 σ0.84 mN；闭环 2 s 内肩力矩按 20 Hz 阶梯跟随，稳态 1.420 N·m 与固件模型一致。
-
-**时序参数不重复**：send interval、肩属性读取周期、反馈超时、会话时长、8:1、kt、限幅都从 DLL 的 `SimBridgeSite` 读回，`timing.json` 只存仿真假设。
+**时序参数不重复**：send interval、肩属性读取周期、反馈超时、会话时长、8:1、kt、限幅都从 DLL 的 `SimBridgeSite` 读回。

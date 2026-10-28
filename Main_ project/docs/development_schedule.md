@@ -3065,3 +3065,28 @@ M6（应用层完整闭环、肌肉模型）保持可选，不在本次批准范
 - 实际结果：接手时复跑`test_bridge.py`与`check_static.py`，全部通过；Word 由脚本重新生成，未用 Word 打开检查排版。
 - 发现未处理：`workspace_scan.py` C2 调用控制库的周期写死为 50 ms，固件现为 10 ms。静态保持取稳态，对结果影响预计很小，但未验证；仓库根目录有未跟踪的`package-lock.json`，来源不明，未动。
 - 遗留与下一步：仿真主线已收尾；可选方向为有界台架窗口验证`r5-assist`、M6 应用层闭环与故障注入、方向相关基线。
+
+### 2026-10-28｜仿真目录清理：删一次性脚本与严格自检，保留报告复现链路
+
+- 用户要求：整理`sim/mujoco_arm/`，删除冗余测试、无必要严格测试、无用结果与模块；先出计划再执行。用户选定"P0 全删+精简"与"结果只留报告引用的一套"。
+- 本次完成：删除 7 个一次性脚本——`smoke_env.py`（M0 单摆冒烟）、`lift_contact.py`（桌面干涉诊断，结论已冻结）、`check_timing.py`、`sweep_elbow_ma.py`（MA 已定 10 A）、`burst_report.py`（理想力矩爆发，被肌肉版取代）、`activation_report.py`（被`muscle_static.py`取代）；随之删除只被`check_timing.py`引用的`sim/io_model.py`与`sim/timing.json`。脚本数 15→8。
+- 精简保留：`test_bridge.py`去掉`--sweep`（重建 gain 0.6 DLL 的一次性通路）；`check_static.py`去掉[7]挪桌造接触、[8]接触角扫描与"孔位与 params.json 比对"三项一次性布局核对，保留轴对齐、质量、重力矩、被动稳定、穿戴更重、绑带随动。
+- 关键依据：查 import 确认`sim/runner.py`从未引用`io_model`，所有实验结果都在**无传感器延迟的理想闭环**里跑出；M3 时序模型只服务那六组自检，删除不影响任何报告数字。README 的 M3 节改写为这条说明。
+- 文档同步：`README.md`删对应命令、加"清理时删除"说明；`validation_report.md`工具数 15→8；`sim/tasks.py`与`workspace_scan.py`的 docstring 去掉已删文件引用；`firmware/README.md`肘扫描工具改为`build_bridge.py --ma`；本目录`AGENTS.md`的`sim/`说明改为"M4 实验、肌肉驱动与指标"。
+- 结果清理（`build/`，均未入库）：`sim-runs`由 40 个目录/114 MB 收到 6 个/21 MB（`final2-20261027`、`workspace-final`、`report-muscle-20261028-100518`、`muscle-static-final`、`muscle-burst-final2`、`burst-final-20261027`）；`sim-tmp`缓存清空（78 MB→8 KB）。`sim-venv`保留。
+- 实际结果（本机实测）：`build_model.py`生成模型、`build_bridge.py`编译、`test_bridge.py`全部通过（30/60/90° 肩 0.1538/0.2663/0.3000 N·m、肘 5/8.66/10 A）、`check_static.py`全部通过（外骨骼水平 1.728 N·m、人臂 10.526 N·m、穿戴不通电 9.369→10.742 N·m）、`run_experiment.py --task T1 --duration 8`跑通（C2 相对 C1 省力 9.0%，与清理前一致）。全部脚本`py_compile`通过。未跑全套`report_muscle_all.py`（耗时），其依赖模块均保留。
+- 参数/接线变化：无，固件未改。
+- 遗留与下一步：若以后要在闭环里体现传感器延迟/量化，应在`sim/runner.py`内实现，不再恢复孤立的`io_model`；`workspace_scan.py` C2 周期仍写死 50 ms 的问题本次未动。
+
+### 2026-10-28｜仿真目录清理续：删 M4 理想力矩链、精简 burst.py、全套复跑确认结果不变
+
+- 衔接：上一条清理由另一个会话完成第一批（7 个脚本 + `io_model`/`timing.json`），中途停止；本会话接手，按用户已批准的方案补完。用户选定：理想力矩版 M4 整套删除；`build/`只留报告引用的一套结果；另调研固件`tests/`。
+- 本次完成：
+  - 删除 M4 理想力矩链：`run_experiment.py`、`sim/runner.py`、`sim/tasks.py`、`sim/metrics.py`、`sim/plots.py`、`scripts/report_figures.py`（报告已全部用肌肉驱动版，回归改用`report_muscle_all.py`）。现存脚本 8 个、`sim/`模块 4 个（`controller`、`burst`、`muscle_drive`、`muscles`）。上一条"`sim/runner.py`内实现延迟"的建议随之改为加在实际在用的仿真循环里。
+  - `sim/burst.py` 253→85 行：只留`Burst`、`BURSTS`、`reference`、`HOLD_S`、`TORQUE_LAG_S`，删除只被`burst_report.py`用的`run_burst`/`BurstRun`/`burst_metrics`和对`runner.GAINS`的依赖。
+  - 文档：README 新增"当前主流程"命令表，M4 与 B 节改为历史记录；固件 README 肘扫描步骤改用`report_muscle_all.py`；子项目 AGENTS 的`scripts/`、`sim/`说明更新；报告与 Word 把 T1–T3 标为"早期，脚本已清理"并重新生成 Word；`requirements.txt`补上漏写的`python-docx==1.2.0`、`lxml==6.1.3`（2026-09-02 发布）。
+  - `build/`：删除 88 个变体控制库文件（`sim_bridge_*`），只留默认`sim_bridge.dll`；`sim-runs`只留`report-muscle-cleanup`（本次复跑）与`workspace-final`，共 7.6 MB；`sim-tmp`清空。
+- 实际结果（本机实测）：`build_bridge.py`、`test_bridge.py`、`check_static.py`全部通过；全部脚本`py_compile`通过。`report_muscle_all.py`全套复跑：静态 P1/P4/P5、DELT1 −20.3/−13.6/−11.7%、爆发 G1 4.69/4.87/4.56 N·m、G2 44.71/46.45/46.11 N·m，均与报告一致；`workspace_scan.py`复跑为 +13.2%/+13.7%/+6.9%，与报告一致。报告图 01–05 与仓库版本**逐字节相同**；场景图 06–08 约 0.4% 像素有渲染差异，目视相同，仓库图未替换。
+- 过程问题：第一次让`report_muscle_all.py`与`workspace_scan.py`并行时，前者在`build_model.py`编译网格惯量处报`MemoryError: bad allocation`。当时系统可提交内存只剩约 3.5 GB，单独重跑即通过，判断为两个进程同时占用内存所致，代码未改；以后这两条不要并行跑。
+- 参数/接线变化：无，固件未改。
+- 遗留与下一步：`workspace_scan.py` C2 周期写死 50 ms 仍未动；固件`tests/`整理计划另行给出。

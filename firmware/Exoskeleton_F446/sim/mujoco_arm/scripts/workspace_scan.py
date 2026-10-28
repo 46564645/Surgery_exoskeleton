@@ -10,7 +10,7 @@ conditions:
   C2  worn + firmware     (straps on, exoskeleton torque = the DLL command)
 
 The muscle activation for each condition comes from the same static
-optimisation as ``activation_report.py``. Writes a CSV, a JSON summary and a
+optimisation (``sim/muscles.py``) as ``muscle_static.py``. Writes a CSV, a JSON summary and a
 three-panel heat map to ``build/sim-runs/workspace-<timestamp>/``.
 
 Usage (from firmware/Exoskeleton_F446):

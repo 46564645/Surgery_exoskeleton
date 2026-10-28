@@ -8,14 +8,12 @@ caps), so a mismatch means the bridge or the site wiring is wrong.
 
 Usage (from firmware/Exoskeleton_F446):
     build\\sim-venv\\Scripts\\python.exe sim\\mujoco_arm\\scripts\\test_bridge.py
-    ... --sweep      # also rebuild with gain 0.6 and check the C3 sweep path
 """
 
 from __future__ import annotations
 
 import argparse
 import math
-import subprocess
 import sys
 from pathlib import Path
 
@@ -50,8 +48,6 @@ def expected_command(site: dict, q_sh: float, q_el: float) -> tuple[float, float
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--sweep", action="store_true",
-                        help="also build gain 0.6 and check the sweep path")
     parser.add_argument("--lib", default=str(DEFAULT_LIB))
     args = parser.parse_args()
 
@@ -125,21 +121,6 @@ def main() -> int:
                               force_n=0.0, force_valid=False)
     check("a force sample changes nothing while the feature is off",
           near(with_force.shoulder_rotor_nm, without.shoulder_rotor_nm, 1e-6))
-
-    if args.sweep:
-        print("\n[6] C3 sweep path: rebuild with gain 0.6")
-        swept = Path(args.lib).with_name("sim_bridge_g06" + Path(args.lib).suffix)
-        subprocess.run([sys.executable, str(SIM_ROOT / "scripts" / "build_bridge.py"),
-                        "--gain", "0.6", "--out", str(swept)], check=True)
-        low = Controller(swept)
-        q = math.radians(30.0)
-        high_cmd = controller.step(shoulder_rad=q, shoulder_vel=0.0, elbow_rad=0.0,
-                                   elbow_vel=0.0, now_ms=0)
-        low_cmd = low.step(shoulder_rad=q, shoulder_vel=0.0, elbow_rad=0.0,
-                           elbow_vel=0.0, now_ms=0)
-        ratio = low_cmd.shoulder_rotor_nm / high_cmd.shoulder_rotor_nm
-        check("gain 0.6 scales the shoulder command by 0.6", near(ratio, 0.6, 1e-4),
-              f"ratio {ratio:.4f}")
 
     print()
     if FAILURES:

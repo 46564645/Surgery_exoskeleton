@@ -3,8 +3,8 @@
 
 Acceptance follows the sim AGENTS rule (main goal roughly confirmed, no
 percentage gates): the scene relations are the ones discussed with the user,
-gravity torques have a sensible size, the straps carry the exoskeleton and let
-the elbow bend, and the forearm can touch the table.
+gravity torques have a sensible size, and the straps carry the exoskeleton and
+let the elbow bend.
 
 Usage (from firmware/Exoskeleton_F446):
     build\\sim-venv\\Scripts\\python.exe sim\\mujoco_arm\\scripts\\check_static.py
@@ -78,7 +78,6 @@ def run_pd(model, data, targets_deg, steps, flags=0, extra_ctrl=None):
 
 
 def main() -> int:
-    params_bore = bm.load_params()["mount"]["clamp_bore_fusion_xy"]["value"]
     model, info = bm.build()
     data = mujoco.MjData(model)
     land = info["human"]
@@ -115,16 +114,11 @@ def main() -> int:
           np.linalg.norm(pole_xy - link_xy) > 0.05,
           f"pole to shoulder-axis point {np.linalg.norm(pole_xy - link_xy) * 1000:.0f} mm horizontally")
     bore_xy = np.array(info["clamp_bore_world"])
-    recorded = np.array([float(v) for v in params_bore])
     check("pole axis goes through the 01B clamp bore", np.linalg.norm(pole_xy - bore_xy) < 1e-6,
           f"bore at ({bore_xy[0]:.4f}, {bore_xy[1]:.4f}) m, pole on the same axis")
     check("pole fits the bore", info["pole_radius"] < info["clamp_bore_radius"],
           f"pole dia {2 * info['pole_radius'] * 1000:.1f} mm in a "
           f"{2 * info['clamp_bore_radius'] * 1000:.1f} mm bore")
-    measured = np.array(info["clamp_bore_fusion_xy"])
-    check("bore centre matches params.json (Fusion frame)",
-          np.linalg.norm(measured - recorded) < 0.002,
-          f"measured {np.round(measured, 5)}, recorded {np.round(recorded, 5)}")
     print(f"  cuff inner surface to bone axis: upper {info['upper_cuff_offset'] * 1000:.1f} mm "
           f"(section 56), forearm {info['forearm_cuff_offset'] * 1000:.1f} mm (section 37)")
 
@@ -209,38 +203,6 @@ def main() -> int:
     check("elbow bends freely with the exoskeleton", h > 20.0 and abs(h - e) < 5.0,
           f"difference {abs(h - e):.1f} deg")
     model.opt.disableflags = 0
-
-    print("\n[7] table collision is live (test only: table moved 15 cm back under the hand "
-          "and 5 cm up)")
-    table_geoms = {model.geom("table_top").id, model.geom("table_pedestal").id}
-    table_body = model.body("table").id
-    saved = model.body_pos[table_body].copy()
-    model.body_pos[table_body] += np.array([0.0, 0.15, 0.05])
-    mujoco.mj_resetData(model, data)
-    for _ in range(500):
-        mujoco.mj_step(model, data)
-    hits = [c for c in data.contact[:data.ncon] if c.geom1 in table_geoms or c.geom2 in table_geoms]
-    model.body_pos[table_body] = saved
-    print(f"  {len(hits)} arm-table contact(s)")
-    check("arm-table contact is generated", len(hits) > 0)
-
-    print("\n[8] first table contact in a kinematic forward sweep")
-    first_straight = None
-    for elbow_deg in (0, 45, 90):
-        first = None
-        for s_deg in np.arange(0.0, 110.5, 0.5):
-            pose(model, data, **{bm.HUMAN_SHOULDER: float(s_deg), bm.HUMAN_ELBOW: elbow_deg,
-                                 bm.EXO_SHOULDER: float(s_deg), bm.EXO_ELBOW: elbow_deg})
-            if any(c.geom1 in table_geoms or c.geom2 in table_geoms for c in data.contact[:data.ncon]):
-                first = float(s_deg)
-                break
-        print(f"  elbow {elbow_deg:3d} deg: " + (f"arm touches the table at shoulder {first:.1f} deg"
-                                                if first is not None else "no table contact up to 110 deg"))
-        if elbow_deg == 0:
-            first_straight = first
-    check("straight-arm lift is stopped by the table (expected at 0.90 m)",
-          first_straight is not None and first_straight < 20.0,
-          f"stops at {first_straight:.1f} deg" if first_straight is not None else "no contact")
 
     print()
     if FAILURES:
