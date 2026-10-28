@@ -4,7 +4,7 @@
 
 本次100ms/20mNm请求获接受，零目标/模式及新鲜闭环心跳符合门控；TTL撤权后驱动IDLE、250ms停稳观察通过，终态FAULT/EXPIRED且output/request/token0，原点UNSET→ACTIVE→RETIRED，锁存ACTIVE后至RETIRED身份不变。方向/零位、精确动态、肘部运动及其余S3现场项目未全部验收，因此S3仍为部分完成。实物掉线/恢复仅从本轮S2取消，未执行，不写通过。
 
-当前已刷镜像为HSE相对台架ELF762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54（BIN91148B）；2026-10-04只复位一次，未再次刷写。主仓默认site禁用/HSI仍保留，镜像差异见验收记录；以下较早上板、未动作描述保留历史时点。原始[本次记录](../tests/s3_capture/evidence-relative-20261004T013713353068Z/summary.json)与[S2变化判定](s2_encoder_stream.md#当前验收证据2026-10-04)记录了全部实际边界；目标转矩受理不证明实际达到20mNm。本轮归档并提交至原GitHub仓库，远端结果以对应Git提交记录为准。
+当前已刷镜像为HSE相对台架ELF762c0902a4269f3056c32e75b2cb99039d9a45f22678aac41364c111500bcf54（BIN91148B）；2026-10-04只复位一次，未再次刷写。主仓默认site禁用/HSI仍保留，镜像差异见验收记录；以下较早上板、未动作描述保留历史时点。原始[本次记录](bench/s3-capture/evidence-relative-20261004T013713353068Z/summary.json)与[S2变化判定](s2_encoder_stream.md#当前验收证据2026-10-04)记录了全部实际边界；目标转矩受理不证明实际达到20mNm。本轮归档并提交至原GitHub仓库，远端结果以对应Git提交记录为准。
 
 ## 实现与实际可达性
 
@@ -217,7 +217,7 @@ ExoKit是主仓库存档目录，快照tree为`04bff2f9710e8df74c7be29dc3d05d176
 - `s3reader` 返回读会话状态、剩余窗口、停止/观察完成时刻和带独立新鲜度的心跳；`s3limits/s3timing/s3stopcfg` 返回实际固件的集中配置，供冻结计划逐项核对。全部响应限定256字节。`s3help` 列出新命令。
 - `qualify` 仅在 SAFE_OFF、配置/绑定/输出均关闭、健康且新鲜的 IDLE 心跳、CAN 无错误且发送空闲时可启动。它按固定顺序读取372/378/195/366/272/287/288七属性，每项只请求一次，单项250ms、总窗2000ms；首个异常停止、无重试、无模式/使能/力矩/IDLE发送。成功还要求第七回复之后的新健康 IDLE 心跳。一次启动独占读会话直到下次冷启动，与旧诊断、连续流和运动准备互斥。
 - `qualstatus`、`qualfield 0..6` 和 `qualerror` 为缓存查询，保留原始 CAN 字节、解析值、时间及首错现场；`qualcancel` 只取消本检查所属的只读发送。`qualstatus.cancelled` 表示取消所属发送接口已确认（`cancel_accepted`），正常完成同样为1，不表示资格检查被用户取消；实际终态看 `state/reason`。
-- [PC记录器](../tests/s3_capture/README.md) 复用已有 encoder_capture 的串口初始化、固定 ST-LINK 身份绑定与日志格式。默认及帮助为离线路径。资格检查与后续 trial 分开启动；trial 必须使用另一次冷启动、已确认并冻结的具体现场计划及真实资格记录，逐项匹配固件配置，然后依次执行 prepare→READY零目标/模式读回→arm token→单次请求→停止后新反馈记录。正常 TTL 到期保留现有 FAULT/EXPIRED 锁存，不自动 ackfault、重试、延长 TTL 或增加输出。
+- PC记录器（`tests/s3_capture/`已于2026-10-28删除，见git历史；采集记录在`bench/s3-capture/`） 复用已有 encoder_capture 的串口初始化、固定 ST-LINK 身份绑定与日志格式。默认及帮助为离线路径。资格检查与后续 trial 分开启动；trial 必须使用另一次冷启动、已确认并冻结的具体现场计划及真实资格记录，逐项匹配固件配置，然后依次执行 prepare→READY零目标/模式读回→arm token→单次请求→停止后新反馈记录。正常 TTL 到期保留现有 FAULT/EXPIRED 锁存，不自动 ackfault、重试、延长 TTL 或增加输出。
 
 时序预算显式包含七读周期 C、刷新周期 P、调度余量和各阶段期限；只通过一轮七属性读取，不能证明运动负载下持续刷新合格。PC 对重复序号不重复计数，对新鲜数据和停止完成的历史证据分别记录。观测到数值变化不自动等于物理方向/幅值对应或 S2 总验收通过；USB读值也不能替代 CAN 实读/padding 验证。
 

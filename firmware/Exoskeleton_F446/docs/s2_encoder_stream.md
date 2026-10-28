@@ -16,7 +16,7 @@ out反映查询时许可，seq11可能采于pulse受理前；仅取明确采于p
 
 本次运行前明确记录肩CAN、UART和调度计数0；reader健康门控持续到COMPLETE间接支持肩CAN及console/心跳无故障。末尾未另读两CAN和UART/调度计数，不宣称末端全部计数直接验证为0。历史HSI CAN错误、UART缺O的物理根因继续保留。
 
-原始[本次summary](../tests/s3_capture/evidence-relative-20261004T013713353068Z/summary.json)、[events](../tests/s3_capture/evidence-relative-20261004T013713353068Z/events.jsonl)、[离线复算](../tests/s3_capture/evidence-relative-20261004T013713353068Z/analysis.json)、[范围判定](../tests/s3_capture/evidence-relative-20261004T013713353068Z/acceptance.json)与[静止summary](../tests/encoder_capture/evidence-static-hse-20261003T0153385075330Z/summary.json)可复核。原始记录的physical_variation_acceptance=review_required保持原样，由独立acceptance记录审阅结论。
+原始[本次summary](bench/s3-capture/evidence-relative-20261004T013713353068Z/summary.json)、[events](bench/s3-capture/evidence-relative-20261004T013713353068Z/events.jsonl)、[离线复算](bench/s3-capture/evidence-relative-20261004T013713353068Z/analysis.json)、[范围判定](bench/s3-capture/evidence-relative-20261004T013713353068Z/acceptance.json)与[静止summary](bench/s2-encoder-capture/evidence-static-hse-20261003T0153385075330Z/summary.json)可复核。原始记录的physical_variation_acceptance=review_required保持原样，由独立acceptance记录审阅结论。
 
 本次验收镜像为HSE相对台架候选ELF762c0902…500bcf54，主仓默认HSI且site禁用；不能把台架验收自动等同于默认构建上板通过。以下实现与较早窗口记录保留其原时点；旧“尚未采集/未上板”不代表本次状态。
 
@@ -57,7 +57,7 @@ reason编号为0无故障、1人工停止、2达到上限、3所有权/门控、
 
 2026-10-03首次连续窗口在00:34:29.844发起，00:34:30.021出现READY，00:34:34.871因肩侧CAN新增错误中止，固件elapsed=4952ms、reason=5、valid=0。MCU已完成99对，主机保存50组有效观测；tx=199是提交次数，不代表199次线上发送成功。肩侧err由0增至1、last_err=0x40（HAL Bit recessive），肘侧错误无增量。用户没有收到手动动作指令；主线程00:35:04收到就绪通知时窗口已中止。此次未达到连续验收，也未完成物理变化，不能以微小噪声或99对宣布通过。
 
-原始记录在`tests/encoder_capture/evidence-20261003T0034063657053Z/`。只读源码及历史证据诊断位于`D:/codex_tasks/2026-10-01/task/s2-br-diagnostic/read_only_diagnosis.json`：估算肩侧占用约4.15–5.05%，未发现请求并发、帧封装改变或队列堆积证据；电气/实际位时序根因仍未确定。未因该故障更改固件、关保护、清错、复位或重试。
+原始记录在`bench/s2-encoder-capture/evidence-20261003T0034063657053Z/`。只读源码及历史证据诊断位于`D:/codex_tasks/2026-10-01/task/s2-br-diagnostic/read_only_diagnosis.json`：估算肩侧占用约4.15–5.05%，未发现请求并发、帧封装改变或队列堆积证据；电气/实际位时序根因仍未确定。未因该故障更改固件、关保护、清错、复位或重试。
 
 原有capture仅将JSON送回代理，没有用户可见窗口；跨线程通知不能承担一次短现场窗口的动作提示。新增主机可见窗口`visible_capture.ps1`，复用原capture流程，不改固件或CAN命令。
 
@@ -69,7 +69,7 @@ reason编号为0无故障、1人工停止、2达到上限、3所有权/门控、
 
 主机提示的软件失效时间预算为200ms加界面调度延迟，不能当硬件实时联锁；界面卡住或不可见时不依赖残留颜色动作。离线WAIT窗口的可见句柄及自身窗口截图已经核对，没有启动采集。带真实采样的可见提示尚未现场验证。
 
-采集器近10Hz查询，可能跳过MCU的20Hz配对，不宣称保存全部MCU样本。设备绑定、原始应答hex/text、UTC/单调时间与CAN统计继续保存在每次evidence目录。操作入口见[工具README](../tests/encoder_capture/README.txt)。实物掉线/恢复继续记为取消、未执行。
+采集器近10Hz查询，可能跳过MCU的20Hz配对，不宣称保存全部MCU样本。设备绑定、原始应答hex/text、UTC/单调时间与CAN统计继续保存在每次evidence目录。操作入口见工具README（`tests/encoder_capture/`已于2026-10-28删除，见git历史；采集记录在`bench/s2-encoder-capture/`）。实物掉线/恢复继续记为取消、未执行。
 
 ## 软件与版本证据
 

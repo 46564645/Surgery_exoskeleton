@@ -163,9 +163,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Generated configuration check failed' }
 
 辅助检查入口为 `python .auto-embedded/scripts/check.py --json`。已知其默认 Windows PowerShell 5 扫描存在 UTF-8 无 BOM、GetRelativePath 兼容问题；S2 当时用 Git Bash 执行包内 `arch-check.sh` 补查，并人工说明生成代码/构建目录及同优先级 IRQ 告警。该入口未全绿，不能据此宣称所有检查通过，详见[该轮记录](.auto-embedded/tasks/s2-feedback-plan/edits.md)。
 
-## Windows 串口检查（当前 S2 无驱动器场景）
+## Windows 串口
 
-`tests/bench_can_serial.py` 使用 pyserial，只发送查询命令。适用条件为当前 S2_CAN_RX 固件、仅 USB 供电、24V 断开、H/L 未接驱动器，且两路从启动起尚未收到 CAN 帧。它要求 `started=1`、`seen=0`、接收/错误计数为 0；接入驱动器或已经收过帧时，不使用此脚本判断通信是否正常。
+S2 无驱动器场景的 `tests/bench_can_serial.py`、S1 的 `tests/bench_serial.py` 以及 S2/S3 采集工具（`tests/encoder_capture/`、`tests/s3_capture/`、`tests/gds_usb/`）已于 2026-10-28 删除（只适用于当时的阶段，见 git 历史）；它们的采集记录移到 `docs/bench/s2-encoder-capture/` 与 `docs/bench/s3-capture/`。当前台架串口入口是 `tests/live_monitor/`。
 
 本机 pyserial 已隔离安装在被忽略的 `build/s2-tools/python`。新电脑缺少该依赖时，可先运行 `python -m pip install --target build/s2-tools/python pyserial`。在固件目录临时设置模块路径并列出端口：
 
@@ -174,11 +174,6 @@ $env:PYTHONPATH = (Resolve-Path 'build/s2-tools/python').Path
 python -m serial.tools.list_ports -v
 ```
 
-确认上述现场条件后，替换下例端口为当次枚举的 ST-LINK VCP 端口，再执行：
-
-```powershell
-python tests/bench_can_serial.py --port COM10 --seconds 60 --report build/s2-validation/usb-soak.json
-```
 
 COM10 只是此前实测端口，不能假定永久不变。串口参数为 115200、8N1、无流控。脚本不烧录、不复位、不使能；失败也会保存报告，未执行的检查不得记为通过。此前 S1 的 10 分钟测试、SWD 校验和重插观察见开发日志，不由此脚本替代。
 
@@ -269,7 +264,7 @@ python3 tests/check_generated.py
 
 Release 使用 `./build.sh Release`。VS Code 同样可选择共享 `Debug/Release` 或自己的个人预设，使用原生构建任务；本轮未在 Mac 上重新验证。
 
-Mac 串口通常使用 `/dev/cu.*`，Linux 通常使用 `/dev/ttyACM*`；均按当次枚举结果选择。当前 S2 的跨平台脚本及使用条件见前文，将端口参数替换成对应设备路径即可。旧 `tests/bench_serial.py` 依赖 POSIX `termios`，保留为历史 S1 脚本，不作为当前 Windows/S2 操作入口。
+Mac 串口通常使用 `/dev/cu.*`，Linux 通常使用 `/dev/ttyACM*`；均按当次枚举结果选择。
 
 ## S3每轴源码准备与既有USB验证（实际输出关闭）
 
@@ -298,4 +293,4 @@ GDS启用肩侧仍需IDLE/校准及新的零目标、模式、闭环读回。C62
 
 `encstart/encstop/encfeedback`无参数，固定CAN1/node1/端点372与378，按位置后速度顺序发布完整同周期样本。每次启动最多一个30秒会话、20Hz配对、1200次请求；应答50ms、配对新鲜度100ms，IDLE心跳另用250ms。与一次性诊断互斥，不自动启动/重启/重试；SDO无线上事务token，要求隔离唯一CAN主机及有序应答。默认enabled_axes=0，连续观察不授予S3许可。
 
-来源依据、限制及明早最小步骤见[连续观察说明](docs/s2_encoder_stream.md)和[Windows采集工具](tests/encoder_capture/README.txt)。采集进程给出`READY_FOR_MOVEMENT`后，主线程才通知用户做一次小幅手动变化；`COMPLETE`和非零小波动都不能自动判为物理变化通过。今晚17:00更新、校验/复位及独立读回通过，17:02仅被动查询、未启动流；明早仍需现场窗口，本轮不安排实物掉线/恢复。
+来源依据、限制及明早最小步骤见[连续观察说明](docs/s2_encoder_stream.md)和Windows采集工具（`tests/encoder_capture/`已于2026-10-28删除，见git历史；采集记录在`docs/bench/s2-encoder-capture/`）。采集进程给出`READY_FOR_MOVEMENT`后，主线程才通知用户做一次小幅手动变化；`COMPLETE`和非零小波动都不能自动判为物理变化通过。今晚17:00更新、校验/复位及独立读回通过，17:02仅被动查询、未启动流；明早仍需现场窗口，本轮不安排实物掉线/恢复。

@@ -1,0 +1,15 @@
+{
+  "at_utc": "2026-10-02T17:01:51.1243213Z",
+  "ports": [
+    {
+      "DeviceID": "COM10",
+      "Name": "STMicroelectronics STLink Virtual COM Port (COM10)",
+      "PNPDeviceID": "USB\\VID_0483&PID_374B&MI_02\\7&7B125CD&0&0002",
+      "Status": "OK",
+      "ConfigManagerErrorCode": 0
+    }
+  ],
+  "parent": "USB\\VID_0483&PID_374B\\066EFF555748874987182240",
+  "serial_verified": true,
+  "read_only_enumeration": true
+}

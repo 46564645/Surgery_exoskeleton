@@ -1,0 +1,670 @@
+{
+  "mode": "capture",
+  "session_id": "evidence-20261003T0034063657053Z",
+  "success": false,
+  "ready_for_movement": true,
+  "physical_variation_acceptance": "review_required",
+  "preflight": {
+    "uptime_ms": 27186963,
+    "legacy_029_observation": {
+      "profile": "v22",
+      "verified": "0",
+      "est": "1",
+      "hb": "1",
+      "wire_valid": "1",
+      "pos_mrad": "0",
+      "vel_mrad_s": "0",
+      "est_ms": "27187007",
+      "hb_ms": "27186917",
+      "state": "1",
+      "error": "00000000",
+      "fault": "0",
+      "output_allowed": "0"
+    },
+    "can": {
+      "shoulder": {
+        "bus": "shoulder",
+        "started": "1",
+        "start_error": "0",
+        "rx": 12201,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "029",
+        "dlc": "8",
+        "data": "0000000000000000",
+        "age_ms": "2"
+      },
+      "elbow": {
+        "bus": "elbow",
+        "started": "1",
+        "start_error": "0",
+        "rx": 110537,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "201",
+        "dlc": "8",
+        "data": "0D6F0000FFCF1C00",
+        "age_ms": "1"
+      }
+    },
+    "encoder": {
+      "src": "encoder_sdo",
+      "active": 0,
+      "reason": 0,
+      "valid": 0,
+      "pairs": 0,
+      "pos_rev": "na",
+      "vel_rev_s": "na",
+      "pos_ms": 0,
+      "vel_ms": 0,
+      "age_ms": 0,
+      "elapsed_ms": 0,
+      "tx": 0,
+      "rejected": 0,
+      "output_allowed": "0"
+    }
+  },
+  "first_can": {
+    "shoulder": {
+      "bus": "shoulder",
+      "started": "1",
+      "start_error": "0",
+      "rx": 12201,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "029",
+      "dlc": "8",
+      "data": "0000000000000000",
+      "age_ms": "2"
+    },
+    "elbow": {
+      "bus": "elbow",
+      "started": "1",
+      "start_error": "0",
+      "rx": 110537,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "201",
+      "dlc": "8",
+      "data": "0D6F0000FFCF1C00",
+      "age_ms": "1"
+    }
+  },
+  "last_can": {
+    "shoulder": {
+      "bus": "shoulder",
+      "started": "1",
+      "start_error": "0",
+      "rx": 12963,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 1,
+      "last_err": "00000040",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "029",
+      "dlc": "8",
+      "data": "0000000000000000",
+      "age_ms": "9"
+    },
+    "elbow": {
+      "bus": "elbow",
+      "started": "1",
+      "start_error": "0",
+      "rx": 115727,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "201",
+      "dlc": "8",
+      "data": "0D6F0000FF511C00",
+      "age_ms": "1"
+    }
+  },
+  "error": "CaptureError: Encoder stream stopped unexpectedly",
+  "stop_acknowledged": true,
+  "start_attempted": true,
+  "stop_attempted": true,
+  "final_encoder_status": {
+    "src": "encoder_sdo",
+    "active": 0,
+    "reason": 5,
+    "valid": 0,
+    "pairs": 99,
+    "pos_rev": "2.857783",
+    "vel_rev_s": "0.000000",
+    "pos_ms": 27192023,
+    "vel_ms": 27192024,
+    "age_ms": 127,
+    "elapsed_ms": 4952,
+    "tx": 199,
+    "rejected": 0,
+    "output_allowed": "0"
+  },
+  "final_query_error": "New CAN fault: shoulder/err",
+  "encoder_analysis": {
+    "distinct_observed_pairs": 50,
+    "first_pair": {
+      "src": "encoder_sdo",
+      "active": 1,
+      "reason": 0,
+      "valid": 1,
+      "pairs": 1,
+      "pos_rev": 2.857816,
+      "vel_rev_s": 0.001907,
+      "pos_ms": 27187122,
+      "vel_ms": 27187123,
+      "age_ms": 7,
+      "elapsed_ms": 7,
+      "tx": 2,
+      "rejected": 0,
+      "output_allowed": "0"
+    },
+    "last_pair": {
+      "src": "encoder_sdo",
+      "active": 1,
+      "reason": 0,
+      "valid": 1,
+      "pairs": 98,
+      "pos_rev": 2.857792,
+      "vel_rev_s": -0.001907,
+      "pos_ms": 27191973,
+      "vel_ms": 27191974,
+      "age_ms": 50,
+      "elapsed_ms": 4901,
+      "tx": 197,
+      "rejected": 0,
+      "output_allowed": "0"
+    },
+    "position_min_rev": 2.857734,
+    "position_max_rev": 2.857912,
+    "position_range_rev": 0.0001779999999995674,
+    "position_net_change_rev": -2.4000000000246047e-05,
+    "velocity_min_rev_s": -0.011444,
+    "velocity_max_rev_s": 0.017166,
+    "numerical_variation_observed": true,
+    "moving_intervals": [
+      {
+        "from_pair": 1,
+        "to_pair": 3,
+        "delta_rev": -7.200000000029405e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0007200000000029405,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 3,
+        "to_pair": 5,
+        "delta_rev": 0.00010600000000016152,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0010600000000016152,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 5,
+        "to_pair": 7,
+        "delta_rev": -0.00010799999999999699,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0010799999999999699,
+        "mean_sampled_vel_rev_s": -0.005722,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 7,
+        "to_pair": 9,
+        "delta_rev": 8.999999999925734e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 8.999999999925734e-05,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 9,
+        "to_pair": 11,
+        "delta_rev": 2.1000000000270802e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00021000000000270802,
+        "mean_sampled_vel_rev_s": 0.014305,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 11,
+        "to_pair": 13,
+        "delta_rev": 6.099999999964467e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006099999999964467,
+        "mean_sampled_vel_rev_s": 0.0057220000000000005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 13,
+        "to_pair": 15,
+        "delta_rev": 1.000000000139778e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.000000000139778e-05,
+        "mean_sampled_vel_rev_s": -0.0019075,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 15,
+        "to_pair": 17,
+        "delta_rev": -3.799999999998249e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0003799999999998249,
+        "mean_sampled_vel_rev_s": -0.0019075,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 17,
+        "to_pair": 19,
+        "delta_rev": -6.199999999978445e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006199999999978445,
+        "mean_sampled_vel_rev_s": -0.004768,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 19,
+        "to_pair": 21,
+        "delta_rev": 4.1999999999653426e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00041999999999653426,
+        "mean_sampled_vel_rev_s": -0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 21,
+        "to_pair": 23,
+        "delta_rev": 2.0000000000131024e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00020000000000131024,
+        "mean_sampled_vel_rev_s": 0.0009535000000000004,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 23,
+        "to_pair": 25,
+        "delta_rev": 5.8999999999809205e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.000589999999998092,
+        "mean_sampled_vel_rev_s": 0.0028610000000000003,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 25,
+        "to_pair": 27,
+        "delta_rev": 2.000000000279556e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 2.000000000279556e-05,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 27,
+        "to_pair": 29,
+        "delta_rev": 1.9999999998354667e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.9999999998354667e-05,
+        "mean_sampled_vel_rev_s": 0.0057215,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 29,
+        "to_pair": 31,
+        "delta_rev": 1.1999999999900979e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00011999999999900979,
+        "mean_sampled_vel_rev_s": 0.0038145,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 31,
+        "to_pair": 33,
+        "delta_rev": -4.099999999995774e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00040999999999957737,
+        "mean_sampled_vel_rev_s": 0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 33,
+        "to_pair": 35,
+        "delta_rev": -4.500000000007276e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0004500000000007276,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 35,
+        "to_pair": 37,
+        "delta_rev": 7.299999999998974e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0007299999999998974,
+        "mean_sampled_vel_rev_s": 0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 37,
+        "to_pair": 39,
+        "delta_rev": -4.999999999810711e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -4.9999999998107114e-05,
+        "mean_sampled_vel_rev_s": 0.012397,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 39,
+        "to_pair": 41,
+        "delta_rev": -4.399999999993298e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0004399999999993298,
+        "mean_sampled_vel_rev_s": 0.009536000000000001,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 41,
+        "to_pair": 43,
+        "delta_rev": 4.999999999988347e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0004999999999988347,
+        "mean_sampled_vel_rev_s": -0.0019075000000000001,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 43,
+        "to_pair": 45,
+        "delta_rev": -6.599999999989947e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006599999999989947,
+        "mean_sampled_vel_rev_s": -0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 45,
+        "to_pair": 47,
+        "delta_rev": -1.700000000015578e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0001700000000015578,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 47,
+        "to_pair": 49,
+        "delta_rev": 8.000000000230045e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 8.000000000230045e-05,
+        "mean_sampled_vel_rev_s": 0.005722,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 49,
+        "to_pair": 51,
+        "delta_rev": 4.899999999974369e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0004899999999974369,
+        "mean_sampled_vel_rev_s": -0.0019069999999999998,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 51,
+        "to_pair": 53,
+        "delta_rev": 9.000000000369823e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 9.000000000369823e-05,
+        "mean_sampled_vel_rev_s": -0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 53,
+        "to_pair": 55,
+        "delta_rev": 2.799999999991698e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0002799999999991698,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 55,
+        "to_pair": 57,
+        "delta_rev": -2.700000000022129e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0002700000000022129,
+        "mean_sampled_vel_rev_s": 0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 57,
+        "to_pair": 59,
+        "delta_rev": -4.999999999810711e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -4.9999999998107114e-05,
+        "mean_sampled_vel_rev_s": -0.0038144999999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 59,
+        "to_pair": 61,
+        "delta_rev": 2.9999999999752447e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 2.9999999999752447e-05,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 61,
+        "to_pair": 63,
+        "delta_rev": 7.099999999971018e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0007099999999971018,
+        "mean_sampled_vel_rev_s": 0.0066749999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 63,
+        "to_pair": 65,
+        "delta_rev": -0.0001349999999997742,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.001349999999997742,
+        "mean_sampled_vel_rev_s": 0.0057215,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 65,
+        "to_pair": 67,
+        "delta_rev": 1.4999999999876223e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00014999999999876223,
+        "mean_sampled_vel_rev_s": 0.001907,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 67,
+        "to_pair": 69,
+        "delta_rev": 0.00010900000000013677,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0010900000000013677,
+        "mean_sampled_vel_rev_s": -0.0019075,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 69,
+        "to_pair": 71,
+        "delta_rev": -0.00010099999999990672,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0010099999999990672,
+        "mean_sampled_vel_rev_s": -0.004768,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 71,
+        "to_pair": 73,
+        "delta_rev": -5.200000000016303e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005200000000016303,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 73,
+        "to_pair": 75,
+        "delta_rev": 3.0999999999892225e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00030999999999892225,
+        "mean_sampled_vel_rev_s": -0.005722,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 75,
+        "to_pair": 77,
+        "delta_rev": 8.000000000230045e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 8.000000000230045e-05,
+        "mean_sampled_vel_rev_s": -0.008583,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 77,
+        "to_pair": 79,
+        "delta_rev": 2.9999999999752447e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 2.9999999999752447e-05,
+        "mean_sampled_vel_rev_s": -0.0076289999999999995,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 79,
+        "to_pair": 81,
+        "delta_rev": 6.49999999997597e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006499999999975969,
+        "mean_sampled_vel_rev_s": -0.01049,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 81,
+        "to_pair": 82,
+        "delta_rev": -1.9999999999686935e-05,
+        "dt_s": 0.051,
+        "observed_delta_rev_s": -0.00039215686273895954,
+        "mean_sampled_vel_rev_s": -0.011444,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 82,
+        "to_pair": 84,
+        "delta_rev": -2.000000000279556e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -2.000000000279556e-05,
+        "mean_sampled_vel_rev_s": -0.003815,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 84,
+        "to_pair": 86,
+        "delta_rev": -1.1999999999900979e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00011999999999900979,
+        "mean_sampled_vel_rev_s": -0.0009539999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 86,
+        "to_pair": 88,
+        "delta_rev": 1.000000000139778e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.000000000139778e-05,
+        "mean_sampled_vel_rev_s": 0.0019069999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 88,
+        "to_pair": 90,
+        "delta_rev": 8.09999999997757e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.000809999999997757,
+        "mean_sampled_vel_rev_s": 0.0076289999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 90,
+        "to_pair": 92,
+        "delta_rev": -0.00010299999999974219,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0010299999999974219,
+        "mean_sampled_vel_rev_s": 0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 92,
+        "to_pair": 94,
+        "delta_rev": -1.8000000000295557e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00018000000000295557,
+        "mean_sampled_vel_rev_s": 0.0028605,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 94,
+        "to_pair": 96,
+        "delta_rev": 6.000000000039307e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006000000000039307,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 96,
+        "to_pair": 98,
+        "delta_rev": -5.000000000032756e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005000000000032756,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "same_sign"
+      }
+    ],
+    "physical_variation_acceptance": "review_required",
+    "relationship_counts": {
+      "same_sign": 25,
+      "opposite_sign": 19,
+      "zero_or_unresolved": 5
+    },
+    "scope": "Observed samples only; no amplitude acceptance threshold or hardware acceptance claim. MCU float text quantization can leave zero/unresolved relationships."
+  },
+  "session_completed_without_fault": false,
+  "finished_utc": "2026-10-03T00:34:34.932537+00:00"
+}

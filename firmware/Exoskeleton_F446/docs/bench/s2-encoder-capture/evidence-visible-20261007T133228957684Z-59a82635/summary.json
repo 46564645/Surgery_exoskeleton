@@ -1,0 +1,2918 @@
+{
+  "mode": "capture",
+  "session_id": "evidence-visible-20261007T133228957684Z-59a82635",
+  "success": true,
+  "ready_for_movement": true,
+  "physical_variation_acceptance": "review_required",
+  "preflight": {
+    "uptime_ms": 2801246,
+    "legacy_029_observation": {
+      "profile": "v22",
+      "verified": "0",
+      "est": "1",
+      "hb": "1",
+      "wire_valid": "1",
+      "pos_mrad": "0",
+      "vel_mrad_s": "0",
+      "est_ms": "2801289",
+      "hb_ms": "2801269",
+      "state": "1",
+      "error": "00000000",
+      "fault": "0",
+      "output_allowed": "0"
+    },
+    "can": {
+      "shoulder": {
+        "bus": "shoulder",
+        "started": "1",
+        "start_error": "0",
+        "rx": 173116,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "029",
+        "dlc": "8",
+        "data": "0000000000000000",
+        "age_ms": "6"
+      },
+      "elbow": {
+        "bus": "elbow",
+        "started": "1",
+        "start_error": "0",
+        "rx": 1587327,
+        "drop": 0,
+        "invalid": 0,
+        "fov": 0,
+        "err": 0,
+        "last_err": "00000000",
+        "bus_off": "0",
+        "queued": "0",
+        "seen": "1",
+        "id": "201",
+        "dlc": "8",
+        "data": "0D6F0000FFC41C00",
+        "age_ms": "1"
+      }
+    },
+    "encoder": {
+      "src": "encoder_sdo",
+      "active": 0,
+      "reason": 0,
+      "valid": 0,
+      "pairs": 0,
+      "pos_rev": "na",
+      "vel_rev_s": "na",
+      "pos_ms": 0,
+      "vel_ms": 0,
+      "age_ms": 0,
+      "elapsed_ms": 0,
+      "tx": 0,
+      "rejected": 0,
+      "output_allowed": "0"
+    }
+  },
+  "first_can": {
+    "shoulder": {
+      "bus": "shoulder",
+      "started": "1",
+      "start_error": "0",
+      "rx": 173116,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "029",
+      "dlc": "8",
+      "data": "0000000000000000",
+      "age_ms": "6"
+    },
+    "elbow": {
+      "bus": "elbow",
+      "started": "1",
+      "start_error": "0",
+      "rx": 1587327,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "201",
+      "dlc": "8",
+      "data": "0D6F0000FFC41C00",
+      "age_ms": "1"
+    }
+  },
+  "last_can": {
+    "shoulder": {
+      "bus": "shoulder",
+      "started": "1",
+      "start_error": "0",
+      "rx": 177631,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "029",
+      "dlc": "8",
+      "data": "0000000000000000",
+      "age_ms": "9"
+    },
+    "elbow": {
+      "bus": "elbow",
+      "started": "1",
+      "start_error": "0",
+      "rx": 1617789,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "1",
+      "id": "201",
+      "dlc": "8",
+      "data": "0D700000FFD01C00",
+      "age_ms": "1"
+    }
+  },
+  "stop_acknowledged": true,
+  "start_attempted": true,
+  "stop_attempted": true,
+  "final_encoder_status": {
+    "src": "encoder_sdo",
+    "active": 0,
+    "reason": 2,
+    "valid": 0,
+    "pairs": 600,
+    "pos_rev": "3.046452",
+    "vel_rev_s": "0.000000",
+    "pos_ms": 2831360,
+    "vel_ms": 2831361,
+    "age_ms": 87,
+    "elapsed_ms": 30000,
+    "tx": 1200,
+    "rejected": 0,
+    "output_allowed": "0"
+  },
+  "encoder_analysis": {
+    "distinct_observed_pairs": 300,
+    "first_pair": {
+      "src": "encoder_sdo",
+      "active": 1,
+      "reason": 0,
+      "valid": 1,
+      "pairs": 1,
+      "pos_rev": 2.930011,
+      "vel_rev_s": 0.0,
+      "pos_ms": 2801410,
+      "vel_ms": 2801411,
+      "age_ms": 7,
+      "elapsed_ms": 7,
+      "tx": 2,
+      "rejected": 0,
+      "output_allowed": "0"
+    },
+    "last_pair": {
+      "src": "encoder_sdo",
+      "active": 1,
+      "reason": 0,
+      "valid": 1,
+      "pairs": 599,
+      "pos_rev": 3.0465,
+      "vel_rev_s": 0.0,
+      "pos_ms": 2831310,
+      "vel_ms": 2831311,
+      "age_ms": 9,
+      "elapsed_ms": 29909,
+      "tx": 1198,
+      "rejected": 0,
+      "output_allowed": "0"
+    },
+    "position_min_rev": 2.929221,
+    "position_max_rev": 3.907526,
+    "position_range_rev": 0.9783049999999998,
+    "position_net_change_rev": 0.11648900000000006,
+    "velocity_min_rev_s": -1.163482,
+    "velocity_max_rev_s": 1.821518,
+    "numerical_variation_observed": true,
+    "moving_intervals": [
+      {
+        "from_pair": 1,
+        "to_pair": 3,
+        "delta_rev": 5.600000000027805e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005600000000027805,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 3,
+        "to_pair": 5,
+        "delta_rev": 3.0999999999892225e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00030999999999892225,
+        "mean_sampled_vel_rev_s": -0.0019075,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 5,
+        "to_pair": 7,
+        "delta_rev": -3.0000000000196536e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00030000000000196536,
+        "mean_sampled_vel_rev_s": -0.0038144999999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 7,
+        "to_pair": 9,
+        "delta_rev": -1.7999999999851468e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00017999999999851468,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 9,
+        "to_pair": 11,
+        "delta_rev": 2.9999999999752447e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 2.9999999999752447e-05,
+        "mean_sampled_vel_rev_s": 0.003814,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 11,
+        "to_pair": 13,
+        "delta_rev": -5.100000000002325e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005100000000002325,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 13,
+        "to_pair": 15,
+        "delta_rev": 4.8000000000048004e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00048000000000048004,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 15,
+        "to_pair": 17,
+        "delta_rev": 4.999999999810711e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 4.9999999998107114e-05,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 17,
+        "to_pair": 19,
+        "delta_rev": -5.999999999994898e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005999999999994898,
+        "mean_sampled_vel_rev_s": 0.005722,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 19,
+        "to_pair": 21,
+        "delta_rev": 6.500000000020378e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006500000000020378,
+        "mean_sampled_vel_rev_s": 0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 21,
+        "to_pair": 23,
+        "delta_rev": -1.100000000020529e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0001100000000020529,
+        "mean_sampled_vel_rev_s": -0.005722,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 23,
+        "to_pair": 25,
+        "delta_rev": -4.2999999999793204e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00042999999999793204,
+        "mean_sampled_vel_rev_s": -0.0019074999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 25,
+        "to_pair": 27,
+        "delta_rev": -2.0000000000131024e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00020000000000131024,
+        "mean_sampled_vel_rev_s": 0.0019075000000000001,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 27,
+        "to_pair": 29,
+        "delta_rev": 0.00014700000000011926,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0014700000000011926,
+        "mean_sampled_vel_rev_s": 0.0019075000000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 29,
+        "to_pair": 31,
+        "delta_rev": -7.899999999994023e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0007899999999994023,
+        "mean_sampled_vel_rev_s": -0.0019074999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 31,
+        "to_pair": 33,
+        "delta_rev": 3.9999999996709334e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 3.9999999996709334e-05,
+        "mean_sampled_vel_rev_s": -0.004768499999999999,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 33,
+        "to_pair": 35,
+        "delta_rev": -6.299999999992423e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006299999999992423,
+        "mean_sampled_vel_rev_s": 0.0047680000000000005,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 35,
+        "to_pair": 37,
+        "delta_rev": 6.200000000022854e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006200000000022854,
+        "mean_sampled_vel_rev_s": 0.0057215,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 37,
+        "to_pair": 39,
+        "delta_rev": 2.0999999999826713e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00020999999999826713,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 39,
+        "to_pair": 41,
+        "delta_rev": 3.300000000017178e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003300000000017178,
+        "mean_sampled_vel_rev_s": -0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 41,
+        "to_pair": 43,
+        "delta_rev": -5.500000000013827e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005500000000013827,
+        "mean_sampled_vel_rev_s": 0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 43,
+        "to_pair": 45,
+        "delta_rev": -1.100000000020529e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0001100000000020529,
+        "mean_sampled_vel_rev_s": 0.0009534999999999995,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 45,
+        "to_pair": 47,
+        "delta_rev": 1.8000000000295557e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00018000000000295557,
+        "mean_sampled_vel_rev_s": -0.0057215,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 47,
+        "to_pair": 49,
+        "delta_rev": 9.799999999993148e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0009799999999993148,
+        "mean_sampled_vel_rev_s": 0.0009539999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 49,
+        "to_pair": 51,
+        "delta_rev": -0.00011099999999997223,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0011099999999997223,
+        "mean_sampled_vel_rev_s": -0.0019069999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 51,
+        "to_pair": 53,
+        "delta_rev": 7.999999999785956e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 7.999999999785956e-05,
+        "mean_sampled_vel_rev_s": -0.0076289999999999995,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 53,
+        "to_pair": 55,
+        "delta_rev": -1.8999999999991246e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00018999999999991246,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 55,
+        "to_pair": 57,
+        "delta_rev": 7.700000000010476e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0007700000000010476,
+        "mean_sampled_vel_rev_s": 0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 57,
+        "to_pair": 59,
+        "delta_rev": 4.000000000115023e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 4.0000000001150227e-05,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 59,
+        "to_pair": 61,
+        "delta_rev": -7.400000000012952e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0007400000000012952,
+        "mean_sampled_vel_rev_s": -0.005722,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 61,
+        "to_pair": 63,
+        "delta_rev": 1.0000000000065512e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00010000000000065512,
+        "mean_sampled_vel_rev_s": -0.0095365,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 63,
+        "to_pair": 65,
+        "delta_rev": -4.000000000115023e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -4.0000000001150227e-05,
+        "mean_sampled_vel_rev_s": -0.0038145,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 65,
+        "to_pair": 67,
+        "delta_rev": 4.2000000000097515e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00042000000000097515,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 67,
+        "to_pair": 69,
+        "delta_rev": -6.700000000003925e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006700000000003925,
+        "mean_sampled_vel_rev_s": 0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 69,
+        "to_pair": 71,
+        "delta_rev": 2.9999999999752447e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 2.9999999999752447e-05,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 71,
+        "to_pair": 73,
+        "delta_rev": 2.4999999999941735e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00024999999999941735,
+        "mean_sampled_vel_rev_s": 0.0057220000000000005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 73,
+        "to_pair": 75,
+        "delta_rev": -8.999999999925734e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -8.999999999925734e-05,
+        "mean_sampled_vel_rev_s": 0.0085825,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 75,
+        "to_pair": 77,
+        "delta_rev": 2.9999999999752447e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 2.9999999999752447e-05,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 77,
+        "to_pair": 79,
+        "delta_rev": 7.00000000000145e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.000700000000000145,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 79,
+        "to_pair": 81,
+        "delta_rev": -5.699999999997374e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005699999999997374,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 81,
+        "to_pair": 83,
+        "delta_rev": -7.000000000090267e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -7.000000000090267e-05,
+        "mean_sampled_vel_rev_s": -0.0038145,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 83,
+        "to_pair": 85,
+        "delta_rev": -8.999999999925734e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -8.999999999925734e-05,
+        "mean_sampled_vel_rev_s": -0.0057215,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 85,
+        "to_pair": 87,
+        "delta_rev": 1.1999999999900979e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00011999999999900979,
+        "mean_sampled_vel_rev_s": 0.0076295,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 87,
+        "to_pair": 89,
+        "delta_rev": -5.999999999950489e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -5.9999999999504894e-05,
+        "mean_sampled_vel_rev_s": 0.0095365,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 89,
+        "to_pair": 91,
+        "delta_rev": -2.3999999999801958e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00023999999999801958,
+        "mean_sampled_vel_rev_s": -0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 91,
+        "to_pair": 93,
+        "delta_rev": 3.0999999999892225e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00030999999999892225,
+        "mean_sampled_vel_rev_s": -0.0066755,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 93,
+        "to_pair": 95,
+        "delta_rev": -2.6000000000081513e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00026000000000081513,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 95,
+        "to_pair": 97,
+        "delta_rev": -8.999999999925734e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -8.999999999925734e-05,
+        "mean_sampled_vel_rev_s": -0.0047680000000000005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 97,
+        "to_pair": 99,
+        "delta_rev": -3.6000000000147026e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00036000000000147026,
+        "mean_sampled_vel_rev_s": -0.0038145,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 99,
+        "to_pair": 101,
+        "delta_rev": 2.700000000022129e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0002700000000022129,
+        "mean_sampled_vel_rev_s": -0.0038145,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 101,
+        "to_pair": 103,
+        "delta_rev": 1.09999999997612e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00010999999999761201,
+        "mean_sampled_vel_rev_s": -0.0095365,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 103,
+        "to_pair": 105,
+        "delta_rev": 4.000000000115023e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 4.0000000001150227e-05,
+        "mean_sampled_vel_rev_s": -0.000954,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 105,
+        "to_pair": 107,
+        "delta_rev": 3.7000000000286803e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00037000000000286803,
+        "mean_sampled_vel_rev_s": 0.0038144999999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 107,
+        "to_pair": 109,
+        "delta_rev": -8.300000000005525e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0008300000000005525,
+        "mean_sampled_vel_rev_s": -0.0038144999999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 109,
+        "to_pair": 111,
+        "delta_rev": 5.100000000002325e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005100000000002325,
+        "mean_sampled_vel_rev_s": 0.0019069999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 111,
+        "to_pair": 113,
+        "delta_rev": 2.799999999991698e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0002799999999991698,
+        "mean_sampled_vel_rev_s": 0.009536,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 113,
+        "to_pair": 115,
+        "delta_rev": -7.200000000029405e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0007200000000029405,
+        "mean_sampled_vel_rev_s": 0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 115,
+        "to_pair": 117,
+        "delta_rev": 1.3000000000040757e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00013000000000040757,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 117,
+        "to_pair": 119,
+        "delta_rev": 4.099999999995774e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00040999999999957737,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 119,
+        "to_pair": 121,
+        "delta_rev": 1.4000000000180535e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00014000000000180535,
+        "mean_sampled_vel_rev_s": 0.0057215,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 121,
+        "to_pair": 123,
+        "delta_rev": 5.3999999999998494e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005399999999999849,
+        "mean_sampled_vel_rev_s": 0.0019069999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 123,
+        "to_pair": 125,
+        "delta_rev": -0.00014100000000016877,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0014100000000016877,
+        "mean_sampled_vel_rev_s": -0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 125,
+        "to_pair": 127,
+        "delta_rev": 5.200000000016303e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005200000000016303,
+        "mean_sampled_vel_rev_s": -0.0066755,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 127,
+        "to_pair": 129,
+        "delta_rev": 4.900000000018778e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0004900000000018778,
+        "mean_sampled_vel_rev_s": -0.0019075,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 129,
+        "to_pair": 131,
+        "delta_rev": -2.199999999996649e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0002199999999996649,
+        "mean_sampled_vel_rev_s": 0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 131,
+        "to_pair": 133,
+        "delta_rev": -6.800000000017903e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006800000000017903,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 133,
+        "to_pair": 135,
+        "delta_rev": 6.4000000000064e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006400000000006401,
+        "mean_sampled_vel_rev_s": 0.004768,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 135,
+        "to_pair": 137,
+        "delta_rev": -2.9000000000056758e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0002900000000005676,
+        "mean_sampled_vel_rev_s": 0.0085825,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 137,
+        "to_pair": 139,
+        "delta_rev": -2.199999999996649e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0002199999999996649,
+        "mean_sampled_vel_rev_s": 0.0038145,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 139,
+        "to_pair": 141,
+        "delta_rev": 1.9999999998354667e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.9999999998354667e-05,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 141,
+        "to_pair": 143,
+        "delta_rev": -7.999999999785956e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -7.999999999785956e-05,
+        "mean_sampled_vel_rev_s": -0.0057215,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 143,
+        "to_pair": 145,
+        "delta_rev": 3.500000000000725e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003500000000000725,
+        "mean_sampled_vel_rev_s": -0.0095365,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 145,
+        "to_pair": 147,
+        "delta_rev": -6.299999999992423e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006299999999992423,
+        "mean_sampled_vel_rev_s": -0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 147,
+        "to_pair": 149,
+        "delta_rev": 9.69999999997917e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.000969999999997917,
+        "mean_sampled_vel_rev_s": -0.0038144999999999997,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 149,
+        "to_pair": 151,
+        "delta_rev": -1.9999999998354667e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.9999999998354667e-05,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 151,
+        "to_pair": 153,
+        "delta_rev": -0.0008360000000000589,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00836000000000059,
+        "mean_sampled_vel_rev_s": -0.0057220000000000005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 153,
+        "to_pair": 155,
+        "delta_rev": 0.0006469999999998421,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0064699999999984215,
+        "mean_sampled_vel_rev_s": -0.013351,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 155,
+        "to_pair": 157,
+        "delta_rev": 0.00037900000000012923,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0037900000000012923,
+        "mean_sampled_vel_rev_s": 0.0019075000000000003,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 157,
+        "to_pair": 159,
+        "delta_rev": -0.000248000000000026,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0024800000000002598,
+        "mean_sampled_vel_rev_s": 0.0085825,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 159,
+        "to_pair": 161,
+        "delta_rev": 6.599999999989947e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006599999999989947,
+        "mean_sampled_vel_rev_s": 0.0066749999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 161,
+        "to_pair": 163,
+        "delta_rev": 0.002315000000000289,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.02315000000000289,
+        "mean_sampled_vel_rev_s": 0.056266000000000004,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 163,
+        "to_pair": 165,
+        "delta_rev": 0.002553999999999945,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.025539999999999452,
+        "mean_sampled_vel_rev_s": 0.0505445,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 165,
+        "to_pair": 167,
+        "delta_rev": -0.00019500000000016726,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0019500000000016726,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 167,
+        "to_pair": 169,
+        "delta_rev": -0.0002900000000001235,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.002900000000001235,
+        "mean_sampled_vel_rev_s": 0.003814,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 169,
+        "to_pair": 171,
+        "delta_rev": 0.0009740000000002524,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.009740000000002524,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 171,
+        "to_pair": 173,
+        "delta_rev": 0.00733399999999973,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0733399999999973,
+        "mean_sampled_vel_rev_s": 0.2088545,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 173,
+        "to_pair": 175,
+        "delta_rev": 0.06549899999999997,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.6549899999999997,
+        "mean_sampled_vel_rev_s": 0.680923,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 175,
+        "to_pair": 177,
+        "delta_rev": 0.09672000000000036,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.9672000000000036,
+        "mean_sampled_vel_rev_s": 0.9870525000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 177,
+        "to_pair": 179,
+        "delta_rev": 0.10582000000000003,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.0582000000000003,
+        "mean_sampled_vel_rev_s": 1.0337825,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 179,
+        "to_pair": 181,
+        "delta_rev": 0.1030369999999996,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.030369999999996,
+        "mean_sampled_vel_rev_s": 0.9946820000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 181,
+        "to_pair": 183,
+        "delta_rev": 0.09943300000000033,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.9943300000000033,
+        "mean_sampled_vel_rev_s": 0.9641645000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 183,
+        "to_pair": 185,
+        "delta_rev": 0.10992099999999994,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.0992099999999994,
+        "mean_sampled_vel_rev_s": 1.048088,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 185,
+        "to_pair": 187,
+        "delta_rev": 0.11672400000000005,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.1672400000000005,
+        "mean_sampled_vel_rev_s": 1.1520385,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 187,
+        "to_pair": 189,
+        "delta_rev": 0.10933499999999974,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.0933499999999974,
+        "mean_sampled_vel_rev_s": 1.091003,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 189,
+        "to_pair": 191,
+        "delta_rev": 0.08190700000000017,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.8190700000000017,
+        "mean_sampled_vel_rev_s": 0.871658,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 191,
+        "to_pair": 193,
+        "delta_rev": 0.042317999999999856,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.42317999999999856,
+        "mean_sampled_vel_rev_s": 0.5340575000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 193,
+        "to_pair": 195,
+        "delta_rev": 0.0029959999999999987,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.029959999999999987,
+        "mean_sampled_vel_rev_s": 0.1573565,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 195,
+        "to_pair": 197,
+        "delta_rev": -0.0003799999999998249,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0037999999999982492,
+        "mean_sampled_vel_rev_s": -0.009536,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 197,
+        "to_pair": 199,
+        "delta_rev": -3.0000000000196536e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00030000000000196536,
+        "mean_sampled_vel_rev_s": -0.009536,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 199,
+        "to_pair": 201,
+        "delta_rev": -0.0006960000000000299,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.006960000000000299,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 201,
+        "to_pair": 203,
+        "delta_rev": -0.005794999999999995,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.057949999999999946,
+        "mean_sampled_vel_rev_s": -0.1306535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 203,
+        "to_pair": 205,
+        "delta_rev": -0.025307999999999886,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.25307999999999886,
+        "mean_sampled_vel_rev_s": -0.191688,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 205,
+        "to_pair": 207,
+        "delta_rev": -0.016145999999999994,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.16145999999999994,
+        "mean_sampled_vel_rev_s": -0.092506,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 207,
+        "to_pair": 209,
+        "delta_rev": -0.004458000000000073,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.04458000000000073,
+        "mean_sampled_vel_rev_s": -0.0524515,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 209,
+        "to_pair": 211,
+        "delta_rev": -0.015673000000000048,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.15673000000000048,
+        "mean_sampled_vel_rev_s": -0.1516335,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 211,
+        "to_pair": 213,
+        "delta_rev": -0.026953999999999922,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.2695399999999992,
+        "mean_sampled_vel_rev_s": -0.372886,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 213,
+        "to_pair": 215,
+        "delta_rev": -0.027298000000000044,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.27298000000000044,
+        "mean_sampled_vel_rev_s": -0.504493,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 215,
+        "to_pair": 217,
+        "delta_rev": -0.044476999999999656,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.44476999999999656,
+        "mean_sampled_vel_rev_s": -0.516891,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 217,
+        "to_pair": 219,
+        "delta_rev": -0.06009700000000029,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.6009700000000029,
+        "mean_sampled_vel_rev_s": -0.6265635,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 219,
+        "to_pair": 221,
+        "delta_rev": -0.07189899999999971,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.7189899999999971,
+        "mean_sampled_vel_rev_s": -0.7143014999999999,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 221,
+        "to_pair": 223,
+        "delta_rev": -0.07005100000000031,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.7005100000000031,
+        "mean_sampled_vel_rev_s": -0.6885524999999999,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 223,
+        "to_pair": 225,
+        "delta_rev": -0.05181099999999983,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.5181099999999983,
+        "mean_sampled_vel_rev_s": -0.4653925,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 225,
+        "to_pair": 227,
+        "delta_rev": -0.03884899999999991,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.3884899999999991,
+        "mean_sampled_vel_rev_s": -0.18691950000000002,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 227,
+        "to_pair": 229,
+        "delta_rev": -0.030676000000000148,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.3067600000000015,
+        "mean_sampled_vel_rev_s": -0.060081499999999996,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 229,
+        "to_pair": 231,
+        "delta_rev": -0.025395000000000056,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.25395000000000056,
+        "mean_sampled_vel_rev_s": -0.0286105,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 231,
+        "to_pair": 233,
+        "delta_rev": -0.01824300000000001,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.1824300000000001,
+        "mean_sampled_vel_rev_s": -0.1649855,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 233,
+        "to_pair": 235,
+        "delta_rev": -0.024474999999999802,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.24474999999999802,
+        "mean_sampled_vel_rev_s": -0.3223415,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 235,
+        "to_pair": 237,
+        "delta_rev": -0.03341300000000036,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.3341300000000036,
+        "mean_sampled_vel_rev_s": -0.3719325,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 237,
+        "to_pair": 239,
+        "delta_rev": -0.036362000000000005,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.36362000000000005,
+        "mean_sampled_vel_rev_s": -0.188827,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 239,
+        "to_pair": 241,
+        "delta_rev": -0.013425999999999938,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.13425999999999938,
+        "mean_sampled_vel_rev_s": -0.126838,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 241,
+        "to_pair": 243,
+        "delta_rev": -0.025633000000000017,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.25633000000000017,
+        "mean_sampled_vel_rev_s": -0.1029965,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 243,
+        "to_pair": 245,
+        "delta_rev": -0.02970499999999987,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.2970499999999987,
+        "mean_sampled_vel_rev_s": -0.14018999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 245,
+        "to_pair": 247,
+        "delta_rev": -0.002902999999999878,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.02902999999999878,
+        "mean_sampled_vel_rev_s": -0.24509399999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 247,
+        "to_pair": 249,
+        "delta_rev": -0.021126999999999896,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.21126999999999896,
+        "mean_sampled_vel_rev_s": -0.314712,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 249,
+        "to_pair": 251,
+        "delta_rev": -0.011149000000000076,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.11149000000000076,
+        "mean_sampled_vel_rev_s": -0.23937150000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 251,
+        "to_pair": 253,
+        "delta_rev": -0.012802999999999898,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.12802999999999898,
+        "mean_sampled_vel_rev_s": -0.042915,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 253,
+        "to_pair": 255,
+        "delta_rev": -0.015226000000000184,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.15226000000000184,
+        "mean_sampled_vel_rev_s": -0.147819,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 255,
+        "to_pair": 257,
+        "delta_rev": -0.020726000000000244,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.20726000000000244,
+        "mean_sampled_vel_rev_s": -0.2079005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 257,
+        "to_pair": 259,
+        "delta_rev": -0.014083999999999985,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.14083999999999985,
+        "mean_sampled_vel_rev_s": -0.077248,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 259,
+        "to_pair": 261,
+        "delta_rev": -0.009051999999999616,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.09051999999999616,
+        "mean_sampled_vel_rev_s": -0.0190735,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 261,
+        "to_pair": 263,
+        "delta_rev": -0.008056000000000285,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.08056000000000285,
+        "mean_sampled_vel_rev_s": -0.1487725,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 263,
+        "to_pair": 265,
+        "delta_rev": -0.012214999999999865,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.12214999999999865,
+        "mean_sampled_vel_rev_s": -0.2841945,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 265,
+        "to_pair": 267,
+        "delta_rev": -0.011740000000000084,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.11740000000000084,
+        "mean_sampled_vel_rev_s": -0.1668925,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 267,
+        "to_pair": 269,
+        "delta_rev": -0.004801999999999751,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.04801999999999751,
+        "mean_sampled_vel_rev_s": -0.012397,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 269,
+        "to_pair": 271,
+        "delta_rev": 0.0004989999999995831,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.004989999999995831,
+        "mean_sampled_vel_rev_s": -0.0114435,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 271,
+        "to_pair": 273,
+        "delta_rev": -8.199999999991547e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0008199999999991547,
+        "mean_sampled_vel_rev_s": -0.0038145,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 273,
+        "to_pair": 275,
+        "delta_rev": -3.0999999999892225e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00030999999999892225,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 275,
+        "to_pair": 277,
+        "delta_rev": 0.00010099999999990672,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0010099999999990672,
+        "mean_sampled_vel_rev_s": -0.0019075,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 277,
+        "to_pair": 279,
+        "delta_rev": -8.499999999989072e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0008499999999989072,
+        "mean_sampled_vel_rev_s": 0.007629,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 279,
+        "to_pair": 281,
+        "delta_rev": 3.900000000012227e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003900000000012227,
+        "mean_sampled_vel_rev_s": 0.0047685,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 281,
+        "to_pair": 283,
+        "delta_rev": 5.8999999999809205e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.000589999999998092,
+        "mean_sampled_vel_rev_s": -0.0028605,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 283,
+        "to_pair": 285,
+        "delta_rev": -0.0004930000000000767,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.004930000000000767,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 285,
+        "to_pair": 287,
+        "delta_rev": 0.0004970000000001917,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.004970000000001917,
+        "mean_sampled_vel_rev_s": 0.003814,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 287,
+        "to_pair": 289,
+        "delta_rev": -0.00018600000000024153,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0018600000000024153,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 289,
+        "to_pair": 291,
+        "delta_rev": -8.999999999925734e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -8.999999999925734e-05,
+        "mean_sampled_vel_rev_s": -0.0066749999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 291,
+        "to_pair": 293,
+        "delta_rev": -0.0004879999999998219,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.004879999999998219,
+        "mean_sampled_vel_rev_s": -0.011443499999999999,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 293,
+        "to_pair": 295,
+        "delta_rev": -0.006632999999999889,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.06632999999999889,
+        "mean_sampled_vel_rev_s": -0.01049,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 295,
+        "to_pair": 297,
+        "delta_rev": -0.0005370000000000097,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.005370000000000097,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 297,
+        "to_pair": 299,
+        "delta_rev": 1.3000000000040757e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00013000000000040757,
+        "mean_sampled_vel_rev_s": 0.0047680000000000005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 299,
+        "to_pair": 301,
+        "delta_rev": 0.00012599999999984846,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0012599999999984846,
+        "mean_sampled_vel_rev_s": 0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 301,
+        "to_pair": 303,
+        "delta_rev": -0.00011300000000025179,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0011300000000025179,
+        "mean_sampled_vel_rev_s": 0.002861,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 303,
+        "to_pair": 305,
+        "delta_rev": -0.0028729999999996814,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.028729999999996814,
+        "mean_sampled_vel_rev_s": -0.014304999999999998,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 305,
+        "to_pair": 307,
+        "delta_rev": -0.0012170000000000236,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.012170000000000236,
+        "mean_sampled_vel_rev_s": -0.020027,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 307,
+        "to_pair": 309,
+        "delta_rev": -0.00011500000000008725,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0011500000000008725,
+        "mean_sampled_vel_rev_s": -0.0057220000000000005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 309,
+        "to_pair": 311,
+        "delta_rev": 0.0002740000000001075,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.002740000000001075,
+        "mean_sampled_vel_rev_s": 0.0038144999999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 311,
+        "to_pair": 313,
+        "delta_rev": -0.00019100000000005224,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0019100000000005224,
+        "mean_sampled_vel_rev_s": 0.0047680000000000005,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 313,
+        "to_pair": 315,
+        "delta_rev": 9.300000000012076e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0009300000000012076,
+        "mean_sampled_vel_rev_s": 0.0047680000000000005,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 315,
+        "to_pair": 317,
+        "delta_rev": 9.999999996956888e-07,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 9.999999996956888e-06,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 317,
+        "to_pair": 319,
+        "delta_rev": 6.100000000008876e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006100000000008876,
+        "mean_sampled_vel_rev_s": 0.0038144999999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 319,
+        "to_pair": 321,
+        "delta_rev": -4.999999999988347e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0004999999999988347,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 321,
+        "to_pair": 323,
+        "delta_rev": -4.500000000007276e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0004500000000007276,
+        "mean_sampled_vel_rev_s": -0.009536,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 323,
+        "to_pair": 325,
+        "delta_rev": -2.9000000000056758e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0002900000000005676,
+        "mean_sampled_vel_rev_s": -0.012397,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 325,
+        "to_pair": 327,
+        "delta_rev": 5.2999999999858716e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005299999999985872,
+        "mean_sampled_vel_rev_s": -0.0114435,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 327,
+        "to_pair": 329,
+        "delta_rev": 1.3000000000040757e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00013000000000040757,
+        "mean_sampled_vel_rev_s": -0.01049,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 329,
+        "to_pair": 331,
+        "delta_rev": -1.9999999998354667e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.9999999998354667e-05,
+        "mean_sampled_vel_rev_s": -0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 331,
+        "to_pair": 333,
+        "delta_rev": -2.4999999999941735e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00024999999999941735,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 333,
+        "to_pair": 335,
+        "delta_rev": 8.799999999986596e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0008799999999986596,
+        "mean_sampled_vel_rev_s": -0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 335,
+        "to_pair": 337,
+        "delta_rev": -0.0004819999999998714,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.004819999999998714,
+        "mean_sampled_vel_rev_s": -0.02098,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 337,
+        "to_pair": 339,
+        "delta_rev": -0.013209999999999944,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.13209999999999944,
+        "mean_sampled_vel_rev_s": -0.023841,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 339,
+        "to_pair": 341,
+        "delta_rev": 0.0015449999999996855,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.015449999999996855,
+        "mean_sampled_vel_rev_s": 0.0038150000000000007,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 341,
+        "to_pair": 343,
+        "delta_rev": 0.042612000000000094,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.42612000000000094,
+        "mean_sampled_vel_rev_s": 0.6618495,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 343,
+        "to_pair": 345,
+        "delta_rev": 0.16423999999999994,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.6423999999999994,
+        "mean_sampled_vel_rev_s": 1.5459055,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 345,
+        "to_pair": 347,
+        "delta_rev": 0.18630000000000013,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.8630000000000013,
+        "mean_sampled_vel_rev_s": 1.7814635,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 347,
+        "to_pair": 349,
+        "delta_rev": 0.17379100000000003,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.7379100000000003,
+        "mean_sampled_vel_rev_s": 1.7995835,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 349,
+        "to_pair": 351,
+        "delta_rev": 0.16450599999999982,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.6450599999999982,
+        "mean_sampled_vel_rev_s": 1.592636,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 351,
+        "to_pair": 353,
+        "delta_rev": 0.11108000000000029,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.110800000000003,
+        "mean_sampled_vel_rev_s": 1.096725,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 353,
+        "to_pair": 355,
+        "delta_rev": 0.0494049999999997,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.494049999999997,
+        "mean_sampled_vel_rev_s": 0.49400299999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 355,
+        "to_pair": 357,
+        "delta_rev": 0.0036920000000000286,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.036920000000000286,
+        "mean_sampled_vel_rev_s": 0.0801085,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 357,
+        "to_pair": 359,
+        "delta_rev": -0.0005349999999997301,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.005349999999997301,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 359,
+        "to_pair": 361,
+        "delta_rev": -0.011105000000000143,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.11105000000000143,
+        "mean_sampled_vel_rev_s": -0.2841945,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 361,
+        "to_pair": 363,
+        "delta_rev": -0.03958800000000018,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.3958800000000018,
+        "mean_sampled_vel_rev_s": -0.417709,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 363,
+        "to_pair": 365,
+        "delta_rev": -0.04396799999999956,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.43967999999999563,
+        "mean_sampled_vel_rev_s": -0.3728865,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 365,
+        "to_pair": 367,
+        "delta_rev": -0.05141400000000029,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.5141400000000029,
+        "mean_sampled_vel_rev_s": -0.567436,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 367,
+        "to_pair": 369,
+        "delta_rev": -0.052992999999999846,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.5299299999999985,
+        "mean_sampled_vel_rev_s": -0.635147,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 369,
+        "to_pair": 371,
+        "delta_rev": -0.08616500000000027,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.8616500000000027,
+        "mean_sampled_vel_rev_s": -0.7915495,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 371,
+        "to_pair": 373,
+        "delta_rev": -0.10577499999999995,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.0577499999999995,
+        "mean_sampled_vel_rev_s": -1.067161,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 373,
+        "to_pair": 375,
+        "delta_rev": -0.11037000000000008,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.1037000000000008,
+        "mean_sampled_vel_rev_s": -1.113891,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 375,
+        "to_pair": 377,
+        "delta_rev": -0.11142199999999969,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.1142199999999969,
+        "mean_sampled_vel_rev_s": -1.0738370000000002,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 377,
+        "to_pair": 379,
+        "delta_rev": -0.07784900000000006,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.7784900000000006,
+        "mean_sampled_vel_rev_s": -0.869751,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 379,
+        "to_pair": 381,
+        "delta_rev": -0.051670000000000105,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.516700000000001,
+        "mean_sampled_vel_rev_s": -0.514984,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 381,
+        "to_pair": 383,
+        "delta_rev": -0.03398499999999993,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.3398499999999993,
+        "mean_sampled_vel_rev_s": -0.28038,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 383,
+        "to_pair": 385,
+        "delta_rev": -0.013692999999999955,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.13692999999999955,
+        "mean_sampled_vel_rev_s": -0.17642950000000002,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 385,
+        "to_pair": 387,
+        "delta_rev": -0.008072999999999997,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.08072999999999997,
+        "mean_sampled_vel_rev_s": -0.09155250000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 387,
+        "to_pair": 389,
+        "delta_rev": 1.09999999997612e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00010999999999761201,
+        "mean_sampled_vel_rev_s": -0.013351,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 389,
+        "to_pair": 391,
+        "delta_rev": -0.00024399999999991095,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0024399999999991095,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 391,
+        "to_pair": 393,
+        "delta_rev": -0.00021799999999982944,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0021799999999982944,
+        "mean_sampled_vel_rev_s": -0.0047685,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 393,
+        "to_pair": 395,
+        "delta_rev": -0.00039500000000014523,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.003950000000001452,
+        "mean_sampled_vel_rev_s": -0.0095365,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 395,
+        "to_pair": 397,
+        "delta_rev": -0.009325000000000028,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.09325000000000028,
+        "mean_sampled_vel_rev_s": -0.0534055,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 397,
+        "to_pair": 399,
+        "delta_rev": -0.0060509999999998065,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.060509999999998065,
+        "mean_sampled_vel_rev_s": -0.15068,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 399,
+        "to_pair": 401,
+        "delta_rev": -0.009307999999999872,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.09307999999999872,
+        "mean_sampled_vel_rev_s": -0.0944135,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 401,
+        "to_pair": 403,
+        "delta_rev": 0.0003229999999998512,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.003229999999998512,
+        "mean_sampled_vel_rev_s": -0.0019069999999999998,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 403,
+        "to_pair": 405,
+        "delta_rev": 1.3999999999736445e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00013999999999736445,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 405,
+        "to_pair": 407,
+        "delta_rev": -8.999999999925734e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -8.999999999925734e-05,
+        "mean_sampled_vel_rev_s": 0.0076289999999999995,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 407,
+        "to_pair": 409,
+        "delta_rev": -0.00017800000000001148,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0017800000000001148,
+        "mean_sampled_vel_rev_s": -0.005722,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 409,
+        "to_pair": 411,
+        "delta_rev": 0.00011000000000027654,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0011000000000027654,
+        "mean_sampled_vel_rev_s": -0.013351,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 411,
+        "to_pair": 413,
+        "delta_rev": -7.00000000000145e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.000700000000000145,
+        "mean_sampled_vel_rev_s": -0.012397,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 413,
+        "to_pair": 415,
+        "delta_rev": -1.8999999999991246e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00018999999999991246,
+        "mean_sampled_vel_rev_s": -0.006675499999999999,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 415,
+        "to_pair": 417,
+        "delta_rev": 0.00010999999999983245,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0010999999999983245,
+        "mean_sampled_vel_rev_s": 0.0028610000000000003,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 417,
+        "to_pair": 419,
+        "delta_rev": -0.00018099999999998673,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0018099999999998673,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 419,
+        "to_pair": 421,
+        "delta_rev": 5.699999999997374e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005699999999997374,
+        "mean_sampled_vel_rev_s": 0.0019075,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 421,
+        "to_pair": 423,
+        "delta_rev": -0.00011500000000008725,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0011500000000008725,
+        "mean_sampled_vel_rev_s": 0.0019075,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 423,
+        "to_pair": 425,
+        "delta_rev": 6.200000000022854e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0006200000000022854,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 425,
+        "to_pair": 427,
+        "delta_rev": 0.00016799999999994597,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0016799999999994597,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 427,
+        "to_pair": 429,
+        "delta_rev": -0.0010829999999999451,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.010829999999999451,
+        "mean_sampled_vel_rev_s": -0.0114435,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 429,
+        "to_pair": 431,
+        "delta_rev": -0.006683999999999912,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.06683999999999912,
+        "mean_sampled_vel_rev_s": -0.048637,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 431,
+        "to_pair": 433,
+        "delta_rev": -0.0043920000000001735,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.043920000000001735,
+        "mean_sampled_vel_rev_s": -0.0362395,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 433,
+        "to_pair": 435,
+        "delta_rev": 3.799999999998249e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003799999999998249,
+        "mean_sampled_vel_rev_s": 0.0019075,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 435,
+        "to_pair": 437,
+        "delta_rev": 5.100000000002325e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005100000000002325,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 437,
+        "to_pair": 439,
+        "delta_rev": -1.9999999998354667e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.9999999998354667e-05,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 439,
+        "to_pair": 441,
+        "delta_rev": -6.800000000017903e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006800000000017903,
+        "mean_sampled_vel_rev_s": 0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 441,
+        "to_pair": 443,
+        "delta_rev": 2.799999999991698e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0002799999999991698,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 443,
+        "to_pair": 445,
+        "delta_rev": -7.799999999980045e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0007799999999980045,
+        "mean_sampled_vel_rev_s": -0.0066749999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 445,
+        "to_pair": 447,
+        "delta_rev": 0.0001129999999998077,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.001129999999998077,
+        "mean_sampled_vel_rev_s": -0.0038144999999999997,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 447,
+        "to_pair": 449,
+        "delta_rev": 1.000000000139778e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 1.000000000139778e-05,
+        "mean_sampled_vel_rev_s": 0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 449,
+        "to_pair": 451,
+        "delta_rev": -9.600000000009601e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0009600000000009601,
+        "mean_sampled_vel_rev_s": 0.0076289999999999995,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 451,
+        "to_pair": 453,
+        "delta_rev": 0.00017099999999992122,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0017099999999992122,
+        "mean_sampled_vel_rev_s": 0.003814,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 453,
+        "to_pair": 455,
+        "delta_rev": -0.00021000000000004349,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.002100000000000435,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 455,
+        "to_pair": 457,
+        "delta_rev": 2.4000000000246047e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00024000000000246047,
+        "mean_sampled_vel_rev_s": -0.004768,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 457,
+        "to_pair": 459,
+        "delta_rev": -8.000000000230045e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -8.000000000230045e-05,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 459,
+        "to_pair": 461,
+        "delta_rev": -1.9999999998354667e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.9999999998354667e-05,
+        "mean_sampled_vel_rev_s": -0.0028605,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 461,
+        "to_pair": 463,
+        "delta_rev": -5.8000000000113516e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005800000000011352,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 463,
+        "to_pair": 465,
+        "delta_rev": 2.199999999996649e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0002199999999996649,
+        "mean_sampled_vel_rev_s": 0.0019075,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 465,
+        "to_pair": 467,
+        "delta_rev": 4.600000000021254e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0004600000000021254,
+        "mean_sampled_vel_rev_s": 0.004768,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 467,
+        "to_pair": 469,
+        "delta_rev": -7.00000000000145e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.000700000000000145,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 469,
+        "to_pair": 471,
+        "delta_rev": 5.8000000000113516e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005800000000011352,
+        "mean_sampled_vel_rev_s": -0.0057215,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 471,
+        "to_pair": 473,
+        "delta_rev": -4.000000000115023e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -4.0000000001150227e-05,
+        "mean_sampled_vel_rev_s": -0.0057215,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 473,
+        "to_pair": 475,
+        "delta_rev": -4.300000000023729e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00043000000000237293,
+        "mean_sampled_vel_rev_s": -0.0066749999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 475,
+        "to_pair": 477,
+        "delta_rev": 7.200000000029405e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0007200000000029405,
+        "mean_sampled_vel_rev_s": -0.0019069999999999998,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 477,
+        "to_pair": 479,
+        "delta_rev": -7.50000000002693e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.000750000000002693,
+        "mean_sampled_vel_rev_s": 0.0019075,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 479,
+        "to_pair": 481,
+        "delta_rev": 4.600000000021254e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0004600000000021254,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 481,
+        "to_pair": 483,
+        "delta_rev": -4.8000000000048004e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00048000000000048004,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 483,
+        "to_pair": 485,
+        "delta_rev": -8.60000000000305e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.000860000000000305,
+        "mean_sampled_vel_rev_s": -0.0057215,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 485,
+        "to_pair": 487,
+        "delta_rev": 8.900000000000574e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0008900000000000574,
+        "mean_sampled_vel_rev_s": -0.013351,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 487,
+        "to_pair": 489,
+        "delta_rev": -7.000000000090267e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -7.000000000090267e-05,
+        "mean_sampled_vel_rev_s": -0.0076295,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 489,
+        "to_pair": 491,
+        "delta_rev": 3.399999999986747e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003399999999986747,
+        "mean_sampled_vel_rev_s": 0.0028605,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 491,
+        "to_pair": 493,
+        "delta_rev": 5.100000000002325e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005100000000002325,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 493,
+        "to_pair": 495,
+        "delta_rev": -9.299999999967667e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0009299999999967667,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 495,
+        "to_pair": 497,
+        "delta_rev": 0.00010899999999969268,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0010899999999969268,
+        "mean_sampled_vel_rev_s": 0.0095365,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 497,
+        "to_pair": 499,
+        "delta_rev": -4.2999999999793204e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00042999999999793204,
+        "mean_sampled_vel_rev_s": 0.0152585,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 499,
+        "to_pair": 501,
+        "delta_rev": 2.3999999999801958e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00023999999999801958,
+        "mean_sampled_vel_rev_s": 0.0152585,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 501,
+        "to_pair": 503,
+        "delta_rev": -2.899999999961267e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0002899999999961267,
+        "mean_sampled_vel_rev_s": 0.0038145,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 503,
+        "to_pair": 505,
+        "delta_rev": 1.3999999999736445e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00013999999999736445,
+        "mean_sampled_vel_rev_s": -0.005722,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 505,
+        "to_pair": 507,
+        "delta_rev": -6.700000000003925e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006700000000003925,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 507,
+        "to_pair": 509,
+        "delta_rev": 1.3000000000040757e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00013000000000040757,
+        "mean_sampled_vel_rev_s": -0.005722,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 509,
+        "to_pair": 511,
+        "delta_rev": 0.00010799999999999699,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0010799999999999699,
+        "mean_sampled_vel_rev_s": 0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 511,
+        "to_pair": 513,
+        "delta_rev": -5.200000000016303e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005200000000016303,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 513,
+        "to_pair": 515,
+        "delta_rev": -1.4999999999876223e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00014999999999876223,
+        "mean_sampled_vel_rev_s": -0.003815,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 515,
+        "to_pair": 517,
+        "delta_rev": -2.9999999999752447e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -2.9999999999752447e-05,
+        "mean_sampled_vel_rev_s": 0.0057215,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 517,
+        "to_pair": 519,
+        "delta_rev": 1.100000000020529e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0001100000000020529,
+        "mean_sampled_vel_rev_s": 0.01049,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 519,
+        "to_pair": 521,
+        "delta_rev": 3.299999999972769e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003299999999972769,
+        "mean_sampled_vel_rev_s": 0.0066755,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 521,
+        "to_pair": 523,
+        "delta_rev": -1.9999999999686935e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00019999999999686935,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 523,
+        "to_pair": 525,
+        "delta_rev": -3.2000000000032e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00032000000000032003,
+        "mean_sampled_vel_rev_s": -0.007629,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 525,
+        "to_pair": 527,
+        "delta_rev": 3.6999999999842714e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00036999999999842714,
+        "mean_sampled_vel_rev_s": -0.009536000000000001,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 527,
+        "to_pair": 529,
+        "delta_rev": -3.399999999986747e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0003399999999986747,
+        "mean_sampled_vel_rev_s": -0.0076289999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 529,
+        "to_pair": 531,
+        "delta_rev": 1.3999999999736445e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00013999999999736445,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 531,
+        "to_pair": 533,
+        "delta_rev": -7.999999999785956e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -7.999999999785956e-05,
+        "mean_sampled_vel_rev_s": 0.003815,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 533,
+        "to_pair": 535,
+        "delta_rev": -3.0000000000196536e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00030000000000196536,
+        "mean_sampled_vel_rev_s": -0.001907,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 535,
+        "to_pair": 537,
+        "delta_rev": -5.499999999969418e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0005499999999969418,
+        "mean_sampled_vel_rev_s": -0.0009535,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 537,
+        "to_pair": 539,
+        "delta_rev": 4.399999999993298e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0004399999999993298,
+        "mean_sampled_vel_rev_s": -0.0038144999999999997,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 539,
+        "to_pair": 541,
+        "delta_rev": -7.000000000090267e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -7.000000000090267e-05,
+        "mean_sampled_vel_rev_s": -0.0076289999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 541,
+        "to_pair": 543,
+        "delta_rev": 4.2999999999793204e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00042999999999793204,
+        "mean_sampled_vel_rev_s": -0.0019069999999999998,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 543,
+        "to_pair": 545,
+        "delta_rev": 4.400000000037707e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0004400000000037707,
+        "mean_sampled_vel_rev_s": 0.0038144999999999997,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 545,
+        "to_pair": 547,
+        "delta_rev": -9.10000000002853e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.000910000000002853,
+        "mean_sampled_vel_rev_s": 0.0047680000000000005,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 547,
+        "to_pair": 549,
+        "delta_rev": 3.300000000017178e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003300000000017178,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 549,
+        "to_pair": 551,
+        "delta_rev": -1.000000000139778e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -1.000000000139778e-05,
+        "mean_sampled_vel_rev_s": 0.0047685,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 551,
+        "to_pair": 553,
+        "delta_rev": -2.9999999999752447e-06,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -2.9999999999752447e-05,
+        "mean_sampled_vel_rev_s": 0.0038150000000000007,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 553,
+        "to_pair": 555,
+        "delta_rev": 5.100000000002325e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005100000000002325,
+        "mean_sampled_vel_rev_s": 0.0019075000000000003,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 555,
+        "to_pair": 557,
+        "delta_rev": -7.199999999984996e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0007199999999984996,
+        "mean_sampled_vel_rev_s": 0.0009535000000000004,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 557,
+        "to_pair": 559,
+        "delta_rev": 3.2000000000032e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.00032000000000032003,
+        "mean_sampled_vel_rev_s": -0.002861,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 559,
+        "to_pair": 561,
+        "delta_rev": -3.0000000000196536e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00030000000000196536,
+        "mean_sampled_vel_rev_s": -0.0009535000000000004,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 561,
+        "to_pair": 563,
+        "delta_rev": 7.100000000015427e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0007100000000015427,
+        "mean_sampled_vel_rev_s": 0.002861,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 563,
+        "to_pair": 565,
+        "delta_rev": 3.899999999967818e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0003899999999967818,
+        "mean_sampled_vel_rev_s": 0.014304500000000001,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 565,
+        "to_pair": 567,
+        "delta_rev": -6.599999999989947e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0006599999999989947,
+        "mean_sampled_vel_rev_s": 0.01049,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 567,
+        "to_pair": 569,
+        "delta_rev": 8.100000000021979e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0008100000000021979,
+        "mean_sampled_vel_rev_s": 0.005722,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 569,
+        "to_pair": 571,
+        "delta_rev": -0.00013100000000010326,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0013100000000010326,
+        "mean_sampled_vel_rev_s": -0.0009535000000000004,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 571,
+        "to_pair": 573,
+        "delta_rev": 5.2999999999858716e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0005299999999985872,
+        "mean_sampled_vel_rev_s": -0.0009535000000000004,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 573,
+        "to_pair": 575,
+        "delta_rev": -1.1999999999900979e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00011999999999900979,
+        "mean_sampled_vel_rev_s": 0.0076289999999999995,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 575,
+        "to_pair": 577,
+        "delta_rev": 0.00021100000000018326,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0021100000000018326,
+        "mean_sampled_vel_rev_s": 0.0009534999999999995,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 577,
+        "to_pair": 579,
+        "delta_rev": -0.005919000000000008,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.059190000000000076,
+        "mean_sampled_vel_rev_s": -0.121116,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 579,
+        "to_pair": 581,
+        "delta_rev": -0.005881000000000025,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.05881000000000025,
+        "mean_sampled_vel_rev_s": -0.1173015,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 581,
+        "to_pair": 583,
+        "delta_rev": 0.00030799999999997496,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0030799999999997496,
+        "mean_sampled_vel_rev_s": 0.0,
+        "signed_relationship": "zero_or_unresolved"
+      },
+      {
+        "from_pair": 583,
+        "to_pair": 585,
+        "delta_rev": -0.0005310000000000592,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.005310000000000592,
+        "mean_sampled_vel_rev_s": 0.0038145,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 585,
+        "to_pair": 587,
+        "delta_rev": -0.009281000000000095,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.09281000000000095,
+        "mean_sampled_vel_rev_s": -0.020981,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 587,
+        "to_pair": 589,
+        "delta_rev": -0.004129999999999967,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.04129999999999967,
+        "mean_sampled_vel_rev_s": -0.01812,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 589,
+        "to_pair": 591,
+        "delta_rev": 0.0003340000000000565,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0033400000000005647,
+        "mean_sampled_vel_rev_s": 0.005722,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 591,
+        "to_pair": 593,
+        "delta_rev": -8.700000000017027e-05,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0008700000000017027,
+        "mean_sampled_vel_rev_s": -0.0095365,
+        "signed_relationship": "same_sign"
+      },
+      {
+        "from_pair": 593,
+        "to_pair": 595,
+        "delta_rev": 0.0003550000000003273,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": 0.0035500000000032728,
+        "mean_sampled_vel_rev_s": -0.0076295,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 595,
+        "to_pair": 597,
+        "delta_rev": -0.00020800000000020802,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.00208000000000208,
+        "mean_sampled_vel_rev_s": 0.001907,
+        "signed_relationship": "opposite_sign"
+      },
+      {
+        "from_pair": 597,
+        "to_pair": 599,
+        "delta_rev": -0.000124000000000013,
+        "dt_s": 0.1,
+        "observed_delta_rev_s": -0.0012400000000001299,
+        "mean_sampled_vel_rev_s": 0.0009535,
+        "signed_relationship": "opposite_sign"
+      }
+    ],
+    "physical_variation_acceptance": "review_required",
+    "relationship_counts": {
+      "same_sign": 190,
+      "opposite_sign": 88,
+      "zero_or_unresolved": 21
+    },
+    "scope": "Observed samples only; no amplitude acceptance threshold or hardware acceptance claim. MCU float text quantization can leave zero/unresolved relationships."
+  },
+  "session_completed_without_fault": true,
+  "finished_utc": "2026-10-07T13:33:23.003665+00:00"
+}

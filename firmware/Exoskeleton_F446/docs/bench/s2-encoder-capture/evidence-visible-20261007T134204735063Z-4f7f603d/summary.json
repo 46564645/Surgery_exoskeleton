@@ -1,0 +1,55 @@
+{
+  "mode": "capture",
+  "session_id": "evidence-visible-20261007T134204735063Z-4f7f603d",
+  "success": false,
+  "ready_for_movement": false,
+  "physical_variation_acceptance": "review_required",
+  "error": "CaptureError: Unexpected hb",
+  "start_attempted": false,
+  "stop_attempted": false,
+  "last_can": {
+    "shoulder": {
+      "bus": "shoulder",
+      "started": "1",
+      "start_error": "0",
+      "rx": 0,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "0",
+      "id": "na",
+      "dlc": "0",
+      "data": "-",
+      "age_ms": "na"
+    },
+    "elbow": {
+      "bus": "elbow",
+      "started": "1",
+      "start_error": "0",
+      "rx": 0,
+      "drop": 0,
+      "invalid": 0,
+      "fov": 0,
+      "err": 0,
+      "last_err": "00000000",
+      "bus_off": "0",
+      "queued": "0",
+      "seen": "0",
+      "id": "na",
+      "dlc": "0",
+      "data": "-",
+      "age_ms": "na"
+    }
+  },
+  "encoder_analysis": {
+    "distinct_observed_pairs": 0,
+    "numerical_variation_observed": false,
+    "physical_variation_acceptance": "review_required"
+  },
+  "session_completed_without_fault": false,
+  "finished_utc": "2026-10-07T13:42:29.050307+00:00"
+}

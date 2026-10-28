@@ -3090,3 +3090,20 @@ M6（应用层完整闭环、肌肉模型）保持可选，不在本次批准范
 - 过程问题：第一次让`report_muscle_all.py`与`workspace_scan.py`并行时，前者在`build_model.py`编译网格惯量处报`MemoryError: bad allocation`。当时系统可提交内存只剩约 3.5 GB，单独重跑即通过，判断为两个进程同时占用内存所致，代码未改；以后这两条不要并行跑。
 - 参数/接线变化：无，固件未改。
 - 遗留与下一步：`workspace_scan.py` C2 周期写死 50 ms 仍未动；固件`tests/`整理计划另行给出。
+
+### 2026-10-28｜固件 tests/ 清理；发现 R5 镜像在 followprepare 处必然 FAULT（根因已查明，未改固件）
+
+- 用户决定：删除历史台架工具，采集记录移到`docs/bench/`；R5 配置的主机测试要修正。
+- 本次完成（tests 清理）：
+  - 删除`tests/bench_serial.py`（S1，POSIX）、`tests/bench_can_serial.py`（S2 无驱动器场景）、`tests/gds_usb/read_power_diag.py`（依赖仓库外`D:\codex_tasks`）、`tests/encoder_capture/`与`tests/s3_capture/`的脚本、离线自测和夹具。
+  - 采集记录移到`docs/bench/s2-encoder-capture/`（原已提交的`evidence-static-hse-*`，加上原先被忽略、只在本机的 8 个`evidence-*`目录，共 2.1 MB）和`docs/bench/s3-capture/`（5 个目录，348 KB）。
+  - `docs/s2_encoder_stream.md`、`docs/s3_output_preparation.md`、`docs/can_clock_comparison.md`、`docs/bench/relative-hse-20261004/README.md`里的链接改到新位置；指向已删工具的链接改为"已删除，见 git 历史"；固件 README 的串口一节改写。本日志与`.auto-embedded`里的历史路径不改。
+  - 保留：`run_host_tests.py`+`host/`（默认 125 项，约 4 s）、`check_generated.py`、`live_monitor/`。
+- 实际结果：默认配置主机测试 125 项通过；`check_generated.py`通过。
+- **R5 配置检查发现的固件问题（未修改，待用户决定）**：
+  - 现象：用当前默认参数（`S5_R5_DUAL_FOLLOW`、肘 10 A）跑 R5 主机测试，19 个用例里有 17 个失败，大多数是 PREPARING 阶段进入`S5_FOLLOW_FAULT`。另外，`run_host_tests.py`只允许肩 Amplify 0–100 mNm，用当前默认值 300 会直接拒绝运行。
+  - 回溯：在临时 worktree 里逐个提交复跑。`11ecbda`及之前全部通过；`18f8dcc`（输出周期 50→10 ms）起只有`s5_r5_site`失败，原因是测试里写死了旧常量；`606f0c3`（肩上限 205→300 mNm、增益 1.5）起状态机开始 FAULT。
+  - 根因：在调试副本里加打印确认，失败点是`s5_follow.c`里的`OutputGateway_ConfigureAxesFollow()`。它要求肩撤力斜率 × (`ramp_max_ms` − 2×`send_interval_ms`) ≥ 肩命令上限。现值为 0.120 N·m/s × (2000 − 20) ms = 0.2376 N·m，小于新上限 0.300 N·m，所以被拒；旧上限 0.205 N·m 时能通过。`S5Site_ProfileReady()`/`ReadReady()`不检查这一项，开机自检会通过，要到`followprepare`才 FAULT。
+  - 影响：10-27 起编译的`build/r5-conservative/`、`build/r5-assist/`（肩上限 300 mNm）刷到板上后，`followprepare`会直接进入 FAULT，无法开始跟随。镜像都没刷写，没有造成实物影响。仿真没有发现这个问题，因为桥接只调用合成函数，不经过输出网关。
+- 参数/接线变化：无，固件未改。
+- 遗留与下一步：修复方式待用户决定（提高肩撤力斜率 / 加长`ramp_max_ms` / 让撤力斜率按上限推导，并把这项预算检查加进`S5Site_ProfileReady`）；之后再修正 R5 测试里写死的常量和 Amplify 范围，用当前默认参数跑通 R5 配置。
