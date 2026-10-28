@@ -165,10 +165,11 @@ def main() -> int:
     benefit = 100.0 * (1.0 - t2 / t1)
     act_cost = 100.0 * (grid("act_C1") / grid("act_C0") - 1.0)
     act_benefit = 100.0 * (1.0 - grid("act_C2") / grid("act_C1"))
-    # A percentage against a near-zero baseline (activation 0.004) is noise:
-    # one such cell gave -85 % and flattened the whole panel. Cells whose
-    # unpowered activation is below 0.01 are left blank instead.
-    act_benefit = np.where(grid("act_C1") >= 0.01, act_benefit, np.nan)
+    # A percentage against a small baseline is misleading: at shoulder 15 /
+    # elbow 40 the unpowered activation is 0.042, so 1 - C2/C1 reads -85 %
+    # although the assisted case simply returns to the bare-arm level. Cells
+    # whose unpowered activation is below 0.2 are left blank (n/a).
+    act_benefit = np.where(grid("act_C1") >= 0.2, act_benefit, np.nan)
 
     with (out_dir / "workspace.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -179,7 +180,7 @@ def main() -> int:
     panels = (
         (cost, "wearing it, unpowered\n(+% effort vs bare arm)"),
         (benefit, "firmware assist\n(% effort back vs unpowered)"),
-        (act_benefit, "assist, muscle activation\n(% back vs unpowered)"),
+        (act_benefit, "assist, muscle activation\n(% back vs unpowered; n/a = baseline < 0.2)"),
     )
     for ax, (values, title) in zip(axes, panels):
         # pcolormesh keeps every sample at its own grid point, so the printed
@@ -215,17 +216,18 @@ def main() -> int:
                      "mean": float(cost.mean())},
         "benefit_pct": {"min": float(benefit.min()), "max": float(benefit.max()),
                         "mean": float(benefit.mean())},
-        "activation_benefit_pct": {"min": float(act_benefit.min()),
-                                   "max": float(act_benefit.max()),
-                                   "mean": float(act_benefit.mean())},
+        "activation_benefit_pct": {"min": float(np.nanmin(act_benefit)),
+                                   "max": float(np.nanmax(act_benefit)),
+                                   "mean": float(np.nanmean(act_benefit)),
+                                   "blank_cells": int(np.isnan(act_benefit).sum())},
         "note": "model estimates; C0 bare, C1 worn unpowered, C2 worn + firmware",
     }
     (out_dir / "workspace.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print(f"wearing cost   {cost.min():+.1f} .. {cost.max():+.1f} % (mean {cost.mean():+.1f})")
     print(f"assist benefit {benefit.min():+.1f} .. {benefit.max():+.1f} % (mean {benefit.mean():+.1f})")
-    print(f"activation     {act_benefit.min():+.1f} .. {act_benefit.max():+.1f} % "
-          f"(mean {act_benefit.mean():+.1f})")
+    print(f"activation     {np.nanmin(act_benefit):+.1f} .. {np.nanmax(act_benefit):+.1f} % "
+          f"(mean {np.nanmean(act_benefit):+.1f}; {int(np.isnan(act_benefit).sum())} cells blank)")
     print(f"wrote {out_dir}")
     return 0
 
