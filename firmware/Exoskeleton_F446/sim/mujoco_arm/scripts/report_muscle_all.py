@@ -60,9 +60,10 @@ def main() -> int:
     # Stack the two result figures into one image for quick sharing.
     try:
         from PIL import Image
-        static_png = static_dir / "muscle_static.png"
-        burst_png = burst_dir / "muscle_burst.png"
-        images = [Image.open(p) for p in (static_png, burst_png) if p.exists()]
+        panels = [static_dir / "muscle_static.png",
+                  static_dir / "muscle_static_deltoid.png",
+                  burst_dir / "muscle_burst.png"]
+        images = [Image.open(p) for p in panels if p.exists()]
         if images:
             width = max(i.width for i in images)
             scaled = [i.resize((width, int(i.height * width / i.width))) for i in images]
@@ -95,7 +96,8 @@ def main() -> int:
             "|---|---|",
             "| `report.png` | static and burst figures stacked |",
             "| `static/muscle_static.png` | activation and human torque per posture (C0/C1/C2) |",
-            "| `static/muscle_static.json` | the numbers behind it |",
+            "| `static/muscle_static_deltoid.png` | anterior deltoid activation, paper-style |",
+            "| `static/muscle_static.json` | the numbers behind it, including per-muscle activations |",
             "| `burst/muscle_burst.png` | activation and joint velocity in the first burst |",
             "| `burst/muscle_burst.json` | burst metrics including positive work |",
             "| `scenes/` | the model at P1 (20/100), P4 (30/110), P5 (60/70) |",

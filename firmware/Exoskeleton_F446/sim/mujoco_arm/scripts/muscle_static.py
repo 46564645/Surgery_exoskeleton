@@ -31,6 +31,11 @@ import build_model as bm  # noqa: E402
 from sim.burst import Burst  # noqa: E402
 from sim.controller import Controller  # noqa: E402
 from sim.muscle_drive import run_muscle_burst  # noqa: E402
+from sim.muscles import MuscleEffort  # noqa: E402
+
+# Muscles the shoulder-exoskeleton papers report (deltoid first, as in the
+# Frontiers 2024 MIS study and the Ergonomics 2026 laparoscopic study).
+REPORTED_MUSCLES = ("DELT1", "DELT2", "DELT3", "SUPSP", "INFSP", "PECM1", "TMAJ", "TRIlong")
 
 COLOURS = {"C0": "tab:grey", "C1": "tab:orange", "C2": "tab:blue"}
 LABELS = {"C0": "C0  bare arm", "C1": "C1  worn, unpowered", "C2": "C2  worn + firmware assist"}
@@ -80,6 +85,7 @@ def main() -> int:
           f"gain {controller.site['shoulder_gain']:.1f}, "
           f"elbow amplitude {controller.site['elbow_gravity_amplitude_nm']:.3f} N*m")
 
+    effort = MuscleEffort()
     results = {}
     for name, (shoulder, elbow) in POSTURES.items():
         task = hold_task(name, shoulder, elbow)
@@ -97,6 +103,30 @@ def main() -> int:
         for cond in per_condition:
             per_condition[cond]["activation_vs_bare_pct"] = 100.0 * (
                 per_condition[cond]["activation_sum_mean"] / base - 1.0)
+
+        # Per-muscle activations at the same pose and torque, so the numbers can
+        # be compared with the shoulder-exoskeleton literature (deltoid).
+        for cond in per_condition:
+            tau_sh = per_condition[cond]["shoulder_torque_mean_nm"]
+            tau_el = per_condition[cond]["elbow_torque_mean_nm"]
+            activations, _ = effort.activations(np.radians(shoulder), np.radians(elbow),
+                                                tau_sh, tau_el)
+            per_condition[cond]["muscle_activation"] = {
+                muscle: float(activations[effort.muscles.index(muscle)])
+                for muscle in REPORTED_MUSCLES if muscle in effort.muscles}
+        for muscle in REPORTED_MUSCLES:
+            if muscle not in effort.muscles:
+                continue
+            bare = per_condition["C0"]["muscle_activation"][muscle]
+            worn = per_condition["C1"]["muscle_activation"][muscle]
+            assist = per_condition["C2"]["muscle_activation"][muscle]
+            per_condition["C2"].setdefault("reduction_pct", {})[muscle] = {
+                "vs_bare": 100.0 * (1.0 - assist / bare) if bare > 1e-6 else None,
+                "vs_worn": 100.0 * (1.0 - assist / worn) if worn > 1e-6 else None,
+            }
+            print(f"    {muscle:7s} C0 {bare:.3f}  C1 {worn:.3f}  C2 {assist:.3f}  "
+                  f"-> vs worn {100.0 * (1.0 - assist / worn) if worn > 1e-6 else float('nan'):+5.1f}%, "
+                  f"vs bare {100.0 * (1.0 - assist / bare) if bare > 1e-6 else float('nan'):+5.1f}%")
         results[name] = per_condition
 
     (out_dir / "muscle_static.json").write_text(json.dumps(
@@ -123,6 +153,33 @@ def main() -> int:
         ax.grid(alpha=0.3, axis="y")
         ax.legend(fontsize=8)
     fig.savefig(out_dir / "muscle_static.png", dpi=150)
+    plt.close(fig)
+
+    # Paper-style panel: anterior deltoid (the muscle these papers report),
+    # relative to the worn-but-unpowered case.
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4), constrained_layout=True)
+    muscle = "DELT1"
+    if all(muscle in results[n]["C2"].get("muscle_activation", {}) for n in names):
+        for k, cond in enumerate(("C0", "C1", "C2")):
+            axes[0].bar(x + (k - 1) * 0.26,
+                        [results[n][cond]["muscle_activation"][muscle] for n in names], 0.26,
+                        color=COLOURS[cond], label=LABELS[cond])
+        axes[0].set_ylabel("anterior deltoid activation")
+        axes[0].set_title("DELT1 activation (the muscle the papers report)")
+        axes[0].legend(fontsize=8)
+
+        worn = [results[n]["C2"]["reduction_pct"][muscle]["vs_worn"] for n in names]
+        bare = [results[n]["C2"]["reduction_pct"][muscle]["vs_bare"] for n in names]
+        axes[1].bar(x - 0.18, worn, 0.36, color="tab:blue", label="vs worn, unpowered")
+        axes[1].bar(x + 0.18, bare, 0.36, color="tab:grey", label="vs bare arm")
+        axes[1].axhline(0.0, color="k", lw=0.8)
+        axes[1].set_ylabel("DELT1 activation change  %")
+        axes[1].set_title("anterior deltoid reduction (positive = less activation)")
+        axes[1].legend(fontsize=8)
+    for ax in axes:
+        ax.set_xticks(x, names)
+        ax.grid(alpha=0.3, axis="y")
+    fig.savefig(out_dir / "muscle_static_deltoid.png", dpi=150)
     plt.close(fig)
     print(f"\nwrote {out_dir}")
     return 0

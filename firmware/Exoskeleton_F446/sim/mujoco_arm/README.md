@@ -248,6 +248,10 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\burst_report.py
 - 肘幅值 10 A→20 A 在肘主导的锤击里把收益从 3.5% 提到 6.8%（肌肉驱动模型），但同样不影响肩主导动作。
 - 风险：4.6 N·m 已到 GDS68 旧 24 V 额定值，没有热裕量；低抬臂姿态可能"帮过头"（A 阶段热力图已显示该区域激活反而上升），需要小角度实测确认。
 
+## 验证报告（2026-10-28）
+
+整体结果、文献对比、图表索引见 [docs/validation_report.md](docs/validation_report.md)。按论文口径（相对穿戴不通电 + 前三角肌）报告时，助力使三角肌激活下降 **11.7–20.3%**，与肩部外骨骼文献同一区间。
+
 ## 一键出全套肌肉驱动结果（2026-10-27）
 
 ```powershell

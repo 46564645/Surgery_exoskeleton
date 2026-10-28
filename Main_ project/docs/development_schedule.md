@@ -3008,3 +3008,11 @@ M6（应用层完整闭环、肌肉模型）保持可选，不在本次批准范
 - 本次完成：新增`scripts/report_muscle_all.py`：依次调用`muscle_static.py`、`muscle_burst.py`与`plot_scene.py`（P1/P4/P5），把静态图与爆发图拼成`report.png`，并写`README.md`（各文件说明 + 从控制库读回的固件设置：输出周期、肩增益/上限、肘幅值、肩 Amplify）。README 增用法。
 - 实际结果：一条命令约 40 s 跑完，输出`build/sim-runs/report-muscle-final/`（`report.png`、`static/`、`burst/`、`scenes/`、`README.md`）。主机测试 125 项仍通过。
 - 参数/接线变化：无（仅新增报告脚本与文档）。
+
+### 2026-10-28｜改用论文口径报告；整理整体验证报告
+
+- 用户决定：按论文口径（相对"穿戴不通电"+ 单块三角肌）报告，并整理整体报告、配上所有索引图。
+- 本次完成：`scripts/muscle_static.py` 增加逐肌肉激活统计（DELT1/2/3、SUPSP、INFSP、PECM1、TMAJ、TRIlong）与"相对穿戴/相对裸臂"降幅，新增`muscle_static_deltoid.png`；`report_muscle_all.py` 把三角肌面板并入拼图与索引；新增`docs/validation_report.md`（目的、模型来源、控制参数、三条件、静态/三角肌/爆发/工作空间结果、文献对比、结论、限制、复现命令、图索引）；8 张图归档到`docs/figures/`（约 1.7 MB，随仓库提交）。
+- 关键结果（肌肉驱动，论文口径）：前三角肌激活相对穿戴不通电 P1 **−20.3%**、P4 **−13.6%**、P5 **−11.7%**；相对裸臂仅 −2.5…−3.6%。与 Frontiers 2024（三角肌前束 −21.0%）、Ergonomics 2026 同一区间；远低于 ArmeoPower 整臂失重（−74.8%）属设备定位差异。
+- 参数/接线变化：无。
+- 遗留与下一步：报告里已写明"模型只有两自由度、人体是简化控制器、镜像未刷写"等限制。
