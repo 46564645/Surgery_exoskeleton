@@ -282,14 +282,19 @@ def build() -> Path:
            "图 1  工作空间热力图：穿戴代价、助力收益、肌肉激活收益",
            "Figure 1  Workspace maps: cost of wearing, assistance benefit, activation benefit",
            "左图是“穿上不通电比裸臂多费多少力”，中间是“助力能收回多少”，右边是激活量的收益。"
-           "抬臂越高、肘越弯，助力越有效（肩 60°/肘 70–110° 处 12–16%）；"
-           "而低抬臂（肩 5–20°）+ 小屈肘（30–60°）区域是红色——助力反而让肌肉更累，"
-           "说明该姿态下自重补偿“帮过头”，需要在台架小角度复核。",
+           "当前默认参数下穿戴代价均值 +13.2%、助力收益均值 +13.7%、激活收益均值 +6.9%。"
+           "抬臂越高、肘越弯，助力越有效（肩 60°/肘 70–110° 处 19–24%）；"
+           "低抬臂（肩 10–15°）区域激活收益为负（多为 −3…−5%，个别 −14%）——助力反而让肌肉更累，"
+           "说明该姿态下补偿“帮过头”，需要在台架小角度复核。激活基线 <0.2 的格子标 n/a，"
+           "因为基线太小时百分比会被放大成假象。",
            "The left panel is how much more effort the unpowered device costs, the middle how much "
-           "the assist gives back, the right the activation benefit. Assistance works better the "
-           "higher and more flexed the arm is (12–16% at 60° shoulder, 70–110° elbow), while the "
-           "low-elevation, small-elbow region is red: there the assist raises activation, i.e. it "
-           "over-compensates, and that region should be checked on the bench.")
+           "the assist gives back, the right the activation benefit. With the current defaults the "
+           "means are +13.2% cost, +13.7% benefit and +6.9% activation benefit. Assistance works "
+           "better the higher and more flexed the arm is (19–24% at 60° shoulder, 70–110° elbow), "
+           "while at low elevation (10–15° shoulder) the activation benefit is negative (mostly "
+           "−3 to −5%, one cell −14%): there the assist over-compensates, and that region should "
+           "be checked on the bench. Cells with an unpowered activation below 0.2 are marked n/a, "
+           "because a percentage of such a small baseline is misleading.")
 
     heading(doc, "5.2 静态姿势：三种条件的直接对照", "5.2 Static Postures: Three Conditions", level=2)
     figure(doc, "02_static.png",
