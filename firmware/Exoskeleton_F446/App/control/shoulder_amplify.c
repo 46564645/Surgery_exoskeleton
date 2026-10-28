@@ -12,7 +12,8 @@ bool ShoulderAmplify_ConfigValid(const ShoulderAmplifyConfig *config)
     if (config->increment_rotor_nm == 0.0f) { return true; }
     return isfinite(config->starting_velocity_rad_s)
         && config->starting_velocity_rad_s > 0.0f
-        && duration(config->suspension_ms) && duration(config->ramp_ms);
+        && duration(config->suspension_ms)
+        && (config->ramp_ms == 0U || duration(config->ramp_ms));
 }
 
 void ShoulderAmplify_Reset(ShoulderAmplify *amplify, uint32_t now_ms)
@@ -55,7 +56,12 @@ float ShoulderAmplify_Step(ShoulderAmplify *amplify, const ShoulderAmplifyConfig
                && (uint32_t)(now_ms - amplify->engage_ms) > config->suspension_ms) {
         amplify->engaged = false;
     }
-    float delta = (float)(uint32_t)(now_ms - amplify->step_ms) / (float)config->ramp_ms;
+    /* ramp_ms == 0 switches instantly, which is what ExoKit does; a ramp was
+     * a local addition and is far too slow for a 250 ms burst (it needs
+     * 241 ms to reach 90 %, i.e. the whole movement). */
+    float delta = config->ramp_ms == 0U
+        ? 1.0f
+        : (float)(uint32_t)(now_ms - amplify->step_ms) / (float)config->ramp_ms;
     amplify->step_ms = now_ms;
     amplify->scale = amplify->engaged ? fminf(1.0f, amplify->scale + delta)
                                       : fmaxf(0.0f, amplify->scale - delta);

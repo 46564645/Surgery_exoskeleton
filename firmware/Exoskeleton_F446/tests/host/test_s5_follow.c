@@ -199,7 +199,8 @@ static void shoulder_amplify_model(void)
     bad = c; bad.increment_rotor_nm = NAN; assert(!ShoulderAmplify_ConfigValid(&bad));
     bad = c; bad.starting_velocity_rad_s = 0.0f; assert(!ShoulderAmplify_ConfigValid(&bad));
     bad = c; bad.suspension_ms = 0U; assert(!ShoulderAmplify_ConfigValid(&bad));
-    bad = c; bad.ramp_ms = 0U; assert(!ShoulderAmplify_ConfigValid(&bad));
+    /* ramp_ms = 0 is the instant switch ExoKit uses, so it is valid. */
+    bad = c; bad.ramp_ms = 0U; assert(ShoulderAmplify_ConfigValid(&bad));
     assert(!ShoulderAmplify_ConfigValid(NULL));
 
     S5SiteProfile p = dual_profile();
@@ -209,7 +210,7 @@ static void shoulder_amplify_model(void)
     assert(!S5Site_ReadReady(&p)); /* Increment above the shoulder cap. */
     p.shoulder_amplify = c;
     p.shoulder_amplify.ramp_ms = 0U;
-    assert(!S5Site_ReadReady(&p));
+    assert(S5Site_ReadReady(&p));   /* instant switch is allowed */
 }
 
 #ifdef S5_R4_ELBOW_FOLLOW

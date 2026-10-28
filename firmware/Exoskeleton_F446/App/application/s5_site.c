@@ -33,6 +33,29 @@
 #if !defined(S5_R5_SHOULDER_AMPLIFY_MNM)
 #define S5_R5_SHOULDER_AMPLIFY_MNM 0
 #endif
+/* Amplify timing. ExoKit's AmplifyReaction switches instantly and only
+ * suspends on a direction change; the 20 deg/s start and the 200 ms ramp were
+ * local values and are far too slow for a 180-250 ms burst (measured 2026-10-27:
+ * the increment only reached 90 % at 241 ms). Defaults now: 10 deg/s start,
+ * instant switch (ramp 0), 150 ms suspension. */
+#if !defined(S5_R5_AMPLIFY_START_DPS)
+#define S5_R5_AMPLIFY_START_DPS 10
+#endif
+#if S5_R5_AMPLIFY_START_DPS < 1 || S5_R5_AMPLIFY_START_DPS > 90
+#error "Amplify start speed must be 1..90 deg/s"
+#endif
+#if !defined(S5_R5_AMPLIFY_RAMP_MS)
+#define S5_R5_AMPLIFY_RAMP_MS 0
+#endif
+#if S5_R5_AMPLIFY_RAMP_MS < 0 || S5_R5_AMPLIFY_RAMP_MS > 400
+#error "Amplify ramp must be 0..400 ms (0 = instant)"
+#endif
+#if !defined(S5_R5_AMPLIFY_SUSPEND_MS)
+#define S5_R5_AMPLIFY_SUSPEND_MS 150
+#endif
+#if S5_R5_AMPLIFY_SUSPEND_MS < 1 || S5_R5_AMPLIFY_SUSPEND_MS > 1000
+#error "Amplify suspension must be 1..1000 ms"
+#endif
 #if S5_R5_SHOULDER_AMPLIFY_MNM < 0 || S5_R5_SHOULDER_AMPLIFY_MNM > 575
 #error "R5 shoulder Amplify increment must be 0..575 mNm (0 = off)"
 #endif
@@ -126,15 +149,17 @@ static const S5SiteProfile site = {
     .shoulder_gain = S5_R5_SHOULDER_GAIN,
     .shoulder_amplify = {
         .increment_rotor_nm = 0.001f * S5_R5_SHOULDER_AMPLIFY_MNM,
-        .starting_velocity_rad_s = 0.34906585f, /* 20 deg/s */
-        .suspension_ms = 400U, .ramp_ms = 200U
+        .starting_velocity_rad_s = 0.0174533f * S5_R5_AMPLIFY_START_DPS,
+        .suspension_ms = S5_R5_AMPLIFY_SUSPEND_MS,
+        .ramp_ms = S5_R5_AMPLIFY_RAMP_MS
     },
     /* Elbow Amplify: same module, increment in C620 amps, sign follows the
      * elbow movement (2026-10-27 user decision: assist the elbow channel too). */
     .elbow_amplify = {
         .increment_rotor_nm = 0.001f * S5_R5_ELBOW_AMPLIFY_MA,
-        .starting_velocity_rad_s = 0.34906585f, /* 20 deg/s */
-        .suspension_ms = 400U, .ramp_ms = 200U
+        .starting_velocity_rad_s = 0.0174533f * S5_R5_AMPLIFY_START_DPS,
+        .suspension_ms = S5_R5_AMPLIFY_SUSPEND_MS,
+        .ramp_ms = S5_R5_AMPLIFY_RAMP_MS
     },
     .elbow_gravity = {
         .amplitude_nm = 0.001f * S5_R5_ELBOW_SUPPORT_MA * S5_ELBOW_MOTOR_KT_NM_PER_A,

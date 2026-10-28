@@ -4,6 +4,7 @@
 
 爆发测试要验证的是固件的助力功能，因此：
 
+- **Amplify 时序改快（2026-10-27 晚）**：原来起始速度 20°/s + 200 ms 斜坡，实测在一次 250 ms 爆发里到 241 ms 才达到 90%——等于爆发结束了才起作用。改为 **起始 10°/s、瞬时切换（斜坡 0）、换向暂停 150 ms**（ExoKit `AmplifyReaction` 本来就是瞬时切换）。新增三个编译选项`S5_R5_AMPLIFY_START_DPS`、`S5_R5_AMPLIFY_RAMP_MS`、`S5_R5_AMPLIFY_SUSPEND_MS`；`ShoulderAmplify_Step`支持`ramp_ms=0`（瞬时），主机用例同步（ramp 0 视为合法）。仿真验证：增量介入时刻由 241 ms 提前到 **121 ms**，肘部锤击收益由 −4.5% 提升到 **−6.4%**；肩部爆发仍只有 −0.7%，因为峰值力矩由惯性主导（4.6 N·m 对 46 N·m）。
 - **肘通道也加 Amplify**：新增`S5_R5_ELBOW_AMPLIFY_MA`（0..20000 mA，默认 **10000**，用户 2026-10-27 选定）。复用`ShoulderAmplify`模块：以肘角速度的**绝对值**判触发（>20°/s），增量符号**跟随运动方向**，所以快速伸展（锤击）和快速屈曲都会被助力；400 ms 换向暂停、200 ms 斜坡与肩通道一致。
 - **肩 Amplify** 由 0 改为 **300 mNm**（2.4 N·m 关节侧），上限放开到 575。
 - `S5AssistCompose_Update` 增加肘 Amplify 的配置与状态参数；`s5_follow.c`、`s5_site.{c,h}`、仿真桥接同步；新增主机用例`compose_elbow_amplify`（正/负速度符号、斜坡进/出）。
@@ -16,7 +17,7 @@
 | `S5_R5_ELBOW_AMPLIFY_MA` | **10000** |
 | `send_interval_ms` | 10 |
 
-- 产物：`build/r5-assist/Exoskeleton_F446.elf` / `.bin`，FLASH 142136 B、RAM 12960 B、0 警告；BIN SHA256 `098E16180898F07618677FC47CD8C1D5114CC9CEB3BFBA38C7ED3A7CA57BE230`。
+- 产物：`build/r5-assist/Exoskeleton_F446.elf` / `.bin`，FLASH 142160 B、RAM 12960 B、0 警告；BIN SHA256 `BC8DCE7C3E30F3E796F64D7AE7BB65BC8A50ECE918A1FBB0BD191D341F99A6F4`。
 - 验证：主机测试 **125 项**通过（含新用例）；**未刷写、未上板**。
 - 仿真结果（肌肉驱动爆发）：肘 Amplify 0→5000→10000→20000 mA 时，G1 锤击峰值力矩相对穿戴不通电由 −3.1% 改善到 −4.0% / −4.6% / −5.6%；肩主导的 G2 不受影响（肘通道帮不到肩）。功口径几乎不变，因为肘命令总幅值会撞到 20 A 上限。
 
