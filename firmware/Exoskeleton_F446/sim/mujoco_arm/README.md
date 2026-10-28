@@ -250,7 +250,13 @@ build\sim-venv\Scripts\python.exe sim\mujoco_arm\scripts\burst_report.py
 
 ## 验证报告（2026-10-28）
 
-整体结果、文献对比、图表索引见 [docs/validation_report.md](docs/validation_report.md)。按论文口径（相对穿戴不通电 + 前三角肌）报告时，助力使三角肌激活下降 **11.7–20.3%**，与肩部外骨骼文献同一区间。
+整体结果、文献对比、图表索引见 [docs/validation_report.md](docs/validation_report.md)。
+
+**中英对照 Word 版（作品集用）**：[docs/validation_report_bilingual.docx](docs/validation_report_bilingual.docx)——封面、摘要、系统与模型、控制参数、实验设计（条件/姿势/动作/指标/参数汇总表）、结果（每张图配中英说明与"看什么"）、文献对比、讨论、**局限性逐条列出**、复现命令、图表索引。由 `docs/make_report_docx.py` 生成（python-docx 1.2.0）：
+
+```powershell
+build\sim-venv\Scripts\python.exe sim\mujoco_arm\docs\make_report_docx.py
+```按论文口径（相对穿戴不通电 + 前三角肌）报告时，助力使三角肌激活下降 **11.7–20.3%**，与肩部外骨骼文献同一区间。
 
 ## 一键出全套肌肉驱动结果（2026-10-27）
 
