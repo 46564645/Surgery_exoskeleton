@@ -4,3 +4,6 @@ CMakeUserPresets.json
 .embeddedskills/
 # MuJoCo writes this next to the working directory when window creation fails.
 MUJOCO_LOG.TXT
+
+# Word/Office lock files
+~$*
