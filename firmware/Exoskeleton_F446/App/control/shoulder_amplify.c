@@ -35,6 +35,24 @@ float ShoulderAmplify_Step(ShoulderAmplify *amplify, const ShoulderAmplifyConfig
     if (amplify == NULL || config == NULL || config->increment_rotor_nm <= 0.0f
         || !isfinite(raise_velocity_rad_s)) { return 0.0f; }
     const float v = raise_velocity_rad_s;
+
+    /* Acceleration from the last sample, for the positive-power gate. A long
+     * gap (first call, or a stalled loop) gives no usable estimate and the
+     * gate stays open, so a missing sample never silently disables the
+     * assist. */
+    float accel = 0.0f;
+    const uint32_t dt_ms = amplify->has_last ? (uint32_t)(now_ms - amplify->last_ms) : 0U;
+    if (amplify->has_last && dt_ms > 0U && dt_ms < 100U) {
+        accel = (v - amplify->last_velocity_rad_s) * 1000.0f / (float)dt_ms;
+    }
+    amplify->last_velocity_rad_s = v;
+    amplify->last_ms = now_ms;
+    amplify->has_last = true;
+    bool gate_open = true;
+    if (config->accel_gate_rad_s2 > 0.0f && dt_ms > 0U && dt_ms < 100U) {
+        gate_open = (v * accel) > 0.0f && fabsf(accel) >= config->accel_gate_rad_s2;
+    }
+
     const bool up = v > config->starting_velocity_rad_s;
     if (up || v < -config->starting_velocity_rad_s) {
         if (amplify->raising != up) {
@@ -56,6 +74,9 @@ float ShoulderAmplify_Step(ShoulderAmplify *amplify, const ShoulderAmplifyConfig
                && (uint32_t)(now_ms - amplify->engage_ms) > config->suspension_ms) {
         amplify->engaged = false;
     }
+    /* Decelerating in the assisted direction: withdraw now, do not wait for
+     * the speed to fall below the start threshold. */
+    if (!gate_open) { amplify->engaged = false; }
     /* ramp_ms == 0 switches instantly, which is what ExoKit does; a ramp was
      * a local addition and is far too slow for a 250 ms burst (it needs
      * 241 ms to reach 90 %, i.e. the whole movement). */

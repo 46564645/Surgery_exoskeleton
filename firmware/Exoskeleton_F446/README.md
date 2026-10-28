@@ -17,7 +17,8 @@
 | `S5_R5_ELBOW_AMPLIFY_MA` | **10000** |
 | `send_interval_ms` | 10 |
 
-- 产物：`build/r5-assist/Exoskeleton_F446.elf` / `.bin`，FLASH 142160 B、RAM 12960 B、0 警告；BIN SHA256 `BC8DCE7C3E30F3E796F64D7AE7BB65BC8A50ECE918A1FBB0BD191D341F99A6F4`。
+- **正功率门控（默认关）**：`S5_R5_AMPLIFY_ACCEL_GATE_DPS2`（0..3600，默认 **0**）。实测只让锤击正功 18.7→18.4 J、峰值反而变差，快速抬举无变化；它撤不掉重力基线，故默认关闭。
+- 产物：`build/r5-assist/Exoskeleton_F446.elf` / `.bin`，FLASH 142392 B、RAM 12992 B、0 警告；BIN SHA256 `E56337BC887AB759A8DE7E8EB4D9D6FA5CF2B6E0E08494D70DD4323385E17E76`。
 - 验证：主机测试 **125 项**通过（含新用例）；**未刷写、未上板**。
 - 仿真结果（肌肉驱动爆发）：肘 Amplify 0→5000→10000→20000 mA 时，G1 锤击峰值力矩相对穿戴不通电由 −3.1% 改善到 −4.0% / −4.6% / −5.6%；肩主导的 G2 不受影响（肘通道帮不到肩）。功口径几乎不变，因为肘命令总幅值会撞到 20 A 上限。
 

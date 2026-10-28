@@ -53,6 +53,7 @@ def build_defines(args: argparse.Namespace) -> list[str]:
         f"S5_R5_ELBOW_SUPPORT_MA={args.ma}",
         f"S5_R5_SHOULDER_AMPLIFY_MNM={args.amplify_mnm}",
         f"S5_R5_ELBOW_AMPLIFY_MA={args.elbow_amplify_ma}",
+        f"S5_R5_AMPLIFY_ACCEL_GATE_DPS2={args.accel_gate_dps2}",
         f"S5_R5_SHOULDER_GAIN={args.gain}",
         f"S5_R5_SHOULDER_CAP_MNM={args.cap_mnm}",
     ] + (["S5_R5_FORCE_ASSIST", f"S5_R5_FORCE_BOOST_PCT={args.boost_pct}"]
@@ -120,6 +121,9 @@ def main() -> int:
                         help="S5_R5_SHOULDER_AMPLIFY_MNM (0..575); 300 = production choice")
     parser.add_argument("--elbow-amplify-ma", default="10000",
                         help="S5_R5_ELBOW_AMPLIFY_MA (0..20000); 10000 = production choice")
+    parser.add_argument("--accel-gate-dps2", default="0",
+                        help="S5_R5_AMPLIFY_ACCEL_GATE_DPS2 (0..3600); 0 = gate off "
+                             "(the production choice: measured marginal)")
     parser.add_argument("--force-assist", action="store_true", help="S5_R5_FORCE_ASSIST")
     parser.add_argument("--boost-pct", default="50", help="S5_R5_FORCE_BOOST_PCT (1..50)")
     parser.add_argument("--out", default=None, help="output library path")

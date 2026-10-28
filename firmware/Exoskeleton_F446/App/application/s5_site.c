@@ -53,6 +53,18 @@
 #if !defined(S5_R5_AMPLIFY_SUSPEND_MS)
 #define S5_R5_AMPLIFY_SUSPEND_MS 150
 #endif
+/* Positive-power gate (deg/s^2): assist only while the joint accelerates in
+ * the assisted direction. 0 = gate off. Implemented 2026-10-27 and measured
+ * marginal (the mallet strike's work improves 18.7 -> 18.4 J but its peak
+ * torque gets worse, and the rapid lift does not change), so it is OFF by
+ * default; the real burst loss is the gravity baseline pushing up during the
+ * lowering phase, which this gate cannot remove. */
+#if !defined(S5_R5_AMPLIFY_ACCEL_GATE_DPS2)
+#define S5_R5_AMPLIFY_ACCEL_GATE_DPS2 0
+#endif
+#if S5_R5_AMPLIFY_ACCEL_GATE_DPS2 < 0 || S5_R5_AMPLIFY_ACCEL_GATE_DPS2 > 3600
+#error "Amplify acceleration gate must be 0..3600 deg/s^2 (0 = off)"
+#endif
 #if S5_R5_AMPLIFY_SUSPEND_MS < 1 || S5_R5_AMPLIFY_SUSPEND_MS > 1000
 #error "Amplify suspension must be 1..1000 ms"
 #endif
@@ -151,7 +163,8 @@ static const S5SiteProfile site = {
         .increment_rotor_nm = 0.001f * S5_R5_SHOULDER_AMPLIFY_MNM,
         .starting_velocity_rad_s = 0.0174533f * S5_R5_AMPLIFY_START_DPS,
         .suspension_ms = S5_R5_AMPLIFY_SUSPEND_MS,
-        .ramp_ms = S5_R5_AMPLIFY_RAMP_MS
+        .ramp_ms = S5_R5_AMPLIFY_RAMP_MS,
+        .accel_gate_rad_s2 = 0.0174533f * S5_R5_AMPLIFY_ACCEL_GATE_DPS2
     },
     /* Elbow Amplify: same module, increment in C620 amps, sign follows the
      * elbow movement (2026-10-27 user decision: assist the elbow channel too). */
@@ -159,7 +172,8 @@ static const S5SiteProfile site = {
         .increment_rotor_nm = 0.001f * S5_R5_ELBOW_AMPLIFY_MA,
         .starting_velocity_rad_s = 0.0174533f * S5_R5_AMPLIFY_START_DPS,
         .suspension_ms = S5_R5_AMPLIFY_SUSPEND_MS,
-        .ramp_ms = S5_R5_AMPLIFY_RAMP_MS
+        .ramp_ms = S5_R5_AMPLIFY_RAMP_MS,
+        .accel_gate_rad_s2 = 0.0174533f * S5_R5_AMPLIFY_ACCEL_GATE_DPS2
     },
     .elbow_gravity = {
         .amplitude_nm = 0.001f * S5_R5_ELBOW_SUPPORT_MA * S5_ELBOW_MOTOR_KT_NM_PER_A,
